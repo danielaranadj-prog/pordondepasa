@@ -1,0 +1,63 @@
+/* System theme changes live, without storing a competing preference. */
+.trip-screen .navigation-top{left:12px;right:12px;gap:8px;align-items:flex-start}
+.trip-screen .navigation-banner{min-width:0;background:var(--ui-panel);color:var(--ui-text);border:1px solid var(--ui-line);border-radius:16px;padding:10px 14px;box-shadow:var(--ui-shadow)}
+.trip-screen .navigation-banner small{display:block;color:var(--ui-muted);font-size:10px;font-weight:650;letter-spacing:.8px;line-height:1.4}
+.trip-screen .navigation-banner h1{color:var(--ui-text);font-size:18px;font-weight:650;line-height:1.25;letter-spacing:-.3px;margin:5px 0;overflow-wrap:anywhere}
+.trip-screen .navigation-banner p{color:var(--ui-muted);font-size:12px;line-height:1.4;margin:0;overflow-wrap:anywhere}
+:root{color-scheme:light dark;--ui-bg:#f7f8f8;--ui-panel:#fff;--ui-soft:#f1f3f3;--ui-text:#172124;--ui-muted:#60696c;--ui-line:#e3e7e7;--ui-action:#172124;--ui-action-text:#fff;--ui-shadow:0 4px 18px #1721240d}
+body{background:var(--ui-bg);color:var(--ui-text)}
+.search-screen,.welcome-screen{background:var(--ui-bg);color:var(--ui-text)}
+.search-screen .hero h1{font-size:36px;letter-spacing:-1.3px}
+.search-screen .hero>p:last-child,.search-screen .search-caption,.search-screen header small,.welcome-screen .welcome-brand p,.welcome-screen .welcome-brand span{color:var(--ui-muted)}
+.search-screen .planner{background:var(--ui-panel);border-color:var(--ui-line);box-shadow:var(--ui-shadow)}
+.search-screen .field{background:var(--ui-soft);border-color:var(--ui-line)}
+.search-screen .field input,.search-screen .field small{color:var(--ui-text)}
+.search-screen .suggestions button{color:var(--ui-text);background:var(--ui-panel)}
+.search-screen .suggestions button:hover{background:var(--ui-soft)}
+.search-screen .suggestions small{color:var(--ui-muted)}
+.search-screen .map-picker-link{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
+.search-screen .search,.trip-screen .start-follow,.navigation-panel .search{background:var(--ui-action);color:var(--ui-action-text);box-shadow:none}
+.trip-screen .trip-top{top:max(12px,env(safe-area-inset-top));left:12px;right:12px;gap:6px}
+.trip-screen .trip-endpoints{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line);box-shadow:var(--ui-shadow);padding:6px 12px}
+.trip-screen .trip-endpoints small{font-size:10px;color:var(--ui-muted)}
+.trip-screen .trip-endpoints strong{font-size:13px;line-height:18px}
+.trip-screen .trip-endpoints>div+div{border-color:var(--ui-line);margin-top:3px;padding-top:5px}
+.trip-screen .back-button,.trip-screen .location-retry,.trip-screen .edit-origin,.trip-screen .edit-destination,.comparison-toggle{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line);box-shadow:var(--ui-shadow)}
+.trip-screen .edit-origin,.trip-screen .edit-destination{padding:6px 12px;min-height:44px}
+.trip-screen .trip-bottom{background:linear-gradient(transparent,var(--ui-bg) 30%);padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.trip-screen .carousel-heading strong{background:var(--ui-panel);color:var(--ui-muted);font-size:11px;font-weight:500}
+.comparison-toggle{font-size:11px;padding:6px 10px}
+.trip-screen .route-slide{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line);box-shadow:var(--ui-shadow);padding:12px;border-radius:18px}
+.trip-screen .route-slide.active{border-color:var(--ui-text);box-shadow:var(--ui-shadow)}
+.trip-screen .time strong{font-size:24px;color:var(--ui-text)}
+.trip-screen .time small{background:var(--ui-soft);color:var(--ui-muted);font-size:10px}
+.trip-screen .legs{margin:8px 0;gap:4px}
+.trip-screen .legs span{font-size:11px;padding:4px 6px}
+.trip-screen .legs .walk{background:var(--ui-soft);color:var(--ui-muted)}
+.trip-screen .route-metrics{background:none;border-radius:0;padding:6px 0;margin:4px 0 8px;gap:6px}
+.trip-screen .route-metrics>div+div{border-color:var(--ui-line);padding-left:8px}
+.trip-screen .route-metrics small{font-size:10px;color:var(--ui-muted)}
+.trip-screen .route-metrics strong{font-size:14px;color:var(--ui-text)}
+.trip-screen .route-metrics strong span{color:var(--ui-muted)}
+.trip-screen .journey-details{border-color:var(--ui-line);margin-top:0}
+.trip-screen .journey-details summary{color:var(--ui-text);font-size:12px;font-weight:500;min-height:44px}
+.journey-steps,.journey-steps span{color:var(--ui-text)}
+.trip-screen .uber-link{color:var(--ui-muted);font-weight:500}
+.trip-screen .trip-estimate{font-size:10px;color:var(--ui-muted)}
+.trip-screen .trip-status,.trip-screen .navigation-panel{background:var(--ui-panel);color:var(--ui-text);box-shadow:var(--ui-shadow)}
+.trip-screen .navigation-panel{padding:12px 16px}
+.trip-screen .navigation-progress{background:var(--ui-soft);color:var(--ui-text);padding:8px}
+.navigation-tools button{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
+.navigation-tools button[aria-pressed=true]{background:var(--ui-action);color:var(--ui-action-text)}
+.walking-safety{background:var(--ui-soft);border:0;border-radius:10px;padding:8px 10px;margin:8px 0}
+.walking-safety p{font-size:12px;line-height:1.4;margin:0;color:var(--ui-muted)}
+@media(prefers-color-scheme:dark){
+ :root{--ui-bg:#17191b;--ui-panel:#202326;--ui-soft:#2b2f32;--ui-text:#f2f4f5;--ui-muted:#b4bdc2;--ui-line:#3b4044;--ui-action:#f2f4f5;--ui-action-text:#17191b;--ui-shadow:0 4px 18px #0003;--ink:#f2f4f5;--muted:#b4bdc2;--surface:#202326;--line:#3b4044}
+ .origin-dot{background:#f2f4f5}
+ /* Dim only the raster basemap; route colors and markers remain unchanged. */
+ .street-map .leaflet-tile-pane{filter:brightness(.65) saturate(.65)}
+ .leaflet-control-zoom a,.leaflet-control-attribution,.leaflet-tooltip{background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+ .leaflet-control-attribution a{color:#9fcbff}
+ .trip-screen .navigation-stops,.navigation-screen .tracking-notice,.navigation-panel>p{color:var(--ui-muted)}
+ .carousel-dots button{filter:invert(1)}
+}

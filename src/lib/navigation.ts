@@ -1,4 +1,18 @@
 import {meters,type Point,type Option} from './router.ts';
+/** Keep the exact street geometry beyond an accepted distance along the leg. */
+export function remainingGeometry(line:Point[],along:number):Point[]{
+ if(along<=0)return line;
+ let travelled=0;
+ for(let i=1;i<line.length;i++){
+  const length=meters(line[i-1],line[i]);
+  if(length>0&&travelled+length>along){
+   const t=(along-travelled)/length,a=line[i-1],b=line[i];
+   return [{lat:a.lat+(b.lat-a.lat)*t,lng:a.lng+(b.lng-a.lng)*t},...line.slice(i)];
+  }
+  travelled+=length;
+ }
+ return line.length?[line[line.length-1]]:[];
+}
 export type TransitStop={id:string;name:string;coordinates:Point;type?:'oficial'|'costumbre'|'base';routeIds?:string[];direction?:string;source?:string};
 export type RouteStop=TransitStop&{legIndex:number;along:number;distance:number;inferred:boolean;side:'right'|'on-trace'};
 export function projectProgress(point:Point,line:Point[]){

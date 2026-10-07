@@ -42,3 +42,29 @@ button,a,input{-webkit-tap-highlight-color:transparent}button{transition:backgro
 @media(max-width:370px){.search-screen{padding:22px 18px}.trip-screen .route-slide{padding:14px}.route-metrics{padding:10px;gap:4px}.route-metrics strong{font-size:14px}.trip-screen .edit-origin,.trip-screen .edit-destination{padding:10px 12px}}
 @media(max-height:650px){.search-screen .hero{margin-top:28px}.trip-screen .route-carousel{max-height:38dvh}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.welcome-progress span{transform:scaleX(1)}}
+/* Compact trip cards: the carousel has one axis; expanded steps scroll inside. */
+.trip-screen .route-carousel:not(.route-list-view){overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;align-items:flex-start;max-height:none}
+.trip-screen .route-carousel.route-list-view{overflow-y:auto;touch-action:pan-y;max-height:48dvh}
+.trip-screen .route-slide{padding:12px 14px;border-radius:18px}
+.trip-screen .option-select:active{transform:none}
+.trip-screen .time strong{font-size:24px}
+.trip-screen .time small{padding:4px 8px}
+.trip-screen .legs{margin:8px 0;gap:5px}
+.trip-screen .legs span{padding:4px 7px}
+.trip-screen .route-metrics{padding:8px 10px;margin:8px 0; border-radius:10px}
+.trip-screen .route-metrics small{margin-bottom:3px}
+.trip-screen .route-metrics strong{font-size:15px}
+.trip-screen .journey-details{margin-top:6px}
+.trip-screen .journey-details summary{min-height:44px;padding:0}
+.trip-screen .journey-details[open] .journey-steps{max-height:18dvh;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain}
+.trip-screen .card-primary{width:100%;min-height:44px;margin:4px 0 0;padding:10px 12px;border-radius:12px;font-size:14px}
+.trip-screen .uber-alternative{margin-top:6px;padding-top:0;border-top:0}
+.trip-screen .uber-link{border:0;background:transparent;min-height:44px;font-size:12px;color:#596366;padding:6px}
+.trip-screen .uber-alternative small{display:none}
+.trip-screen .carousel-heading{padding:4px 16px}
+.trip-screen .carousel-heading strong{padding:6px 10px}
+.trip-screen .trip-endpoints{padding:8px 12px;border-radius:16px}
+.search-screen .hero{margin:40px 0 20px}
+.search-screen .planner{padding:12px;border-radius:18px}
+.search-screen .field{min-height:56px;padding:10px}
+.search-screen .hero>p:last-child{margin-top:10px;line-height:1.4}

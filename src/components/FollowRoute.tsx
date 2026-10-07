@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {Option,Point} from '../lib/router';
 import {meters,routeTextColor} from '../lib/router';
-import {projectProgress,stopsForOption,type TransitStop} from '../lib/navigation';
+import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
 import WalkingSafety from './WalkingSafety';
 import {useCompass} from './useCompass';
@@ -20,6 +20,20 @@ export default function FollowRoute({option,stops,origin,destination,destination
  const leg=option.legs[step],line=leg.geometry??[leg.from,leg.to];
  const progress=live?projectProgress(live,line):undefined;
  const confident=!!live&&accuracy!==undefined&&accuracy<=60;
+ const [accepted,setAccepted]=useState({step:0,along:0});
+ const acceptedAt=useRef(0);
+ useEffect(()=>{
+  if(accepted.step!==step){setAccepted({step,along:0});acceptedAt.current=0;return;}
+  if(arrived||!progress||accuracy===undefined||accuracy>35||progress.distance>40)return;
+  const now=Date.now(),elapsed=acceptedAt.current?(now-acceptedAt.current)/1000:0;
+  const limit=acceptedAt.current?Math.max(50,elapsed*(leg.kind==='bus'?25:3)+accuracy):150;
+  if(progress.along<accepted.along||progress.along-accepted.along>limit)return;
+  acceptedAt.current=now;
+  if(progress.along>accepted.along+2)setAccepted({step,along:progress.along});
+ },[live,accuracy,step,arrived]);
+ const displayedOption=useMemo(()=>({...option,legs:option.legs.map((item,index)=>({
+  ...item,geometry:arrived||index<step?[]:index===step?remainingGeometry(item.geometry??[item.from,item.to],accepted.step===step?accepted.along:0):item.geometry
+ }))}),[option,step,accepted,arrived]);
  const close=confident&&meters(live!,leg.to)<60;
  const nearAlighting=leg.kind==='bus'&&confident&&progress&&progress.distance<=100&&progress.remaining<=350;
  const currentStops=routeStops.filter(s=>s.legIndex===step);
@@ -39,7 +53,7 @@ export default function FollowRoute({option,stops,origin,destination,destination
  function advance(){if(step<option.legs.length-1)setStep(step+1);else setArrived(true)}
  const title=arrived?'Llegaste a tu destino':leg.kind==='bus'?(nearAlighting?'Prepárate para bajar':`Viaja en ${leg.route?.name}`):step===option.legs.length-1?'Camina a tu destino':step===0?'Camina al punto de abordaje':'Camina al siguiente abordaje';
  return <main className="trip-screen navigation-screen">
-  <StreetMap fullscreen origin={origin} destination={destination} option={option} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} onPan={()=>setFollow(false)}/>
+  <StreetMap fullscreen origin={origin} destination={destination} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} onPan={()=>setFollow(false)}/>
   <section className="navigation-top"><button className="back-button" onClick={onExit} aria-label="Salir del seguimiento">←</button><div className="navigation-banner" role="status"><small>{arrived?'VIAJE FINALIZADO':`PASO ${step+1} DE ${option.legs.length}`}</small><h1>{title}</h1><p>{arrived?destinationName:leg.kind==='bus'?`Bajada ${progress&&confident?`a ${distanceLabel(progress.remaining)}`:'marcada en el mapa'}`:destinationName}</p></div></section>
   {!arrived&&<div className="navigation-tools"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-pressed={compass.enabled}>{compass.enabled?'Desactivar brújula':'Activar brújula'}</button><button onClick={()=>setNorthUp(!northUp)} aria-pressed={northUp}>{northUp?'Orientar al avanzar':'Norte arriba'}</button></div>}
   {!arrived&&<button className="recenter" onClick={()=>setFollow(true)} disabled={!live}>{!live?'⌖ Esperando ubicación':follow?'⌖ Siguiendo tu ubicación':'⌖ Centrar en mí'}</button>}

@@ -1,0 +1,44 @@
+/* Local system typography: no font download, tracking or extra dependency. */
+:root{--ink:#172124;--muted:#596366;--accent:#ec692f;--surface:#fff;--line:#e9edeb;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#f7f9f8;-webkit-font-smoothing:antialiased}
+button,a,input{-webkit-tap-highlight-color:transparent}button{transition:background .18s,transform .18s}button:active{transform:scale(.98)}
+.search-screen{padding:28px 24px;min-height:100dvh;background:radial-gradient(ellipse at 100% 0,#ffe7d8 0,transparent 48%),#f7f9f8}
+.search-screen header strong{font-size:19px;font-weight:750;letter-spacing:-.7px}.search-screen header small{font-size:12px;color:var(--muted)}
+.search-screen .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--ink);color:#fff;font-size:27px;box-shadow:0 5px 12px #17212412}
+.search-screen .brand-info{color:#727d79;font-size:22px}
+.search-screen .hero{margin:64px 0 28px}.search-screen .hero .eyebrow{font-size:11px;letter-spacing:1.8px;color:#9b431e;font-weight:700}
+.search-screen .hero h1{font-size:clamp(36px,9vw,44px);font-weight:750;letter-spacing:-1.7px;line-height:1.1}
+.search-screen .hero>p:last-child{font-size:16px;color:var(--muted);max-width:290px;line-height:1.6;margin-top:14px}
+.search-screen .planner{padding:16px;border:1px solid #fff;border-radius:24px;background:#fff;box-shadow:0 12px 40px #1721240b}
+.search-screen .field{min-height:68px;border:1px solid var(--line);border-radius:16px;background:#f8faf9;padding:14px;cursor:text}
+.search-screen .field small{font-size:12px;color:var(--muted);margin-bottom:5px}.search-screen .field input{color:var(--ink);background:transparent}.search-screen .field>span{color:var(--accent);font-size:24px}
+.search-screen .search,.welcome-screen .search,.navigation-panel .search{background:var(--ink);border-radius:16px;min-height:52px;font-size:15px;font-weight:650;box-shadow:0 4px 12px #17212415}
+.search-screen .suggestions button{border-radius:12px;border-bottom:0;padding:14px 12px}.search-screen .suggestions button:hover{background:#f2f5f3}
+.search-screen .map-picker-link{border:1px solid #dfe5e2;border-radius:16px;padding:12px 20px;min-height:50px;width:100%;background:#ffffff80;color:var(--ink);font-weight:600;margin-top:16px}
+.search-screen .search-caption{color:var(--muted);font-size:12px;margin-top:32px}
+.welcome-screen{background:radial-gradient(ellipse at 80% 15%,#ffe2cf,transparent 50%),radial-gradient(ellipse at 10% 90%,#e9f0e9,transparent 45%),#f8faf7;color:var(--ink)}
+.welcome-screen .welcome-brand svg{width:82px;height:82px;border-radius:26px;padding:16px;background:var(--ink);color:#ffa66d;box-shadow:0 14px 40px #17212418}
+.welcome-screen .welcome-brand h1{font-size:clamp(32px,8vw,44px);font-weight:750;letter-spacing:-1.7px;margin-top:26px}.welcome-screen .welcome-brand p{font-size:19px;color:#394744;margin-bottom:12px}.welcome-screen .welcome-brand span{font-size:14px;color:var(--muted)}
+.welcome-screen .welcome-action small{font-size:12px;color:var(--muted);letter-spacing:1px}.welcome-progress{width:56px;height:4px;background:#dce3de;margin:0 auto 20px;border-radius:4px;overflow:hidden}.welcome-progress span{display:block;height:100%;background:var(--accent);transform-origin:left;animation:welcome-progress 2.5s linear forwards}@keyframes welcome-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.trip-screen .trip-top{max-width:460px;gap:8px;grid-template-columns:44px 1fr}.trip-screen .trip-endpoints{border:1px solid #ffffffd0;border-radius:22px;padding:12px 16px;background:#fffffff5;box-shadow:0 8px 28px #17212412;backdrop-filter:blur(12px)}
+.trip-screen .trip-endpoints small{font-size:11px;color:var(--muted)}.trip-screen .trip-endpoints strong{font-size:14px;line-height:19px;font-weight:600}.trip-screen .trip-endpoints>div+div{border-color:var(--line);margin-top:7px;padding-top:8px}
+.trip-screen .back-button{background:#fff;border:1px solid #ffffffc0;box-shadow:0 4px 18px #17212412;color:var(--ink)}
+.trip-screen .edit-origin,.trip-screen .edit-destination{border-radius:50px;border:1px solid #ffffffc0;padding:10px 14px;font-size:12px;font-weight:600;color:var(--ink);box-shadow:0 4px 14px #1721240d;background:#fffffff5}
+.trip-screen .location-retry{position:absolute;grid-column:1;grid-row:1;top:54px;left:0;width:44px;height:44px;min-height:44px;border:0;border-radius:50%;font-size:24px;background:#fff;color:var(--ink);box-shadow:0 4px 18px #17212412}
+.trip-screen .map-hint{top:174px;border-radius:14px;font-size:13px;background:var(--ink)}.trip-screen .leaflet-top{top:184px}
+.trip-screen .trip-bottom{background:linear-gradient(transparent,#f7f9f8c9 20%,#f7f9f8 100%);padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.trip-screen .carousel-heading{max-width:460px;padding:8px 18px;font-size:12px}.trip-screen .carousel-heading strong{color:var(--ink);font-weight:650;background:#fffffff0;border-radius:30px;padding:9px 12px}
+.comparison-toggle{border:0;border-radius:30px;min-height:44px;font-size:12px;font-weight:600;padding:10px 14px;background:#fff;box-shadow:0 3px 14px #1721240a;color:var(--ink)}
+.trip-screen .route-slide{border:1px solid var(--line);border-radius:24px;padding:18px;background:#fff;box-shadow:0 6px 24px #1721240b}.trip-screen .route-slide.active{border-color:#c0cbc5;box-shadow:0 6px 24px #17212412}
+.trip-screen .time{justify-content:space-between;align-items:center}.trip-screen .time strong{font-size:29px;letter-spacing:-1.1px;color:var(--ink)}.trip-screen .time small{background:#fff0e6;color:#994117;border-radius:50px;font-size:11px;padding:7px 10px;font-weight:600}
+.trip-screen .legs{margin:14px 0;gap:6px}.trip-screen .legs span{border-radius:8px;font-size:12px;padding:6px 8px}.trip-screen .legs .walk{background:#f0f3f1;color:#4d5954}
+.route-metrics{display:grid;grid-template-columns:1fr 1fr 1.25fr;margin:12px 0 14px;border-radius:15px;padding:12px;background:#f6f8f6;gap:8px}.route-metrics>div+div{border-left:1px solid #e0e6e1;padding-left:10px}.route-metrics small{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.route-metrics strong{font-size:16px;font-weight:650;color:var(--ink)}.route-metrics strong span{font-size:11px;font-weight:500;color:var(--muted)}
+.trip-screen .arrival-instruction{font-size:12px;line-height:1.5;color:var(--muted);margin-bottom:12px}
+.journey-details{border-top:1px solid var(--line);margin-top:10px}.journey-details summary{min-height:46px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;list-style:none}.journey-details summary::-webkit-details-marker{display:none}.journey-details summary span{font-size:19px;transition:transform .2s}.journey-details[open] summary span{transform:rotate(180deg)}
+.journey-steps{margin:2px 0 14px;padding-left:24px;font-size:13px}.journey-steps li{padding:8px 0}.journey-steps li::marker{color:#ad4a20;font-weight:700}.journey-steps span{color:var(--muted);font-size:12px;line-height:1.5}
+.trip-screen .uber-alternative{margin-top:0;padding-top:10px;border-color:var(--line)}.trip-screen .uber-link{border:0;border-radius:12px;background:#f1f4f2;color:var(--ink);min-height:44px;font-size:13px}.trip-screen .uber-alternative small{color:var(--muted);font-size:10px}
+.trip-screen .start-follow{border-radius:16px;background:var(--ink);min-height:50px;font-size:14px;font-weight:650;box-shadow:0 4px 14px #17212415}
+.trip-screen .trip-estimate{font-size:10px;color:var(--muted);max-width:420px;margin:auto;line-height:1.4}.trip-screen .carousel-dots button{height:28px}.trip-screen .trip-status{border-radius:22px;padding:20px;font-size:14px;line-height:1.5;box-shadow:0 10px 30px #17212412}
+.trip-screen .navigation-banner{border-radius:22px;background:var(--ink)}.trip-screen .navigation-panel{border-radius:26px 26px 0 0;padding:18px 20px;box-shadow:0 -6px 30px #17212412}.trip-screen .navigation-panel>p{font-size:13px;line-height:1.5}.trip-screen .navigation-progress{padding:12px;background:#f3f6f3;border-radius:13px}.trip-screen .navigation-stops{font-size:13px}
+@media(max-width:370px){.search-screen{padding:22px 18px}.trip-screen .route-slide{padding:14px}.route-metrics{padding:10px;gap:4px}.route-metrics strong{font-size:14px}.trip-screen .edit-origin,.trip-screen .edit-destination{padding:10px 12px}}
+@media(max-height:650px){.search-screen .hero{margin-top:28px}.trip-screen .route-carousel{max-height:38dvh}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.welcome-progress span{transform:scaleX(1)}}

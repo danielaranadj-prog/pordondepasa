@@ -1,0 +1,14 @@
+.navigation-tools{position:absolute;z-index:500;right:12px;top:150px;display:flex;flex-direction:column;gap:8px}
+.navigation-tools button{border:1px solid #fff;border-radius:14px;min-height:44px;padding:10px 14px;background:#fffffff5;color:#172124;box-shadow:0 4px 18px #17212412;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.navigation-tools button[aria-pressed=true]{background:#172124;color:#fff}
+.navigation-screen .compass-issue{font-size:12px;color:#8b431e;background:#fff3e9;border-radius:10px;padding:10px}
+.navigation-screen .tracking-notice{font-size:12px;color:#596366}
+.navigation-screen .recenter{top:255px;min-height:44px;background:#fff}
+.navigation-screen .leaflet-top{top:155px}
+.tracking-arrow{background:transparent;border:0}
+.tracking-arrow span{display:block;width:22px;height:22px;background:#2563eb;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 8px #2563eb20,0 3px 8px #17212430}
+.tracking-arrow.directional span{border-radius:5px 50% 50%;transform:rotate(45deg)}
+.walking-safety{background:#fff4df;border:1px solid #f1d7a6;border-radius:14px;padding:12px 14px;margin:10px 0;color:#663e13;text-align:left}
+.walking-safety strong{display:block;font-size:14px;line-height:1.4}
+.walking-safety p{font-size:13px;line-height:1.5;margin:6px 0;color:#663e13}
+.walking-safety small{display:block;font-size:11px;line-height:1.5;color:#765322}

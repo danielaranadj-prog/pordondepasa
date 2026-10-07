@@ -1,0 +1,10 @@
+const assert={equal:(a:unknown,b:unknown)=>{if(a!==b)throw new Error(`Expected ${a} to equal ${b}`)},ok:(value:unknown)=>{if(!value)throw new Error('Assertion failed')}};
+import {compassHeading,movementHeading,normalHeading} from './heading.ts';
+assert.equal(normalHeading(-1),359);
+assert.equal(compassHeading({alpha:90,absolute:true}),270);
+assert.equal(compassHeading({alpha:90,absolute:false}),undefined);
+assert.equal(compassHeading({alpha:null,webkitCompassHeading:45,webkitCompassAccuracy:5}),45);
+assert.equal(compassHeading({alpha:null,webkitCompassHeading:45,webkitCompassAccuracy:-1}),undefined);
+assert.equal(movementHeading({lat:21,lng:-104},{lat:22,lng:-104}),0);
+assert.ok(Math.abs(movementHeading({lat:21,lng:-104},{lat:21,lng:-103})-90)<1);
+console.log('Orientación: pruebas correctas');

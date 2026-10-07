@@ -1,0 +1,28 @@
+.trip-screen .trip-endpoints small{font-size:12px;color:#555}
+.trip-screen .trip-endpoints strong{font-size:14px;line-height:19px}
+.trip-screen .edit-origin,.trip-screen .edit-destination{min-height:44px;font-size:13px}
+.trip-screen .back-button{width:44px;height:44px}
+.trip-screen .trip-top{grid-template-columns:44px 1fr}
+.trip-screen .carousel-heading{font-size:13px;align-items:center}
+.comparison-toggle{border:1px solid #777;border-radius:9px;background:white;color:#222;min-height:44px;padding:8px 12px;font:inherit;cursor:pointer}
+.trip-screen .legs span,.trip-screen .time small{font-size:12px}
+.trip-screen .route-meta,.trip-screen .arrival-instruction{font-size:14px;line-height:1.45;color:#444}
+.trip-screen .arrival-instruction{display:block;overflow:visible}
+.journey-steps{padding-left:22px;margin:12px 0;font-size:14px;line-height:1.45;color:#222}
+.journey-steps li{padding:4px 0}.journey-steps span{display:block;color:#555;margin-top:2px}
+.trip-screen .route-carousel{max-height:44dvh;overflow-y:auto;touch-action:pan-x pan-y}
+.trip-screen .route-slide{min-height:0}
+.trip-screen .trip-estimate{font-size:12px;color:#444;padding:0 16px}
+.trip-screen .carousel-dots button{width:44px;height:44px}
+.trip-screen .carousel-dots button[aria-pressed=true]{width:44px}
+.trip-screen .carousel-dots{overflow-x:auto}
+.trip-screen .route-list-view{display:block;max-width:460px;margin:auto;padding:4px 16px 12px;cursor:auto;scroll-snap-type:none}
+.route-list-view .route-slide+.route-slide{margin-top:12px}
+.trip-screen .start-follow{font-size:14px}
+.trip-screen .map-hint{top:228px;font-size:14px}
+.trip-screen .leaflet-top{top:232px}
+.search-screen .suggestions b{font-size:15px}.search-screen .suggestions small{font-size:12px;color:#555}
+.search-screen .hero>p:last-child,.search-screen .map-picker-link{font-size:15px;color:#555}
+.location-retry{grid-column:2;min-height:44px;border:1px solid #bbb;border-radius:10px;background:#fff;font-size:14px;color:#222}
+button:focus-visible{outline:3px solid #f57928;outline-offset:2px}
+@media(max-height:650px){.trip-screen .route-carousel{max-height:38dvh}.trip-screen .carousel-dots button{height:32px}.trip-screen .arrival-instruction{display:block}}

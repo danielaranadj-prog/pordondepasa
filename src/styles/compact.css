@@ -1,0 +1,79 @@
+/* Compact mobile chrome; route-specific colours remain attached to the data. */
+:root{color:#181818;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
+button,input{font-family:inherit}
+.search-screen{max-width:460px;padding:22px 20px}
+.search-screen header{gap:8px}
+.search-screen header strong{font-size:16px;letter-spacing:-.4px;color:#171717}
+.search-screen header small{font-size:10px;color:#8a8a8a;margin-top:2px}
+.search-screen .logo{font-size:20px;color:#f57928}
+.search-screen .brand-info{font-size:19px;width:44px;height:44px;padding:0;color:#777}
+.search-screen .hero{margin:36px 0 20px}
+.search-screen .hero h1{font-size:30px;letter-spacing:-1px;font-weight:750;line-height:1.15}
+.search-screen .hero .eyebrow{font-size:9px;letter-spacing:1.4px;color:#8b8b8b;margin-bottom:8px}
+.search-screen .hero>p:last-child{font-size:13px;line-height:1.5;color:#777;margin-top:9px}
+.search-screen .planner{border:1px solid #eeeeee;border-radius:16px;padding:12px;box-shadow:0 4px 18px #00000005}
+.search-screen .field{border-radius:10px;min-height:52px;padding:10px 12px;gap:10px;font-size:13px;background:#f6f6f6}
+.search-screen .field span{font-size:18px;color:#171717}
+.search-screen .field small{font-size:9px;color:#888}
+.search-screen .field input{font-size:16px;line-height:20px;letter-spacing:-.2px}
+.search-screen .connector{height:8px;margin-left:21px;border-color:#d2d2d2}
+.search-screen .suggestions{gap:0;border-top:1px solid #eee;margin-top:10px}
+.search-screen .suggestions button{border:0;border-bottom:1px solid #f0f0f0;border-radius:0;padding:11px 10px;min-height:48px}
+.search-screen .suggestions b{font-size:13px;font-weight:600}
+.search-screen .suggestions small{font-size:10px;margin-top:3px}
+.search-screen .search,.welcome-screen .search,.navigation-panel .search{min-height:44px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:650;background:#171717;color:white}
+.search-screen .map-picker-link{margin:16px auto;font-size:12px;color:#555;min-height:44px}
+.search-screen .search-caption{margin-top:26px;font-size:11px;color:#999}
+.welcome-screen{background:#fafafa;color:#171717;padding:28px}
+.welcome-screen .welcome-brand svg{width:66px;height:66px;padding:10px;border-radius:18px;background:#fff1e7;color:#f57928}
+.welcome-screen .welcome-brand h1{font-size:32px;letter-spacing:-1.2px;margin:20px 0 7px}
+.welcome-screen .welcome-brand p{font-size:17px;color:#555;margin-bottom:11px}
+.welcome-screen .welcome-brand span{font-size:12px;color:#999}
+.welcome-screen .welcome-action{max-width:300px;padding-top:36px}
+.welcome-screen .welcome-action small{font-size:11px;color:#999;margin-top:12px}
+.trip-screen .trip-top{top:max(12px,env(safe-area-inset-top));left:12px;right:12px;max-width:440px;grid-template-columns:36px 1fr;gap:7px}
+.trip-screen .back-button{width:36px;height:36px;font-size:19px;box-shadow:0 2px 12px #00000014}
+.trip-screen .trip-endpoints{padding:9px 12px;border-radius:12px;box-shadow:0 3px 15px #00000012}
+.trip-screen .trip-endpoints>div{padding-left:17px}
+.trip-screen .trip-endpoints>div+div{margin-top:4px;padding-top:6px}
+.trip-screen .trip-endpoints small{font-size:9px}
+.trip-screen .trip-endpoints strong{font-size:12px;line-height:16px;font-weight:600}
+.trip-screen .origin-dot{width:6px;height:6px;top:12px;background:#171717}
+.trip-screen .destination-dot{width:6px;height:6px;top:17px;background:#f57928}
+.trip-screen .edit-origin{font-size:10px;padding:7px 10px;min-height:30px;border-radius:10px;color:#555}
+.trip-screen .leaflet-top{top:142px}
+.trip-screen .leaflet-bottom{bottom:255px}
+.trip-screen .carousel-heading{max-width:460px;padding:5px 16px;font-size:10px}
+.trip-screen .carousel-heading strong,.trip-screen .carousel-heading span{padding:4px 7px;border-radius:8px;font-weight:500}
+.trip-screen .route-carousel{gap:10px;padding:4px max(16px,calc((100vw - 420px)/2)) 8px}
+.trip-screen .route-slide{flex-basis:min(420px,calc(100vw - 32px));min-height:128px;padding:12px 14px;border-radius:14px;border-width:1px;box-shadow:0 3px 16px #00000012}
+.trip-screen .route-slide.active{border-color:#171717}
+.trip-screen .time{gap:8px}
+.trip-screen .time strong{font-size:22px;letter-spacing:-.8px;font-weight:750;color:#171717}
+.trip-screen .time small{font-size:9px;font-weight:600;color:#9a541e;background:#fff1e7;padding:3px 5px;border-radius:4px}
+.trip-screen .legs{gap:4px;margin:8px 0}
+.trip-screen .legs span{font-size:10px;padding:4px 6px;border-radius:5px;font-weight:600}
+.trip-screen .route-meta{font-size:10px;margin:5px 0;color:#777}
+.trip-screen .arrival-instruction{font-size:10px;line-height:1.4;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.trip-screen .carousel-dots{gap:3px;padding:0}
+.trip-screen .carousel-dots button{width:20px;height:20px;background:radial-gradient(circle,#bcbcbc 2.5px,transparent 3px)}
+.trip-screen .carousel-dots button[aria-pressed=true]{width:20px;border-radius:50%;background:radial-gradient(circle,#171717 3px,transparent 3.5px)}
+.trip-screen .start-follow{width:min(420px,calc(100% - 32px));font-size:13px;min-height:44px;padding:11px 14px;border-radius:10px;margin:3px auto 5px;background:#171717}
+.trip-screen .trip-estimate{font-size:9px}
+.trip-screen .trip-status{max-width:420px;padding:14px;border-radius:14px;font-size:12px}
+.trip-screen .navigation-top{max-width:460px;left:12px;right:12px;gap:8px;top:max(12px,env(safe-area-inset-top))}
+.trip-screen .navigation-banner{padding:12px 14px;border-radius:12px;background:#171717}
+.trip-screen .navigation-banner small{font-size:9px;color:#ffb77d}
+.trip-screen .navigation-banner h1{font-size:17px;line-height:1.25;margin:5px 0;font-weight:650}
+.trip-screen .navigation-banner p{font-size:11px}
+.trip-screen .navigation-panel{max-width:460px;padding:12px 16px max(14px,env(safe-area-inset-bottom));border-radius:18px 18px 0 0;box-shadow:0 -3px 20px #00000012}
+.trip-screen .navigation-panel>p{font-size:11px;line-height:1.4;margin:6px 0}
+.trip-screen .navigation-progress{font-size:13px;margin-top:8px}
+.trip-screen .navigation-progress span{color:#171717}
+.trip-screen .navigation-stops{font-size:11px;margin-top:10px;padding-top:10px}
+.trip-screen .navigation-stops>div{padding:9px 0}
+.trip-screen .navigation-stops small{font-size:10px}
+.trip-screen .recenter{top:128px;right:12px;font-size:11px;padding:9px 11px;min-height:36px;border-radius:10px;color:#555}
+.trip-screen.navigation-screen .leaflet-top{top:130px}
+.trip-screen.navigation-screen .leaflet-bottom{bottom:44dvh}
+@media(max-height:650px){.search-screen .hero{margin-top:22px}.trip-screen .route-slide{min-height:112px}.trip-screen .arrival-instruction{display:none}.trip-screen .leaflet-bottom{bottom:235px}}

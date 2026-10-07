@@ -1,0 +1,828 @@
+{
+  "cityId": "tepic",
+  "exportDate": "2026-10-04T08:31:48.387Z",
+  "version": "2026.1",
+  "stops": [
+    {
+      "id": "stop-avenida-1-tepic--1004",
+      "name": "CETIS 100",
+      "coordinates": {
+        "lat": 21.479264,
+        "lng": -104.891681
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 60,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-gardenias-tepic--9725",
+      "name": "Clavel",
+      "coordinates": {
+        "lat": 21.53202,
+        "lng": -104.876133
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 34,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-3813",
+      "name": "Avenida México - Rosal",
+      "coordinates": {
+        "lat": 21.531146,
+        "lng": -104.877065
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 33,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--0543",
+      "name": "Avenida México - Parque el Mirador",
+      "coordinates": {
+        "lat": 21.523784,
+        "lng": -104.88551
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 41,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--0625",
+      "name": "Avenida México - Obrerismo",
+      "coordinates": {
+        "lat": 21.524551,
+        "lng": -104.884404
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 40,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--2663",
+      "name": "Avenida México - Vicente Suarez",
+      "coordinates": {
+        "lat": 21.522919,
+        "lng": -104.886428
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 28,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--4314",
+      "name": "Avenida México - Jardines de la Cruz",
+      "coordinates": {
+        "lat": 21.531499,
+        "lng": -104.876939
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 37,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--4468",
+      "name": "Avenida México - CONALEP",
+      "coordinates": {
+        "lat": 21.526395,
+        "lng": -104.881167
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 32,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--4764",
+      "name": "Cd de las Artes Sur a Norte",
+      "coordinates": {
+        "lat": 21.515932,
+        "lng": -104.89002
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 24,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--4865",
+      "name": "Avenida México - Bahía de Banderas",
+      "coordinates": {
+        "lat": 21.523617,
+        "lng": -104.885381
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 29,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--4974",
+      "name": "Palacio de Gobierno",
+      "coordinates": {
+        "lat": 21.507504,
+        "lng": -104.893285
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 21,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--5198",
+      "name": "Cd de las Artes Norte a Sur",
+      "coordinates": {
+        "lat": 21.515956,
+        "lng": -104.890131
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 45,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--5761",
+      "name": "Avenida México - Isla de Mexcaltitán",
+      "coordinates": {
+        "lat": 21.525556,
+        "lng": -104.882446
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 31,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--6671",
+      "name": "Zaragoza",
+      "coordinates": {
+        "lat": 21.513335,
+        "lng": -104.891191
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 46,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--7072",
+      "name": "Avenida México - 20 de Noviembre",
+      "coordinates": {
+        "lat": 21.517878,
+        "lng": -104.889369
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 44,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--8279",
+      "name": "Avenida México - Churubusco",
+      "coordinates": {
+        "lat": 21.521509,
+        "lng": -104.887758
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 27,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--9768",
+      "name": "Avenida México - PLaya Novillero",
+      "coordinates": {
+        "lat": 21.524493,
+        "lng": -104.884065
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 30,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-norte-tepic--9933",
+      "name": "Avenida México - Aurrera",
+      "coordinates": {
+        "lat": 21.525928,
+        "lng": -104.882301
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 39,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-num-532-norte-1836",
+      "name": "Avenida Mexico - 20 Noviembre",
+      "coordinates": {
+        "lat": 21.517681,
+        "lng": -104.889325
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 25,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--3604",
+      "name": "Abasolo",
+      "coordinates": {
+        "lat": 21.507767,
+        "lng": -104.893318
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 48,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--3715",
+      "name": "Avenida México - Miñon",
+      "coordinates": {
+        "lat": 21.505597,
+        "lng": -104.894023
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 20,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--3859",
+      "name": "Avenida México - Coyoacán",
+      "coordinates": {
+        "lat": 21.520055,
+        "lng": -104.888504
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 43,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--3963",
+      "name": "Bugambilias",
+      "coordinates": {
+        "lat": 21.534788,
+        "lng": -104.873417
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 36,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--4973",
+      "name": "Hidalgo",
+      "coordinates": {
+        "lat": 21.510753,
+        "lng": -104.892137
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 47,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--5340",
+      "name": "Avenida México - Coyoacán",
+      "coordinates": {
+        "lat": 21.519852,
+        "lng": -104.888452
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 26,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--6944",
+      "name": "Avenida México - Bravo",
+      "coordinates": {
+        "lat": 21.513689,
+        "lng": -104.890912
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 23,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--7223",
+      "name": "Miñon",
+      "coordinates": {
+        "lat": 21.505825,
+        "lng": -104.894087
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 49,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-mexico-tepic--9480",
+      "name": "Avenida México - INMUNAY",
+      "coordinates": {
+        "lat": 21.504618,
+        "lng": -104.894402
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 19,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-paseo-de-la-loma-tep-1598",
+      "name": "Hermana Agua",
+      "coordinates": {
+        "lat": 21.502754,
+        "lng": -104.896005
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 50,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-uno-num-216-tepic--9800",
+      "name": "Puerto Rico",
+      "coordinates": {
+        "lat": 21.478351,
+        "lng": -104.891231
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 7,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-0032",
+      "name": "LA FUENTE",
+      "coordinates": {
+        "lat": 21.474793,
+        "lng": -104.890237
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 62,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-1047",
+      "name": "Boulevard Tepic - BBVA",
+      "coordinates": {
+        "lat": 21.47363,
+        "lng": -104.889702
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 3,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-1506",
+      "name": "Boulevard Tepic - Col Morelos",
+      "coordinates": {
+        "lat": 21.495051,
+        "lng": -104.896785
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 51,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-2999",
+      "name": "Nicaragua",
+      "coordinates": {
+        "lat": 21.486448,
+        "lng": -104.893855
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 12,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-3395",
+      "name": "Boulevard Tepic - Iturbide",
+      "coordinates": {
+        "lat": 21.492975,
+        "lng": -104.896113
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 52,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-3513",
+      "name": "Boulevard Tepic - P. Sanchez",
+      "coordinates": {
+        "lat": 21.49433,
+        "lng": -104.89641
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 16,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-3518",
+      "name": "Plaza Luna Lima",
+      "coordinates": {
+        "lat": 21.481542,
+        "lng": -104.892418
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 58,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-4264",
+      "name": "Hasta de la Bandera -  UAN",
+      "coordinates": {
+        "lat": 21.493134,
+        "lng": -104.896022
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 15,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-4517",
+      "name": "Nicaragua",
+      "coordinates": {
+        "lat": 21.486414,
+        "lng": -104.893992
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 55,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-5375",
+      "name": "La Penal",
+      "coordinates": {
+        "lat": 21.488161,
+        "lng": -104.894559
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 54,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-5992",
+      "name": "Calle Perú",
+      "coordinates": {
+        "lat": 21.483542,
+        "lng": -104.892914
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 10,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-6003",
+      "name": "LAS BANDERAS",
+      "coordinates": {
+        "lat": 21.472365,
+        "lng": -104.889448
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 63,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-8600",
+      "name": "Boulevard Tepic - Calle I",
+      "coordinates": {
+        "lat": 21.475521,
+        "lng": -104.890314
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 5,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-8754",
+      "name": "Las Banderas",
+      "coordinates": {
+        "lat": 21.472275,
+        "lng": -104.889244
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-8897",
+      "name": "Boulevard Tepic - Av Cultura",
+      "coordinates": {
+        "lat": 21.488197,
+        "lng": -104.894422
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 13,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-tepic-xalisco-tepi-9039",
+      "name": "Boulevard Tepic - Juan de la Barrera",
+      "coordinates": {
+        "lat": 21.474526,
+        "lng": -104.889992
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 4,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-argentina-tepic--4388",
+      "name": "Brasil",
+      "coordinates": {
+        "lat": 21.485011,
+        "lng": -104.893539
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 56,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-argentina-tepic--4788",
+      "name": "Calle Argentina",
+      "coordinates": {
+        "lat": 21.485076,
+        "lng": -104.893411
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-fernando-montano-ponie-7358",
+      "name": "La Cruz - Nodo Vial",
+      "coordinates": {
+        "lat": 21.500538,
+        "lng": -104.897054
+      },
+      "type": "oficial",
+      "routeIds": [
+        "m-xico"
+      ],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-g-tepic--6785",
+      "name": "CECA",
+      "coordinates": {
+        "lat": 21.477047,
+        "lng": -104.890965
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 61,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-g-tepic--7451",
+      "name": "Calle G",
+      "coordinates": {
+        "lat": 21.476971,
+        "lng": -104.890784
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 6,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-peru-tepic--2231",
+      "name": "Calle Perú",
+      "coordinates": {
+        "lat": 21.48377,
+        "lng": -104.893138
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 57,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-sebastian-lerdo-de-tej-3910",
+      "name": "Avenida México - Zapopan",
+      "coordinates": {
+        "lat": 21.530719,
+        "lng": -104.877774
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 38,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-tacubaya-poniente-tepi-4945",
+      "name": "Ley Mololoa",
+      "coordinates": {
+        "lat": 21.52234,
+        "lng": -104.887592
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 42,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-uruguay-tepic--1970",
+      "name": "Calle Uruguay",
+      "coordinates": {
+        "lat": 21.482331,
+        "lng": -104.892521
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 9,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calzada-de-la-cruz-tepic--1921",
+      "name": "Calzada de la Cruz - La Loma",
+      "coordinates": {
+        "lat": 21.502308,
+        "lng": -104.896216
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 18,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calzada-de-la-cruz-tepic--7739",
+      "name": "Calzada de la Cruz - Cancerología",
+      "coordinates": {
+        "lat": 21.500513,
+        "lng": -104.89722
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 50,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-guanabanos-num-220-colonia-e-5421",
+      "name": "Guayabos",
+      "coordinates": {
+        "lat": 21.538719,
+        "lng": -104.869202
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 35,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-kilometro-1-5-carretera-tepi-0864",
+      "name": "Rectoría UAN",
+      "coordinates": {
+        "lat": 21.490714,
+        "lng": -104.895238
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 14,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-kilometro-1-5-carretera-tepi-3568",
+      "name": "ETI 1",
+      "coordinates": {
+        "lat": 21.491086,
+        "lng": -104.895503
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 53,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-miguel-hidalgo-tepic--1618",
+      "name": "Avenida México - Hidalgo",
+      "coordinates": {
+        "lat": 21.510748,
+        "lng": -104.892033
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 22,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-tepic-xalisco-tepic--3807",
+      "name": "Ecuador",
+      "coordinates": {
+        "lat": 21.480483,
+        "lng": -104.892075
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 59,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-tepic-xalisco-tepic--8887",
+      "name": "Calle Tepic",
+      "coordinates": {
+        "lat": 21.480637,
+        "lng": -104.891972
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 8,
+      "accuracy": 1
+    }
+  ]
+}

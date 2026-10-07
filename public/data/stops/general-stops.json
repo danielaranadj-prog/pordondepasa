@@ -1,0 +1,1224 @@
+{
+  "cityId": "tepic",
+  "version": "2026.1",
+  "exportDate": "2026-10-06T06:54:46.693329Z",
+  "stops": [
+    {
+      "id": "stop-xal-01-63196-6159",
+      "name": "Ociel Sandoval",
+      "coordinates": {
+        "lat": 21.472973,
+        "lng": -104.884589
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 48,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-avenida-francisco-i-madero-o-9711",
+      "name": "Avenida Francisco I. Madero Oriente (Tepic)",
+      "coordinates": {
+        "lat": 21.51789,
+        "lng": -104.883055
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 14,
+      "accuracy": 10
+    },
+    {
+      "id": "stop-xal-01-avenida-mexico-norte-tepic--3520",
+      "name": "M\u00e9xico - Allende",
+      "coordinates": {
+        "lat": 21.508505,
+        "lng": -104.892976
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 22,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-avenida-prisciliano-sanchez--0696",
+      "name": "PREP 13",
+      "coordinates": {
+        "lat": 21.513311,
+        "lng": -104.884997
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 10,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-24-de-febrero-tepic--6706",
+      "name": "Calle 24 de Febrero (Tepic)",
+      "coordinates": {
+        "lat": 21.518212,
+        "lng": -104.886754
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 17,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-24-de-febrero-tepic--8307",
+      "name": "Calle 24 de Febrero (Tepic)",
+      "coordinates": {
+        "lat": 21.518127,
+        "lng": -104.886515
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 15,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-basilio-badillo-tepic--6233",
+      "name": "Calle Basilio Badillo (Tepic)",
+      "coordinates": {
+        "lat": 21.518299,
+        "lng": -104.88663
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 16,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-herminio-lopez-perez-t-1002",
+      "name": "Cancha La Caminera",
+      "coordinates": {
+        "lat": 21.472881,
+        "lng": -104.887065
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 44,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-juan-ramos-flores-tepi-1384",
+      "name": "Calle Juan Ramos Flores (Tepic)",
+      "coordinates": {
+        "lat": 21.472931,
+        "lng": -104.885847
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 46,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-juan-ramos-flores-tepi-2310",
+      "name": "Marquesitas",
+      "coordinates": {
+        "lat": 21.472916,
+        "lng": -104.884745
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 47,
+      "accuracy": 5
+    },
+    {
+      "id": "stop-xal-01-calle-juan-ramos-flores-tepi-2831",
+      "name": "Calle Juan Ramos Flores (Tepic)",
+      "coordinates": {
+        "lat": 21.472876,
+        "lng": -104.885965
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 45,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-miguel-lebrija-juan-es-1772",
+      "name": "Santiago Valle",
+      "coordinates": {
+        "lat": 21.479371,
+        "lng": -104.883961
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 4
+    },
+    {
+      "id": "stop-xal-01-calle-minon-tepic--8396",
+      "name": "Calzada del Pante\u00f3n",
+      "coordinates": {
+        "lat": 21.503666,
+        "lng": -104.889109
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 9,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-ninos-heroes-tepic--0217",
+      "name": "Calle Ni\u00f1os H\u00e9roes (Tepic)",
+      "coordinates": {
+        "lat": 21.472864,
+        "lng": -104.887674
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 43,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-revolucion-social-los--0735",
+      "name": "ESTADIO BEISBOL UAN",
+      "coordinates": {
+        "lat": 21.49017,
+        "lng": -104.889098
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 5,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-revolucion-social-los--2821",
+      "name": "Calle Revoluci\u00f3n Social (Los Fresnos)",
+      "coordinates": {
+        "lat": 21.492073,
+        "lng": -104.889185
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 6,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-revolucion-social-los--5734",
+      "name": "Calle Revoluci\u00f3n Social (Los Fresnos)",
+      "coordinates": {
+        "lat": 21.495099,
+        "lng": -104.889457
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 7,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-revolucion-social-san--4871",
+      "name": "Rep\u00fablica de Brasil",
+      "coordinates": {
+        "lat": 21.500155,
+        "lng": -104.890248
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 8,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-rio-suchiate-los-fresn-8431",
+      "name": "Argentina",
+      "coordinates": {
+        "lat": 21.485483,
+        "lng": -104.888705
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 4,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-rio-suchiate-villas-de-5787",
+      "name": "Rey Nayar - Suchiate",
+      "coordinates": {
+        "lat": 21.483791,
+        "lng": -104.888413
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 3,
+      "accuracy": 5
+    },
+    {
+      "id": "stop-xal-01-calle-rosa-navarro-tepic--2945",
+      "name": "Calle Rosa Navarro (Tepic)",
+      "coordinates": {
+        "lat": 21.517768,
+        "lng": -104.883194
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 13,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-xal-01-calle-tenochtitlan-oriente-0823",
+      "name": "Calle Tenochtitl\u00e1n Oriente",
+      "coordinates": {
+        "lat": 21.517391,
+        "lng": -104.884769
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-calle-tenochtitlan-oriente-7419",
+      "name": "Calle Tenochtitl\u00e1n Oriente",
+      "coordinates": {
+        "lat": 21.517835,
+        "lng": -104.885686
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 12,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-juan-escutia-tepic--5017",
+      "name": "Juan Escutia (Tepic)",
+      "coordinates": {
+        "lat": 21.472746,
+        "lng": -104.887703
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 41,
+      "accuracy": 9
+    },
+    {
+      "id": "stop-xal-01-rey-nayar-tepic--1712",
+      "name": "Rey Nayar (Tepic)",
+      "coordinates": {
+        "lat": 21.483713,
+        "lng": -104.888222
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 2,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-xal-01-vicente-suarez-tepic--7824",
+      "name": "Vicente Su\u00e1rez (Tepic)",
+      "coordinates": {
+        "lat": 21.474071,
+        "lng": -104.88475
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 49,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-avenida-benito-juarez-tepic--7071",
+      "name": "Avenida Benito Ju\u00e1rez (Tepic)",
+      "coordinates": {
+        "lat": 21.505076,
+        "lng": -104.889114
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 19,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-avenida-de-la-cultura-tepic--2755",
+      "name": "Avenida de la Cultura (Tepic)",
+      "coordinates": {
+        "lat": 21.487168,
+        "lng": -104.889029
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 26,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-avenida-ignacio-allende-tepi-9936",
+      "name": "Avenida Ignacio Allende (Tepic)",
+      "coordinates": {
+        "lat": 21.508777,
+        "lng": -104.893475
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 17,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-avenida-prisciliano-sanchez--7275",
+      "name": "Avenida Prisciliano S\u00e1nchez Sur (Tepic)",
+      "coordinates": {
+        "lat": 21.50432,
+        "lng": -104.889178
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 20,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-5-de-mayo-tepic--5117",
+      "name": "Calle 5 de Mayo (Tepic)",
+      "coordinates": {
+        "lat": 21.516156,
+        "lng": -104.889125
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 9,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-atenas-tepic--5455",
+      "name": "Calle Atenas (Tepic)",
+      "coordinates": {
+        "lat": 21.49007,
+        "lng": -104.889162
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 25,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-i-tepic--5100",
+      "name": "Calle I (Tepic)",
+      "coordinates": {
+        "lat": 21.476589,
+        "lng": -104.887921
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 33,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-janitzio-tepic--1607",
+      "name": "Calle Janitzio (Tepic)",
+      "coordinates": {
+        "lat": 21.480089,
+        "lng": -104.888178
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 30,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-joaquin-murrieta-tepic-9062",
+      "name": "Calle Joaqu\u00edn Murrieta (Tepic)",
+      "coordinates": {
+        "lat": 21.475953,
+        "lng": -104.88791
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 34,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-jose-maria-menchaca-te-5711",
+      "name": "Calle Jos\u00e9 Mar\u00eda Menchaca (Tepic)",
+      "coordinates": {
+        "lat": 21.498471,
+        "lng": -104.892671
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 22,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-leyes-de-reforma-tepic-6242",
+      "name": "Calle Leyes de Reforma (Tepic)",
+      "coordinates": {
+        "lat": 21.478706,
+        "lng": -104.884971
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 5,
+      "accuracy": 6
+    },
+    {
+      "id": "stop-calle-mariano-abasolo-orient-6506",
+      "name": "Calle Mariano Abasolo Oriente (Tepic)",
+      "coordinates": {
+        "lat": 21.507138,
+        "lng": -104.891627
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 18,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-miguel-hidalgo-oriente-1763",
+      "name": "Calle Miguel Hidalgo Oriente (Tepic)",
+      "coordinates": {
+        "lat": 21.510509,
+        "lng": -104.891056
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 15,
+      "accuracy": 10
+    },
+    {
+      "id": "stop-calle-revolucion-social-tepi-7274",
+      "name": "Calle Revoluci\u00f3n Social (Tepic)",
+      "coordinates": {
+        "lat": 21.495416,
+        "lng": -104.889586
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 23,
+      "accuracy": 5
+    },
+    {
+      "id": "stop-calle-rio-suchiate-tepic--4076",
+      "name": "Calle R\u00edo Suchiate (Tepic)",
+      "coordinates": {
+        "lat": 21.477752,
+        "lng": -104.888011
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 32,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-rio-suchiate-tepic--5065",
+      "name": "Calle R\u00edo Suchiate (Tepic)",
+      "coordinates": {
+        "lat": 21.479422,
+        "lng": -104.888128
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 31,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-rio-suchiate-tepic--6268",
+      "name": "Calle R\u00edo Suchiate (Tepic)",
+      "coordinates": {
+        "lat": 21.483498,
+        "lng": -104.888438
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 28,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-rio-suchiate-tepic--7328",
+      "name": "Calle R\u00edo Suchiate (Tepic)",
+      "coordinates": {
+        "lat": 21.485709,
+        "lng": -104.888813
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 27,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-rio-tigris-tepic--7886",
+      "name": "Calle R\u00edo Tigris (Tepic)",
+      "coordinates": {
+        "lat": 21.481612,
+        "lng": -104.888245
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 29,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-santiago-valle-tepic--5592",
+      "name": "Calle Santiago Valle (Tepic)",
+      "coordinates": {
+        "lat": 21.479425,
+        "lng": -104.885015
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 6,
+      "accuracy": 7
+    },
+    {
+      "id": "stop-calle-veracruz-tepic--0869",
+      "name": "Calle Veracruz (Tepic)",
+      "coordinates": {
+        "lat": 21.510951,
+        "lng": -104.892931
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 16,
+      "accuracy": 9
+    },
+    {
+      "id": "stop-calle-vicente-guerrero-tepic-7446",
+      "name": "Calle Vicente Guerrero (Tepic)",
+      "coordinates": {
+        "lat": 21.49216,
+        "lng": -104.889278
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 24,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-calle-zacatecas-norte-tepic--3875",
+      "name": "Calle Zacatecas Norte (Tepic)",
+      "coordinates": {
+        "lat": 21.514883,
+        "lng": -104.889575
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 10,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-calle-zacatecas-norte-tepic--6538",
+      "name": "Calle Zacatecas Norte (Tepic)",
+      "coordinates": {
+        "lat": 21.510828,
+        "lng": -104.891075
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 14,
+      "accuracy": 10
+    },
+    {
+      "id": "stop-calle-zacatecas-norte-tepic--6545",
+      "name": "Calle Zacatecas Norte (Tepic)",
+      "coordinates": {
+        "lat": 21.513426,
+        "lng": -104.890101
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 7
+    },
+    {
+      "id": "stop-calle-zacatecas-norte-tepic--9443",
+      "name": "Calle Zacatecas Norte (Tepic)",
+      "coordinates": {
+        "lat": 21.51245,
+        "lng": -104.890482
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 13,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-juan-escutia-tepic--9674",
+      "name": "Juan Escutia (Tepic)",
+      "coordinates": {
+        "lat": 21.472829,
+        "lng": -104.887628
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 35,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-parada-21-4749-104-8847--0820",
+      "name": "Parada (21.4749, -104.8847)",
+      "coordinates": {
+        "lat": 21.474889,
+        "lng": -104.88472
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 2,
+      "accuracy": 3
+    },
+    {
+      "id": "stop-privada-eulogio-parra-tepic--1421",
+      "name": "Privada Eulogio Parra (Tepic)",
+      "coordinates": {
+        "lat": 21.500532,
+        "lng": -104.891222
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 21,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-roberto-fierro-s-n-colonia-l-3904",
+      "name": "Roberto Fierro S/N (Colonia Lazaro Cardenas)",
+      "coordinates": {
+        "lat": 21.47732,
+        "lng": -104.884887
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 4,
+      "accuracy": 8
+    },
+    {
+      "id": "stop-vicente-guerrero-tepic--4948",
+      "name": "Vicente Guerrero (Tepic)",
+      "coordinates": {
+        "lat": 21.476093,
+        "lng": -104.884798
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 3,
+      "accuracy": 2
+    },
+    {
+      "id": "stop-vicente-suarez-tepic--9087",
+      "name": "Vicente Su\u00e1rez (Tepic)",
+      "coordinates": {
+        "lat": 21.474071,
+        "lng": -104.884784
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 7
+    },
+    {
+      "id": "stop-aguamilpa-tepic--3881",
+      "name": "Aguamilpa (Tepic)",
+      "coordinates": {
+        "lat": 21.48750667860901,
+        "lng": -104.8361725451309
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 5,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T05:59:13.881Z"
+    },
+    {
+      "id": "stop-aguamilpa-tepic--4397",
+      "name": "Av. Aguamilpa - Ni\u00f1o Obrero",
+      "coordinates": {
+        "lat": 21.479070511486473,
+        "lng": -104.84605639831078
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 3,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T05:56:14.397Z"
+    },
+    {
+      "id": "stop-aguamilpa-tepic--5772",
+      "name": "Aguamilpa (Tepic)",
+      "coordinates": {
+        "lat": 21.471385840707832,
+        "lng": -104.84910609389257
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T05:51:45.773Z"
+    },
+    {
+      "id": "stop-aguamilpa-tepic--6190",
+      "name": "Sec T\u00e9cnica 65",
+      "coordinates": {
+        "lat": 21.487738559628568,
+        "lng": -104.8361324622293
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 9,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:03:06.190Z"
+    },
+    {
+      "id": "stop-avenida-12-de-octubre-tepic--9156",
+      "name": "Universidad",
+      "coordinates": {
+        "lat": 21.493593321010593,
+        "lng": -104.89549022497661
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 32,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:41:39.156Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-la-cantera-6559",
+      "name": "Plaza La Cantera",
+      "coordinates": {
+        "lat": 21.488984620136105,
+        "lng": -104.8327411252624
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 6,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:01:56.559Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-tepic--1654",
+      "name": "Av. De la Salud",
+      "coordinates": {
+        "lat": 21.48138605447772,
+        "lng": -104.84519294359772
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 4,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T05:57:51.654Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-tepic--4676",
+      "name": "Vialidad",
+      "coordinates": {
+        "lat": 21.48935068048952,
+        "lng": -104.83271791715464
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 8,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:02:44.676Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-tepic--5179",
+      "name": "Avenida Aguamilpa (Tepic)",
+      "coordinates": {
+        "lat": 21.476945728000754,
+        "lng": -104.84718577172643
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:04:25.179Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-tepic--6185",
+      "name": "Calle Forjadores",
+      "coordinates": {
+        "lat": 21.476697462827122,
+        "lng": -104.84705686705969
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 2,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T05:55:26.185Z"
+    },
+    {
+      "id": "stop-avenida-aguamilpa-tepic--6850",
+      "name": "Avenida Aguamilpa (Tepic)",
+      "coordinates": {
+        "lat": 21.480599780347845,
+        "lng": -104.8457426748997
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 10,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:04:06.850Z"
+    },
+    {
+      "id": "stop-avenida-allende-tepic--2022",
+      "name": "Presidente Alem\u00e1n",
+      "coordinates": {
+        "lat": 21.509078625026998,
+        "lng": -104.89429605667566
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 33,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:46:02.022Z"
+    },
+    {
+      "id": "stop-avenida-de-la-cultura-tepic--5114",
+      "name": "Avenida de la Cultura (Tepic)",
+      "coordinates": {
+        "lat": 21.487257415859236,
+        "lng": -104.88892344432506
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 17,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:24:25.114Z"
+    },
+    {
+      "id": "stop-avenida-de-la-cultura-tepic--7611",
+      "name": "Enfermer\u00eda",
+      "coordinates": {
+        "lat": 21.488694505512182,
+        "lng": -104.8943497958996
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 15,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:23:37.611Z"
+    },
+    {
+      "id": "stop-avenida-de-la-cultura-tepic--9521",
+      "name": "Avenida de la Cultura (Tepic)",
+      "coordinates": {
+        "lat": 21.48890189835098,
+        "lng": -104.89305715508785
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 18,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:24:59.521Z"
+    },
+    {
+      "id": "stop-avenida-de-la-cultura-tepic--9813",
+      "name": "Enfermer\u00eda",
+      "coordinates": {
+        "lat": 21.488799270236818,
+        "lng": -104.89317979891754
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 16,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:23:49.813Z"
+    },
+    {
+      "id": "stop-avenida-del-parque-tepic--0807",
+      "name": "SEP",
+      "coordinates": {
+        "lat": 21.485280142389655,
+        "lng": -104.88261189676639
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 21,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:28:10.807Z"
+    },
+    {
+      "id": "stop-avenida-paseo-de-la-loma-fra-3656",
+      "name": "Avenida Paseo de la Loma (Fray Jun\u00edpero Serra)",
+      "coordinates": {
+        "lat": 21.502031281620994,
+        "lng": -104.90026121089151
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 28,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:35:23.656Z"
+    },
+    {
+      "id": "stop-avenida-paseo-de-la-loma-tep-2771",
+      "name": "Acaponeta",
+      "coordinates": {
+        "lat": 21.501794133481628,
+        "lng": -104.90129145949784
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 30,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:36:02.771Z"
+    },
+    {
+      "id": "stop-avenida-paseo-de-la-loma-tep-4642",
+      "name": "San Juan",
+      "coordinates": {
+        "lat": 21.50662313778494,
+        "lng": -104.90128295543043
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 31,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:40:04.642Z"
+    },
+    {
+      "id": "stop-avenida-paseo-de-la-loma-tep-4972",
+      "name": "ISSTE",
+      "coordinates": {
+        "lat": 21.50224338440436,
+        "lng": -104.89729747591399
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 27,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:33:24.972Z"
+    },
+    {
+      "id": "stop-avenida-universidad-tepic--0711",
+      "name": "Ley Alica",
+      "coordinates": {
+        "lat": 21.49212128351303,
+        "lng": -104.88230371965545
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 22,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:29:10.711Z"
+    },
+    {
+      "id": "stop-avenida-universidad-tepic--3716",
+      "name": "Walmart Tepic",
+      "coordinates": {
+        "lat": 21.49183169428664,
+        "lng": -104.88216689212356
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 23,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:29:23.716Z"
+    },
+    {
+      "id": "stop-avenida-villa-de-leon-la-can-8010",
+      "name": "Av. Villa de Le\u00f3n",
+      "coordinates": {
+        "lat": 21.494077471450364,
+        "lng": -104.82858996490972
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 13,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:12:38.010Z"
+    },
+    {
+      "id": "stop-avenida-villa-de-leon-tepic--9363",
+      "name": "Av. Villa de Le\u00f3n",
+      "coordinates": {
+        "lat": 21.494544297284502,
+        "lng": -104.8281902419196
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 12,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:10:29.363Z",
+      "isLocked": false
+    },
+    {
+      "id": "stop-calle-mazatlan-tepic--6632",
+      "name": "Gimnasio Ni\u00f1os Hero\u00e9s",
+      "coordinates": {
+        "lat": 21.505930726688998,
+        "lng": -104.90137150490946
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 30,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:38:56.632Z"
+    },
+    {
+      "id": "stop-calle-veracruz-sur-tepic--7475",
+      "name": "La Loma",
+      "coordinates": {
+        "lat": 21.503558538570406,
+        "lng": -104.89590262192608
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 24,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:30:37.475Z"
+    },
+    {
+      "id": "stop-calzada-de-la-cruz-tepic--6362",
+      "name": "La Hermana Agua",
+      "coordinates": {
+        "lat": 21.50231634389948,
+        "lng": -104.89651416079509
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 26,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:32:16.362Z"
+    },
+    {
+      "id": "stop-cuarzo-tepic--2375",
+      "name": "Lapisl\u00e1zuli",
+      "coordinates": {
+        "lat": 21.48748162427532,
+        "lng": -104.8389673909962
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:08:32.375Z"
+    },
+    {
+      "id": "stop-de-la-cultura-tepic--8773",
+      "name": "Manglar",
+      "coordinates": {
+        "lat": 21.487588632479458,
+        "lng": -104.88983207043978
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 19,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:25:18.773Z"
+    },
+    {
+      "id": "stop-de-la-cultura-tepic--9728",
+      "name": "Manglar",
+      "coordinates": {
+        "lat": 21.487750907106786,
+        "lng": -104.88986158226038
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 20,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:25:29.728Z"
+    },
+    {
+      "id": "stop-pirita-tepic--2397",
+      "name": "Lapisl\u00e1zuli",
+      "coordinates": {
+        "lat": 21.487232036935154,
+        "lng": -104.83917118007734
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 14,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:16:22.397Z"
+    },
+    {
+      "id": "stop-veracruz-tepic--9632",
+      "name": "Presidente Alem\u00e1n",
+      "coordinates": {
+        "lat": 21.508125381706805,
+        "lng": -104.89401421276118
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 25,
+      "accuracy": 1,
+      "createdAt": "2026-10-06T06:30:59.632Z"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+.uber-alternative{margin-top:10px;padding-top:10px;border-top:1px solid #e5e5e5}
+.uber-link{display:flex;justify-content:center;align-items:center;min-height:44px;border:1px solid #444;border-radius:9px;background:#fff;color:#181818;font-size:13px;font-weight:600;text-decoration:none;padding:8px 12px}
+.uber-link:focus-visible{outline:3px solid #f57928;outline-offset:3px}
+.uber-alternative small{display:block;text-align:center;margin-top:5px;font-size:11px;line-height:1.4;color:#555}
+@media(max-height:650px){.trip-screen .route-carousel{max-height:38dvh;overflow-y:auto;touch-action:pan-x pan-y}.trip-screen .route-slide{min-height:0}}

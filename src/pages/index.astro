@@ -1,0 +1,22 @@
+---
+import TransitApp from '../components/TransitApp';
+import '../styles/global.css';
+import '../styles/flow.css';
+import '../styles/compact.css';
+import '../styles/destination.css';
+import '../styles/usability.css';
+import '../styles/modern.css';
+import '../styles/tracking.css';
+---
+
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101827" />
+    <meta name="description" content="Encuentra cómo llegar en transporte público por Tepic y Xalisco." />
+    <link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.webmanifest`} />
+    <title>PorDóndePasa · Tepic</title>
+  </head>
+  <body><TransitApp client:load /></body>
+</html>

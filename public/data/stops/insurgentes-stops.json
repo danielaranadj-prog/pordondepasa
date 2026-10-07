@@ -1,0 +1,670 @@
+{
+  "cityId": "tepic",
+  "exportDate": "2026-10-04T06:19:39.039Z",
+  "version": "2026.1",
+  "stops": [
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-1815",
+      "name": "Insurgentes y Eucalipto",
+      "coordinates": {
+        "lat": 21.489804,
+        "lng": -104.878232
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 43,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-1930",
+      "name": "Insurgentes y Gobernadores",
+      "coordinates": {
+        "lat": 21.486161,
+        "lng": -104.876951
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 10,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-1963",
+      "name": "Plaza Álica",
+      "coordinates": {
+        "lat": 21.493862,
+        "lng": -104.882051
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 41,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-4822",
+      "name": "Insurgentes y Pitágoras",
+      "coordinates": {
+        "lat": 21.484107,
+        "lng": -104.876542
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 45,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-5403",
+      "name": "Cruz Roja",
+      "coordinates": {
+        "lat": 21.485775,
+        "lng": -104.877089
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 44,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-6417",
+      "name": "Walmart Tepic",
+      "coordinates": {
+        "lat": 21.492226,
+        "lng": -104.880518
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 42,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-7794",
+      "name": "Insurgentes e Independencia",
+      "coordinates": {
+        "lat": 21.489605,
+        "lng": -104.877973
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 11,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-8169",
+      "name": "Insurgentes y Egipto",
+      "coordinates": {
+        "lat": 21.481356,
+        "lng": -104.875729
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 46,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-8255",
+      "name": "Insurgentes y Office Depot",
+      "coordinates": {
+        "lat": 21.493843,
+        "lng": -104.881739
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 12,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-o-9397",
+      "name": "Chedraui",
+      "coordinates": {
+        "lat": 21.484523,
+        "lng": -104.876455
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 9,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-0394",
+      "name": "Insurgentes y Pradexis",
+      "coordinates": {
+        "lat": 21.514159,
+        "lng": -104.909194
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 20,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-0632",
+      "name": "Insurgentes y San Juan",
+      "coordinates": {
+        "lat": 21.50797,
+        "lng": -104.901555
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 35,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-1120",
+      "name": "Insurgentes y Durango",
+      "coordinates": {
+        "lat": 21.5052,
+        "lng": -104.897179
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 16,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-1729",
+      "name": "Ley Rodeo",
+      "coordinates": {
+        "lat": 21.517992,
+        "lng": -104.915149
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 22,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-1997",
+      "name": "Catra",
+      "coordinates": {
+        "lat": 21.517828,
+        "lng": -104.915387
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 30,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-4618",
+      "name": "Insurgentes y el Chopo",
+      "coordinates": {
+        "lat": 21.515153,
+        "lng": -104.910745
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 21,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-6258",
+      "name": "Insurgentes y Álamo",
+      "coordinates": {
+        "lat": 21.512943,
+        "lng": -104.907747
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 32,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-6734",
+      "name": "Estadios",
+      "coordinates": {
+        "lat": 21.511288,
+        "lng": -104.904687
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 18,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-7208",
+      "name": "Insurgentes y Roble",
+      "coordinates": {
+        "lat": 21.511973,
+        "lng": -104.90622
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 33,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-7515",
+      "name": "Insurgentes y La Loma",
+      "coordinates": {
+        "lat": 21.505209,
+        "lng": -104.898861
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 36,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-7644",
+      "name": "IMSS",
+      "coordinates": {
+        "lat": 21.513909,
+        "lng": -104.909253
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 31,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-8649",
+      "name": "Alameda",
+      "coordinates": {
+        "lat": 21.508077,
+        "lng": -104.901517
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 17,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-9119",
+      "name": "Alaska Centro",
+      "coordinates": {
+        "lat": 21.521518,
+        "lng": -104.923459
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 27,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-de-los-insurgentes-p-9194",
+      "name": "Insurgentes y Perla",
+      "coordinates": {
+        "lat": 21.520278,
+        "lng": -104.920114
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 28,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--0787",
+      "name": "Insurgentes y Fresno",
+      "coordinates": {
+        "lat": 21.512793,
+        "lng": -104.907053
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 19,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--1224",
+      "name": "Insurgentes y Colima",
+      "coordinates": {
+        "lat": 21.50304,
+        "lng": -104.892043
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 37,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--1730",
+      "name": "Insurgentes y Madero",
+      "coordinates": {
+        "lat": 21.4834,
+        "lng": -104.87613
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 8,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--2314",
+      "name": "Insurgentes y Ures",
+      "coordinates": {
+        "lat": 21.503185,
+        "lng": -104.892173
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 15,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--3219",
+      "name": "Soriana",
+      "coordinates": {
+        "lat": 21.497439,
+        "lng": -104.885098
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 13,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--3463",
+      "name": "Insurgentes y Contry Club",
+      "coordinates": {
+        "lat": 21.509801,
+        "lng": -104.902763
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 34,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--3558",
+      "name": "Insurgentes y Rep Chile",
+      "coordinates": {
+        "lat": 21.499417,
+        "lng": -104.887292
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 39,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--6184",
+      "name": "Insurgentes y 12 de Octubre",
+      "coordinates": {
+        "lat": 21.501026,
+        "lng": -104.888798
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 38,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--8202",
+      "name": "CONAGUA",
+      "coordinates": {
+        "lat": 21.496695,
+        "lng": -104.884715
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 40,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-insurgentes-tepic--9340",
+      "name": "El Molino",
+      "coordinates": {
+        "lat": 21.499271,
+        "lng": -104.886894
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 14,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-num-2595-3586",
+      "name": "Tecnologíco",
+      "coordinates": {
+        "lat": 21.476926,
+        "lng": -104.866665
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 5,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--1901",
+      "name": "Tecnológico Omnibus",
+      "coordinates": {
+        "lat": 21.472515,
+        "lng": -104.854788
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 50,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--2100",
+      "name": "Tecnológico y Diamante",
+      "coordinates": {
+        "lat": 21.476767,
+        "lng": -104.867019
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 47,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--2604",
+      "name": "2 de Agosto",
+      "coordinates": {
+        "lat": 21.477439,
+        "lng": -104.868181
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 6,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--8777",
+      "name": "Tecnológico Aurrera",
+      "coordinates": {
+        "lat": 21.474866,
+        "lng": -104.861575
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 48,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--9019",
+      "name": "Avenida Tecnológico (Tepic)",
+      "coordinates": {
+        "lat": 21.473753,
+        "lng": -104.857549
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 2,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--9088",
+      "name": "Fiscalia",
+      "coordinates": {
+        "lat": 21.472835,
+        "lng": -104.854899
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 1,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--9158",
+      "name": "Parque Ecológico",
+      "coordinates": {
+        "lat": 21.475598,
+        "lng": -104.862858
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 4,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-avenida-tecnologico-tepic--9201",
+      "name": "Colegio de Inglés",
+      "coordinates": {
+        "lat": 21.474632,
+        "lng": -104.860066
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 3,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-boulevard-luis-donaldo-colos-5827",
+      "name": "Blvd Colosio TUFESA",
+      "coordinates": {
+        "lat": 21.472833,
+        "lng": -104.853706
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 51,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-alaska-tepic--0067",
+      "name": "Insurgentes y Alaska",
+      "coordinates": {
+        "lat": 21.521917,
+        "lng": -104.923935
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 23,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-atlantida-tepic--9610",
+      "name": "Calle Atlántida",
+      "coordinates": {
+        "lat": 21.473905,
+        "lng": -104.858793
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 49,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-aztecas-tepic--0276",
+      "name": "Las Brisas",
+      "coordinates": {
+        "lat": 21.517058,
+        "lng": -104.925292
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 26,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-coras-las-delicias--2965",
+      "name": "Solidaridad",
+      "coordinates": {
+        "lat": 21.519628,
+        "lng": -104.935973
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 25,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-calle-egipto-tepic--1226",
+      "name": "David Alfaro Siqueiros",
+      "coordinates": {
+        "lat": 21.480912,
+        "lng": -104.87539
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 7,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-carretera-tepic-miramar-tepi-0391",
+      "name": "Jardines de San Juan",
+      "coordinates": {
+        "lat": 21.522667,
+        "lng": -104.929759
+      },
+      "type": "costumbre",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 24,
+      "accuracy": 1
+    },
+    {
+      "id": "stop-puente-peatonal-catra-tepic--3587",
+      "name": "Catra Calle 2",
+      "coordinates": {
+        "lat": 21.518257,
+        "lng": -104.916044
+      },
+      "type": "oficial",
+      "routeIds": [],
+      "direction": "ida",
+      "sequence": 29,
+      "accuracy": 1
+    }
+  ]
+}

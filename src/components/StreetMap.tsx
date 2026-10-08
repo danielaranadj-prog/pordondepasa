@@ -1,99 +1,87 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Map, LayerGroup, Marker } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import type { Option, Point } from '../lib/router';
+import {useEffect,useRef,useState} from 'react';
+import type {Map,Marker,GeoJSONSource} from 'maplibre-gl';
+import type {Option,Point} from '../lib/router';
 import type {RouteStop} from '../lib/navigation';
-
-export default function StreetMap({origin,destination,option,onPick,onDestinationChange,fullscreen=false,stops,live,follow,onPan,navigation=false,heading,activeLeg=0}: {origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number}) {
-  const container=useRef<HTMLDivElement>(null), map=useRef<Map|null>(null), layers=useRef<LayerGroup|null>(null), callback=useRef(onPick);
-  const [ready,setReady]=useState(false),[error,setError]=useState('');
-  const pan=useRef(onPan),liveMarker=useRef<Marker|null>(null);pan.current=onPan;
-  const destinationCallback=useRef(onDestinationChange);destinationCallback.current=onDestinationChange;
-  const draggable=!!onDestinationChange;
-  const fitVisible=useRef<()=>void>(()=>{});
-  useEffect(()=>{
-    if(!ready||navigation)return;
-    const sheet=container.current?.closest('main')?.querySelector('.trip-bottom');
-    if(!sheet)return;
-    const observer=new ResizeObserver(()=>fitVisible.current());
-    observer.observe(sheet);
-    return()=>observer.disconnect();
-  },[ready,navigation]);
-  function navigationCenter(point:Point,_instance:Map){
-    // Keep the actual coordinate at the centre; projected offsets drift when
-    // the compass rotates the map.
-    return [point.lat,point.lng] as [number,number];
-  }
-  callback.current=onPick;
-  useEffect(()=>{let disposed=false;let instance:Map|undefined;let cleanupBasemap:(()=>void)|undefined;
-    import('leaflet').then(async L=>{if(navigation)await import('@tomickigrzegorz/leaflet-rotate');if(disposed||!container.current)return;
-      instance=L.map(container.current,{rotate:navigation,dragRotate:false,touchRotate:false,rotateControl:false}).setView([origin.lat,origin.lng],navigation?18:13);map.current=instance;
-      instance.setMaxZoom(19);
-      try{
-       const {addVectorBasemap}=await import('../lib/vectorBasemap');
-       if(disposed)return;
-       cleanupBasemap=await addVectorBasemap(instance,message=>{if(!disposed)setError(message)});
-       if(disposed){cleanupBasemap();return;}
-      }catch{
-       if(disposed)return;
-       // Older devices without WebGL can still plan trips on the original map.
-       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(instance);
-       setError('Tu dispositivo usa el mapa básico.');
-      }
-      layers.current=L.layerGroup().addTo(instance);
-      instance.on('click',event=>callback.current?.({lat:event.latlng.lat,lng:event.latlng.lng}));
-      instance.on('dragstart',()=>pan.current?.());
-      setReady(true);
-    }).catch(()=>setError('No se pudo abrir el mapa. Recarga la página.'));
-    return()=>{disposed=true;cleanupBasemap?.();instance?.remove();map.current=null;layers.current=null};
-  },[]);
-  useEffect(()=>{if(!ready)return;import('leaflet').then(L=>{if(!map.current||!layers.current)return;const group=layers.current;group.clearLayers();
-    L.circleMarker([origin.lat,origin.lng],{radius:8,color:'#fff',weight:3,fillColor:'#101827',fillOpacity:1}).bindTooltip('Origen').addTo(group);
-    if(destination){
-      const marker=L.marker([destination.lat,destination.lng],{draggable,bubblingMouseEvents:false,title:draggable?'Destino: arrastra para cambiarlo':'Destino',icon:L.divIcon({className:'destination-drag-marker',html:'<span></span>',iconSize:[32,32],iconAnchor:[16,16]})}).bindTooltip(draggable?'Arrastra para mover tu destino':'Destino').addTo(group);
-      marker.on('dragend',()=>{const point=marker.getLatLng();destinationCallback.current?.({lat:point.lat,lng:point.lng});});
+import {visibleMapPadding} from '../lib/mapCamera';
+import '../styles/vector-map.css';
+type Props={origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number};
+const coord=(p:Point):[number,number]=>[p.lng,p.lat];
+export default function StreetMap(props:Props){
+ const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
+ latest.current=props;
+ const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{});
+ const [ready,setReady]=useState(false),[error,setError]=useState('');
+ function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');return visibleMapPadding(rect,main?.querySelector('.navigation-top')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect())}
+ useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;
+  const theme=window.matchMedia('(prefers-color-scheme: dark)'),style=()=>`https://tiles.openfreemap.org/styles/${theme.matches?'dark':'positron'}`;
+  const change=()=>instance?.setStyle(style());
+  Promise.all([import('maplibre-gl'),import('../lib/vectorBasemap')]).then(([M,base])=>{
+   if(disposed||!container.current)return;
+   M.setWorkerUrl(base.workerUrl);
+   instance=new M.Map({container:container.current,style:style(),center:coord(latest.current.origin),zoom:props.navigation?18:13,maxZoom:19,attributionControl:false,dragRotate:false,pitchWithRotate:false});map.current=instance;
+   instance.touchZoomRotate.disableRotation();
+   instance.addControl(new M.NavigationControl({showCompass:false}),'top-left');
+   instance.addControl(new M.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org/">OpenFreeMap</a>'}),'bottom-right');
+   theme.addEventListener('change',change);
+   instance.on('click',event=>latest.current.onPick?.({lat:event.lngLat.lat,lng:event.lngLat.lng}));
+   instance.on('dragstart',event=>{if(event.originalEvent)latest.current.onPan?.()});
+   instance.on('error',()=>{if(!disposed)setError('No se pudieron cargar algunas calles. Revisa tu conexión.')});
+   instance.on('idle',()=>{if(!disposed)setError('')});
+   draw.current=()=>{
+    if(!instance?.getStyle()?.layers)return;
+    const current=latest.current,features=current.option?.legs.flatMap((leg,index)=>{
+     if(leg.kind==='walk'&&!leg.geometry)return [];
+     const coordinates=(leg.geometry??[leg.from,leg.to]).map(coord);if(coordinates.length<2)return [];
+     return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':'#2563eb',walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?(current.navigation?9:7):5}}];
+    })??[],data={type:'FeatureCollection' as const,features};
+    const source=instance.getSource('trip-lines') as GeoJSONSource|undefined;
+    if(source)source.setData(data);else{
+     instance.addSource('trip-lines',{type:'geojson',data});
+     instance.addLayer({id:'trip-halo',type:'line',source:'trip-lines',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':['+',['get','width'],5]}});
+     for(const walk of [false,true])instance.addLayer({id:walk?'trip-walk':'trip-bus',type:'line',source:'trip-lines',filter:['==',['get','walk'],walk],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','color'],'line-width':['get','width'],...(walk?{'line-dasharray':[1.5,1]}:{})}});
     }
-    const points: [number,number][]=[[origin.lat,origin.lng]];
-    if(destination)points.push([destination.lat,destination.lng]);
-    option?.legs.forEach((leg,legIndex)=>{if(leg.kind==='walk'&&!leg.geometry)return;const geometry=(leg.geometry??[leg.from,leg.to]).map(p=>[p.lat,p.lng] as [number,number]);points.push(...geometry);
-      const active=!navigation||legIndex===activeLeg,weight=active?(navigation?9:7):6,opacity=active?1:.8;
-      L.polyline(geometry,{color:'#fff',weight:weight+6,opacity:1,lineCap:'round',lineJoin:'round',interactive:false}).addTo(group);
-      L.polyline(geometry,{color:'#172124',weight:weight+2,opacity:.65,lineCap:'round',lineJoin:'round',interactive:false}).addTo(group);
-      L.polyline(geometry,{color:leg.kind==='bus'?(leg.route?.color??'#0a9364'):'#2563eb',weight,opacity,lineCap:'round',lineJoin:'round',dashArray:leg.kind==='walk'?'10 6':undefined}).addTo(group);
+   };
+   instance.on('style.load',()=>{
+    if(!instance)return;
+    for(const item of instance.getStyle().layers??[]){
+     if(item.type==='fill'&&item.paint?.['fill-pattern'])instance.setPaintProperty(item.id,'fill-pattern',undefined);
+     if(!theme.matches)continue;
+     if(item.type==='background')instance.setPaintProperty(item.id,'background-color','#202328');
+     if(item.type==='line'&&/highway/.test(item.id))instance.setPaintProperty(item.id,'line-color',/casing/.test(item.id)?'#30343b':/minor|path/.test(item.id)?'#454b54':'#626b76');
+     if(item.type==='symbol'&&item.layout?.['text-field']){instance.setPaintProperty(item.id,'text-color','#bdc6d2');instance.setPaintProperty(item.id,'text-halo-color','#202328');instance.setPaintProperty(item.id,'text-halo-width',1.2)}
+    }draw.current();
+   });
+   function marker(point:Point,className:string,label:string,draggable=false){
+    const element=document.createElement('div');element.className=className;element.setAttribute('aria-label',label);element.title=label;element.appendChild(document.createElement('span'));element.addEventListener('click',event=>event.stopPropagation());
+    return new M.Marker({element,draggable}).setLngLat(coord(point)).addTo(instance!);
+   }
+   updateMarkers.current=()=>{
+    markers.current.forEach(item=>item.remove());markers.current=[];const current=latest.current;
+    if(!current.navigation||!current.live)markers.current.push(marker(current.origin,'vector-origin','Origen'));
+    if(current.destination){const item=marker(current.destination,'destination-drag-marker','Destino: arrastra para cambiarlo',!!current.onDestinationChange);item.on('dragend',()=>{const p=item.getLngLat();latest.current.onDestinationChange?.({lat:p.lat,lng:p.lng})});markers.current.push(item)}
+    current.stops?.forEach(stop=>{
+     const item=marker(stop.coordinates,`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,stop.name);item.getElement().style.background=current.option?.legs[stop.legIndex]?.route?.color??'#2563eb';
+     const content=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('small');name.textContent=stop.name;detail.textContent=stop.type==='oficial'?'Parada oficial':stop.type==='base'?'Base':'Bajada habitual';content.append(name,document.createElement('br'),detail);item.setPopup(new M.Popup({offset:12}).setDOMContent(content));markers.current.push(item);
     });
-    stops?.forEach(stop=>{
-      const color=option?.legs[stop.legIndex]?.route?.color??'#0a9364';
-      const popup=document.createElement('div');const name=document.createElement('strong');name.textContent=stop.name;popup.append(name,document.createElement('br'));
-      const detail=document.createElement('small');detail.textContent=(stop.type==='oficial'?'Parada oficial':stop.type==='base'?'Base':'Bajada habitual')+(stop.inferred?' · Referencia cercana al trazo':'');popup.append(detail);
-      const safeColor=/^#[0-9a-f]{6}$/i.test(color)?color:'#0a9364';
-      L.marker([stop.coordinates.lat,stop.coordinates.lng],{icon:L.divIcon({className:`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,html:`<div style="background:${safeColor};width:100%;height:100%;border-radius:inherit"></div>`,iconSize:[14,14],iconAnchor:[7,7]})}).bindPopup(popup).addTo(group);
-    });
-    map.current.invalidateSize();
-    if(navigation){if(!live&&follow)map.current.setView(navigationCenter(origin,map.current),18,{animate:false});return;}
-    fitVisible.current=()=>{
-      if(!map.current||!destination)return;
-      const rect=container.current?.getBoundingClientRect(),panel=container.current?.closest('main')?.querySelector('.trip-bottom')?.getBoundingClientRect();
-      const side=!!rect&&!!panel&&rect.width>=760;
-      const bottom=!side&&rect&&panel?Math.max(0,rect.bottom-panel.top)+24:35;
-      const left=side&&rect&&panel?panel.right-rect.left+24:35;
-      map.current.fitBounds(points,{paddingTopLeft:fullscreen?[left,85]:[35,35],paddingBottomRight:fullscreen?[35,bottom]:[35,35],maxZoom:16,animate:false});
-    };
-    if(destination)fitVisible.current();else map.current.setView([origin.lat,origin.lng],13);
-  })},[ready,origin,destination,option,fullscreen,stops,draggable,navigation,activeLeg]);
-  useEffect(()=>{if(!ready||(!live&&!navigation))return;let active=true;import('leaflet').then(L=>{if(!active||!map.current)return;
-    if(live){
-     const icon=L.divIcon({className:'tracking-arrow '+(heading!==undefined?'directional':''),html:'<span></span>',iconSize:[22,22],iconAnchor:[11,11]});
-     if(!liveMarker.current)liveMarker.current=L.marker([live.lat,live.lng],{icon}).bindTooltip('Tu ubicación').addTo(map.current);
-     else liveMarker.current.setLatLng([live.lat,live.lng]).setIcon(icon);
-     if(navigation){liveMarker.current.options.rotation=heading??0;liveMarker.current.setLatLng([live.lat,live.lng]);}
-    }
-    if(follow){const point=live??origin;map.current.setView(navigation?navigationCenter(point,map.current):[point.lat,point.lng],navigation?18:16,{animate:!!live&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches});}
-    if(navigation){if(follow&&heading!==undefined)map.current.setHeading(heading,{ease:.15,deadzone:2});else{map.current.stopHeadingUp();map.current.setBearing(0);}}
-  });return()=>{active=false};},[ready,live,follow,navigation,origin]);
-  useEffect(()=>{if(!ready||!navigation||!map.current)return;
-    if(follow&&heading!==undefined)map.current.setHeading(heading,{ease:.15,deadzone:2});
-    else{map.current.stopHeadingUp();map.current.setBearing(0);}
-    if(liveMarker.current){liveMarker.current.options.rotation=heading??0;liveMarker.current.setLatLng(liveMarker.current.getLatLng());}
-  },[ready,navigation,follow,heading]);
-  return <div className="street-map-wrap"><div ref={container} className="street-map" aria-label="Mapa de calles de Tepic" />{error&&<p role="status">{error}</p>}</div>;
+   };
+   camera.current=()=>{
+    if(!instance||!container.current)return;const current=latest.current;
+    if(current.navigation){if(current.follow)instance.jumpTo({center:coord(current.live??current.origin),zoom:18,bearing:current.heading??0,padding:padding()})}
+    else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.destination));current.option?.legs.forEach(leg=>leg.geometry?.forEach(p=>bounds.extend(coord(p))));instance.fitBounds(bounds,{padding:padding(),maxZoom:16,duration:0})}
+    else instance.jumpTo({center:coord(current.origin),zoom:13,padding:padding()});
+   };
+   observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
+   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
+   instance.on('load',()=>{if(disposed)return;draw.current();updateMarkers.current();camera.current();setReady(true)});
+  }).catch(()=>{if(!disposed)setError('No se pudo abrir el mapa. Revisa tu conexión o la compatibilidad WebGL del dispositivo.')});
+  return()=>{disposed=true;theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
+ },[props.navigation]);
+ useEffect(()=>{if(!ready)return;draw.current();updateMarkers.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.stops,!!props.onDestinationChange,props.navigation,props.activeLeg,!!props.live]);
+ useEffect(()=>{if(!ready||!map.current)return;let cancelled=false;
+  import('maplibre-gl').then(M=>{if(cancelled||!map.current)return;const {live,heading,navigation,follow}=latest.current;
+   if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.setLngLat(coord(live)).setRotation(heading??0);liveMarker.current.getElement().classList.toggle('directional',heading!==undefined)}
+   if(navigation&&follow)camera.current();else if(navigation)map.current.setBearing(0);
+  });return()=>{cancelled=true};
+ },[ready,props.live,props.heading,props.follow,props.navigation,props.origin]);
+ return <div className="street-map-wrap"><div ref={container} className="street-map" aria-label="Mapa de calles de Tepic"/>{error&&<p role="status" className="vector-map-error">{error}</p>}</div>;
 }

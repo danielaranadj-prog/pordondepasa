@@ -1,0 +1,55 @@
+/* Structural map-first layout, shared by planning and navigation. */
+.trip-screen .sheet-endpoints.compact-endpoints{grid-template-columns:1fr}
+.trip-screen .compact-endpoints{display:grid;grid-template-columns:1fr 38px;align-items:center;padding:0 12px 4px;gap:6px}
+.trip-screen .compact-endpoints .trip-endpoints{grid-column:1;padding:2px 10px;border-radius:16px}
+.trip-screen .compact-endpoints .location-retry{grid-column:2;grid-row:1;width:38px;height:44px}
+.endpoint-edit{position:relative;display:block;text-align:left;width:100%;min-height:44px;padding:5px 24px 5px 19px;background:none;border:0;color:var(--ui-text);font:inherit;cursor:pointer}
+.endpoint-edit+.endpoint-edit{border-top:1px solid var(--ui-line)}
+.endpoint-edit .origin-dot,.endpoint-edit .destination-dot{left:0;top:21px}
+.endpoint-edit small{display:block}
+.endpoint-edit strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.endpoint-pencil{position:absolute;right:0;top:14px;font-size:20px;color:var(--glass-blue)}
+.endpoint-edit[aria-pressed=true]{color:var(--glass-blue)}
+.trip-screen:not(.navigation-screen) .sheet-handle{min-height:48px;font-size:16px;padding-top:14px;padding-bottom:6px}
+.trip-screen:not(.navigation-screen) .sheet-content{max-height:46dvh}
+.trip-screen .map-sheet .route-slide{padding:8px 12px}
+.trip-screen .map-sheet .time strong{font-size:22px}
+.trip-screen .map-sheet .legs{margin:5px 0}
+.trip-screen .map-sheet .route-metrics{padding:3px 0;margin:0}
+.trip-screen .map-sheet .carousel-heading{padding-bottom:0}
+.trip-screen .map-sheet .journey-details summary{min-height:36px}
+.trip-screen .map-sheet .uber-link{min-height:36px}
+.trip-screen .map-top-minimal{display:block;max-width:none;pointer-events:none}
+.map-top-minimal .back-button{pointer-events:auto}
+.trip-screen .map-sheet{left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));padding:0;overflow:hidden;border-radius:30px;max-width:480px;margin:auto;pointer-events:auto}
+.trip-screen .map-sheet::before{display:none}
+.sheet-handle{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:100%;border:0;background:none;color:var(--ui-text);min-height:64px;padding:20px 20px 10px;position:relative;font:inherit;font-size:18px;font-weight:650;letter-spacing:-.4px;touch-action:none;cursor:pointer}
+.sheet-grip{position:absolute;top:8px;left:calc(50% - 20px);width:40px;height:4px;border-radius:4px;background:var(--ui-muted);opacity:.4}
+.sheet-handle>span:nth-child(2){grid-column:2}
+.sheet-chevron{justify-self:end;font-size:22px;color:var(--ui-muted)}
+.sheet-content{max-height:65dvh;overflow-y:auto;overscroll-behavior:contain;padding-bottom:10px;scrollbar-width:thin}
+.sheet-content[hidden]{display:none}
+.trip-screen .map-sheet.sheet-closed{max-height:64px}
+.sheet-endpoints{display:grid;grid-template-columns:1fr 1fr 44px;gap:4px 8px;padding:0 14px 8px}
+.trip-screen .sheet-endpoints .trip-endpoints{grid-column:1/-1;background:var(--glass-soft);border:0;box-shadow:none;border-radius:20px;padding:10px 14px}
+.trip-screen .sheet-endpoints .trip-endpoints strong{max-width:100%;font-size:14px}
+.trip-screen .sheet-endpoints .trip-endpoints>div{padding:4px 0 4px 22px}
+.trip-screen .sheet-endpoints .edit-origin,.trip-screen .sheet-endpoints .edit-destination{grid-column:auto;justify-self:stretch;background:none;box-shadow:none;border:0;color:var(--glass-blue);min-height:44px;padding:4px;font-size:12px}
+.trip-screen .sheet-endpoints .location-retry{position:static;grid-column:3;grid-row:2;background:var(--glass-soft);box-shadow:none;border:0}
+.trip-screen .map-hint{top:74px;max-width:calc(100vw - 32px);white-space:normal}
+.trip-screen:not(.navigation-screen) .leaflet-top{top:76px}
+.trip-screen .map-sheet .route-carousel:not(.route-list-view){touch-action:pan-x;overflow-y:hidden}
+.trip-screen .navigation-panel.map-sheet{max-height:none}
+.navigation-panel .sheet-content{padding:0 16px 14px;max-height:42dvh}
+.trip-screen .apple-map-controls{right:14px;top:145px;gap:0;border-radius:28px;overflow:hidden;background:var(--glass);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.trip-screen .apple-map-controls button{display:grid;place-items:center;width:50px;height:50px;min-height:50px;padding:0;border:0;border-radius:0;box-shadow:none;background:none;color:var(--ui-text)}
+.trip-screen .apple-map-controls button+button{border-top:1px solid var(--glass-edge)}
+.trip-screen .apple-map-controls button[aria-pressed=true]{color:var(--glass-blue);background:var(--glass-soft)}
+.trip-screen .apple-map-controls button:disabled{opacity:.45}
+.sheet-handle:active{transform:none}
+.trip-screen .map-sheet .navigation-progress span{color:var(--glass-blue)}
+.trip-screen .map-sheet .trip-status{margin:8px 14px;max-width:none}
+.trip-screen .map-sheet .text-button{color:var(--glass-blue)}
+.trip-screen .walking-tag{background:var(--glass-soft);color:var(--ui-text)}
+@media(min-width:760px){.trip-screen:not(.navigation-screen) .map-sheet{right:auto;left:20px;width:380px;top:84px;bottom:auto}.trip-screen:not(.navigation-screen) .sheet-content{max-height:calc(100dvh - 178px)}}
+@media(max-height:650px){.sheet-content{max-height:58dvh}.sheet-handle{min-height:58px;font-size:16px}.navigation-panel .sheet-content{max-height:36dvh}}

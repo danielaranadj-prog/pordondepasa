@@ -10,17 +10,42 @@ export default function StreetMap({origin,destination,option,onPick,onDestinatio
   const pan=useRef(onPan),liveMarker=useRef<Marker|null>(null);pan.current=onPan;
   const destinationCallback=useRef(onDestinationChange);destinationCallback.current=onDestinationChange;
   const draggable=!!onDestinationChange;
+  const fitVisible=useRef<()=>void>(()=>{});
+  useEffect(()=>{
+    if(!ready||navigation)return;
+    const sheet=container.current?.closest('main')?.querySelector('.trip-bottom');
+    if(!sheet)return;
+    const observer=new ResizeObserver(()=>fitVisible.current());
+    observer.observe(sheet);
+    return()=>observer.disconnect();
+  },[ready,navigation]);
+  function navigationCenter(point:Point,_instance:Map){
+    // Keep the actual coordinate at the centre; projected offsets drift when
+    // the compass rotates the map.
+    return [point.lat,point.lng] as [number,number];
+  }
   callback.current=onPick;
-  useEffect(()=>{let disposed=false;let instance:Map|undefined;
+  useEffect(()=>{let disposed=false;let instance:Map|undefined;let cleanupBasemap:(()=>void)|undefined;
     import('leaflet').then(async L=>{if(navigation)await import('@tomickigrzegorz/leaflet-rotate');if(disposed||!container.current)return;
       instance=L.map(container.current,{rotate:navigation,dragRotate:false,touchRotate:false,rotateControl:false}).setView([origin.lat,origin.lng],navigation?18:13);map.current=instance;
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).on('tileerror',()=>setError('No se pudieron cargar algunas calles. Revisa tu conexión.')).addTo(instance);
+      instance.setMaxZoom(19);
+      try{
+       const {addVectorBasemap}=await import('../lib/vectorBasemap');
+       if(disposed)return;
+       cleanupBasemap=await addVectorBasemap(instance,message=>{if(!disposed)setError(message)});
+       if(disposed){cleanupBasemap();return;}
+      }catch{
+       if(disposed)return;
+       // Older devices without WebGL can still plan trips on the original map.
+       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(instance);
+       setError('Tu dispositivo usa el mapa básico.');
+      }
       layers.current=L.layerGroup().addTo(instance);
       instance.on('click',event=>callback.current?.({lat:event.latlng.lat,lng:event.latlng.lng}));
       instance.on('dragstart',()=>pan.current?.());
       setReady(true);
     }).catch(()=>setError('No se pudo abrir el mapa. Recarga la página.'));
-    return()=>{disposed=true;instance?.remove();map.current=null;layers.current=null};
+    return()=>{disposed=true;cleanupBasemap?.();instance?.remove();map.current=null;layers.current=null};
   },[]);
   useEffect(()=>{if(!ready)return;import('leaflet').then(L=>{if(!map.current||!layers.current)return;const group=layers.current;group.clearLayers();
     L.circleMarker([origin.lat,origin.lng],{radius:8,color:'#fff',weight:3,fillColor:'#101827',fillOpacity:1}).bindTooltip('Origen').addTo(group);
@@ -44,8 +69,16 @@ export default function StreetMap({origin,destination,option,onPick,onDestinatio
       L.marker([stop.coordinates.lat,stop.coordinates.lng],{icon:L.divIcon({className:`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,html:`<div style="background:${safeColor};width:100%;height:100%;border-radius:inherit"></div>`,iconSize:[14,14],iconAnchor:[7,7]})}).bindPopup(popup).addTo(group);
     });
     map.current.invalidateSize();
-    if(navigation)return;
-    if(destination)map.current.fitBounds(points,{paddingTopLeft:fullscreen?[35,160]:[35,35],paddingBottomRight:fullscreen?[35,300]:[35,35],maxZoom:16});else map.current.setView([origin.lat,origin.lng],13);
+    if(navigation){if(!live&&follow)map.current.setView(navigationCenter(origin,map.current),18,{animate:false});return;}
+    fitVisible.current=()=>{
+      if(!map.current||!destination)return;
+      const rect=container.current?.getBoundingClientRect(),panel=container.current?.closest('main')?.querySelector('.trip-bottom')?.getBoundingClientRect();
+      const side=!!rect&&!!panel&&rect.width>=760;
+      const bottom=!side&&rect&&panel?Math.max(0,rect.bottom-panel.top)+24:35;
+      const left=side&&rect&&panel?panel.right-rect.left+24:35;
+      map.current.fitBounds(points,{paddingTopLeft:fullscreen?[left,85]:[35,35],paddingBottomRight:fullscreen?[35,bottom]:[35,35],maxZoom:16,animate:false});
+    };
+    if(destination)fitVisible.current();else map.current.setView([origin.lat,origin.lng],13);
   })},[ready,origin,destination,option,fullscreen,stops,draggable,navigation,activeLeg]);
   useEffect(()=>{if(!ready||(!live&&!navigation))return;let active=true;import('leaflet').then(L=>{if(!active||!map.current)return;
     if(live){
@@ -54,7 +87,7 @@ export default function StreetMap({origin,destination,option,onPick,onDestinatio
      else liveMarker.current.setLatLng([live.lat,live.lng]).setIcon(icon);
      if(navigation){liveMarker.current.options.rotation=heading??0;liveMarker.current.setLatLng([live.lat,live.lng]);}
     }
-    if(follow){const point=live??origin;map.current.setView([point.lat,point.lng],navigation?18:16,{animate:!window.matchMedia('(prefers-reduced-motion: reduce)').matches});}
+    if(follow){const point=live??origin;map.current.setView(navigation?navigationCenter(point,map.current):[point.lat,point.lng],navigation?18:16,{animate:!!live&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches});}
     if(navigation){if(follow&&heading!==undefined)map.current.setHeading(heading,{ease:.15,deadzone:2});else{map.current.stopHeadingUp();map.current.setBearing(0);}}
   });return()=>{active=false};},[ready,live,follow,navigation,origin]);
   useEffect(()=>{if(!ready||!navigation||!map.current)return;

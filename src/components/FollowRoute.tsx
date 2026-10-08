@@ -4,16 +4,19 @@ import {meters,routeTextColor} from '../lib/router';
 import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
 import WalkingSafety from './WalkingSafety';
+import MapSheet from './MapSheet';
+import MapIcon from './MapIcon';
 import {useCompass} from './useCompass';
 import {movementHeading} from '../lib/heading';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,origin,destination,destinationName,onExit}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;destinationName:string;onExit:()=>void}){
+export default function FollowRoute({option,stops,origin,destination,destinationName,compassStart,onExit}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;destinationName:string;compassStart:{enabled:boolean;issue:string};onExit:()=>void}){
  const [step,setStep]=useState(0),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(false);
- const compass=useCompass(!arrived);
+ const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
  const previous=useRef<{point:Point;accuracy:number}|undefined>(undefined);
+ const startedAtOrigin=useRef(false);
  const heading=northUp?undefined:compass.heading??course;
  const rides=option.legs.flatMap((leg,index)=>leg.kind==='bus'&&leg.route?[{route:leg.route,index}]:[]);
  const routeStops=useMemo(()=>stopsForOption(option,stops),[option,stops]);
@@ -42,6 +45,12 @@ export default function FollowRoute({option,stops,origin,destination,destination
   if(arrived)return;
   if(!navigator.geolocation){setLocationIssue('Tu ubicación no está disponible. Sigue los pasos en el mapa.');return;}
   const id=navigator.geolocation.watchPosition(p=>{const point={lat:p.coords.latitude,lng:p.coords.longitude};
+   if(p.coords.accuracy>60){setLocationIssue('GPS aproximado. Mantendremos el mapa en el último punto fiable.');return;}
+   if(!startedAtOrigin.current&&meters(point,origin)>150){
+    setLocationIssue('Tu GPS está lejos del origen elegido. El mapa permanece en el punto de partida; revisa el origen si es necesario.');
+    return;
+   }
+   startedAtOrigin.current=true;
    if(p.coords.accuracy<=35){
     if(p.coords.heading!==null&&Number.isFinite(p.coords.heading)&&p.coords.speed!==null&&p.coords.speed>.8)setCourse(p.coords.heading);
     else if(previous.current&&previous.current.accuracy<=35&&meters(previous.current.point,point)>=Math.max(12,p.coords.accuracy,previous.current.accuracy)){setCourse(movementHeading(previous.current.point,point));previous.current={point,accuracy:p.coords.accuracy};}
@@ -55,9 +64,8 @@ export default function FollowRoute({option,stops,origin,destination,destination
  return <main className="trip-screen navigation-screen">
   <StreetMap fullscreen origin={origin} destination={destination} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} onPan={()=>setFollow(false)}/>
   <section className="navigation-top"><button className="back-button" onClick={onExit} aria-label="Salir del seguimiento">←</button><div className="navigation-banner" role="status"><small>{arrived?'VIAJE FINALIZADO':`PASO ${step+1} DE ${option.legs.length}`}</small><h1>{title}</h1><p>{arrived?destinationName:leg.kind==='bus'?`Bajada ${progress&&confident?`a ${distanceLabel(progress.remaining)}`:'marcada en el mapa'}`:destinationName}</p></div></section>
-  {!arrived&&<div className="navigation-tools"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-pressed={compass.enabled}>{compass.enabled?'Desactivar brújula':'Activar brújula'}</button><button onClick={()=>setNorthUp(!northUp)} aria-pressed={northUp}>{northUp?'Orientar al avanzar':'Norte arriba'}</button></div>}
-  {!arrived&&<button className="recenter" onClick={()=>setFollow(true)} disabled={!live}>{!live?'⌖ Esperando ubicación':follow?'⌖ Siguiendo tu ubicación':'⌖ Centrar en mí'}</button>}
-  <section className="navigation-panel"><div className="navigation-route-tags" aria-label="Rutas de tu viaje">{rides.length?rides.map(({route,index},i)=><span className="navigation-route-item" key={`${route.id}-${index}`}>{i>0&&<span className="transfer-arrow" aria-label="Transbordo">→</span>}<span className="navigation-route-tag" style={{backgroundColor:route.color,color:routeTextColor(route.color)}} aria-current={step===index?'step':undefined}>{route.name}{step===index&&<small> · Ahora</small>}</span></span>):<span className="walking-tag">🚶 Viaje a pie</span>}</div>
+  {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
+  <MapSheet className="navigation-panel" title={arrived?"Llegaste":"Tu recorrido"}><div className="navigation-route-tags" aria-label="Rutas de tu viaje">{rides.length?rides.map(({route,index},i)=><span className="navigation-route-item" key={`${route.id}-${index}`}>{i>0&&<span className="transfer-arrow" aria-label="Transbordo">→</span>}<span className="navigation-route-tag" style={{backgroundColor:route.color,color:routeTextColor(route.color)}} aria-current={step===index?'step':undefined}>{route.name}{step===index&&<small> · Ahora</small>}</span></span>):<span className="walking-tag">🚶 Viaje a pie</span>}</div>
    {compass.issue&&!arrived&&<p className="compass-issue" role="status">{compass.issue}</p>}
    {!live&&!arrived&&!locationIssue&&<p className="tracking-notice" role="status">Buscando tu ubicación para acompañarte…</p>}
    {locationIssue&&<p className="location-issue" role="status">{locationIssue}</p>}
@@ -70,6 +78,6 @@ export default function FollowRoute({option,stops,origin,destination,destination
    {close&&<small>Estás cerca del final de este tramo. Confirma para continuar.</small>}</>}
    {arrived&&<button className="search" onClick={onExit}>Volver a las opciones</button>}
    <details className="navigation-stops"><summary>Paradas de este recorrido ({routeStops.length})</summary>{!routeStops.length?<p>No hay paradas registradas sobre este tramo. La bajada sigue marcada en el mapa.</p>:routeStops.map(s=><div key={`${s.legIndex}-${s.id}`}><span className="stop-type-dot" style={{backgroundColor:option.legs[s.legIndex].route?.color}}/><div><strong>{s.name}</strong><small>{option.legs[s.legIndex].route?.name} · {s.type==='oficial'?'Oficial':s.type==='base'?'Base':'Bajada habitual'}{s.inferred?' · Coincide con el trazo':''}</small></div></div>)}</details>
-  </section>
+  </MapSheet>
  </main>;
 }

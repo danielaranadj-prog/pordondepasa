@@ -1,0 +1,32 @@
+/* Shared neutral palette. Route identities retain their original colors. */
+:root{color-scheme:light;--ui-bg:#fff;--ui-panel:#fff;--ui-soft:#f3f4f6;--ui-text:#171717;--ui-muted:#737373;--ui-line:#e5e7eb;--ui-action:#171717;--ui-action-text:#fff;--ui-shadow:0 4px 18px #0000000d;--glass:var(--ui-panel);--glass-edge:var(--ui-line);--glass-soft:var(--ui-soft);--glass-blue:#2563eb;--glass-shadow:var(--ui-shadow);--ink:var(--ui-text);--muted:var(--ui-muted);--surface:var(--ui-panel);--line:var(--ui-line)}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--ui-bg:#141414;--ui-panel:#1c1c1c;--ui-soft:#242424;--ui-text:#f5f5f5;--ui-muted:#aaa;--ui-line:#333;--ui-action:#f5f5f5;--ui-action-text:#171717;--ui-shadow:0 4px 18px #0003;--glass-blue:#78aaff}}
+body{background:var(--ui-bg);color:var(--ui-text)}
+.pdp-home,.welcome-screen{color-scheme:normal;background:var(--ui-bg);color:var(--ui-text)}
+.pdp-home .home-brand strong,.pdp-home .home-hero h1,.pdp-home input{color:var(--ui-text)}
+.pdp-home .home-brand small,.pdp-home .home-caption,.pdp-home .home-message,.pdp-home .home-suggestions small,.pdp-home input::placeholder{color:var(--ui-muted)}
+.pdp-home .home-field{background:var(--ui-soft);color:var(--ui-muted);border-color:var(--ui-line)}
+.pdp-home .home-brand svg,.pdp-home .home-hero h1 span,.pdp-home .home-map{color:var(--glass-blue)}
+.pdp-home .home-submit{background:var(--ui-action);color:var(--ui-action-text)}
+.pdp-home .home-submit:disabled{background:var(--ui-action);opacity:.55}
+.pdp-home .home-city span{border-color:var(--ui-line)}
+.pdp-home .home-suggestions,.pdp-home .home-suggestions button{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
+.pdp-home .home-suggestions button:hover{background:var(--ui-soft)}
+.welcome-screen .welcome-brand svg{background:var(--ui-soft);color:var(--glass-blue);box-shadow:none}
+.welcome-screen .welcome-brand h1{color:var(--ui-text)}
+.welcome-screen .welcome-brand p,.welcome-screen .welcome-brand span,.welcome-screen .welcome-action small{color:var(--ui-muted)}
+.welcome-screen .welcome-progress{background:var(--ui-soft)}
+.welcome-screen .welcome-progress span{background:var(--glass-blue)}
+.trip-screen .card-primary,.trip-screen .start-follow,.navigation-panel .search{background:var(--ui-action);color:var(--ui-action-text)}
+.trip-screen .route-slide.active{border-color:var(--ui-text)}
+.trip-screen .navigation-banner small{color:var(--glass-blue)}
+.trip-screen .map-hint,.trip-screen .recenter{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
+.trip-screen .map-hint{background:var(--ui-action);color:var(--ui-action-text);border:1px solid var(--ui-action-text);box-shadow:0 4px 18px #0004;font-weight:600;line-height:1.4;text-align:center;padding:10px 16px;pointer-events:none}
+.leaflet-control-zoom a,.leaflet-control-attribution,.leaflet-tooltip{background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+.leaflet-control-attribution a{color:var(--glass-blue)}
+.trip-screen{background:var(--ui-bg)}
+.carousel-dots button{background:var(--ui-line);filter:none}
+.carousel-dots button[aria-pressed=true]{background:var(--ui-text)}
+.loading-dot{background:var(--glass-blue)}
+.street-map .leaflet-tile-pane{filter:none}
+@media(min-width:760px){.trip-screen:not(.navigation-screen) .map-hint{left:calc(400px + (100% - 400px)/2);max-width:calc(100% - 432px)}}

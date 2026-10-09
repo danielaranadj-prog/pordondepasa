@@ -76,7 +76,7 @@ export default function StreetMap(props:Props){
    camera.current=()=>{
     if(!instance||!container.current)return;const current=latest.current;cameraPadding=padding();
     if(current.navigation){if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}}
-    else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.destination));current.option?.legs.forEach(leg=>leg.geometry?.forEach(p=>bounds.extend(coord(p))));instance.fitBounds(bounds,{padding:padding(),maxZoom:16,duration:0})}
+    else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.origin));bounds.extend(coord(current.destination));current.option?.legs.forEach(leg=>leg.geometry?.forEach(p=>bounds.extend(coord(p))));instance.fitBounds(bounds,{padding:padding(),maxZoom:16,duration:0})}
     else instance.jumpTo({center:coord(current.origin),zoom:13,padding:padding()});
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);

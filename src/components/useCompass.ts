@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {compassHeading,normalHeading} from '../lib/heading';
+import {compassHeading,normalHeading,headingDelta,smoothHeading} from '../lib/heading';
 type PermissionOrientation=typeof DeviceOrientationEvent&{requestPermission?:(absolute?:boolean)=>Promise<string>};
 export async function requestCompass():Promise<{enabled:boolean;issue:string}>{
  if(!window.isSecureContext)return {enabled:false,issue:'La brújula necesita HTTPS. Usaremos la dirección del GPS.'};
@@ -21,13 +21,17 @@ export function useCompass(active=true,initial={enabled:false,issue:''}){
  }
  useEffect(()=>{
   if(!enabled||!active)return;
-  let received=false,previous:number|undefined;
+  let received=false,previous:number|undefined,lastValid=Date.now();
+  const expiry=setInterval(()=>{if(Date.now()-lastValid>4000){setHeading(undefined);previous=undefined;setIssue('Orientación no disponible. Seguimos con tu desplazamiento.')}},1000);
   const timer=setTimeout(()=>{if(!received)setIssue('No recibimos una orientación fiable. El mapa usará tu dirección al avanzar.')},5000);
-  function update(event:DeviceOrientationEvent){const value=compassHeading(event);if(value===undefined)return;received=true;setIssue('');const now=Date.now();if(now-last.current<100)return;last.current=now;
-   previous=previous===undefined?value:previous+(((value-previous+540)%360)-180)*.25;setHeading(normalHeading(previous));
+  function update(event:DeviceOrientationEvent){const raw=compassHeading(event);if(raw===undefined)return;received=true;setIssue('');const now=Date.now();lastValid=now;if(now-last.current<50)return;
+   const elapsed=Math.min(500,now-last.current);last.current=now;
+   const value=normalHeading(raw+(window.screen.orientation?.angle??(window as Window&{orientation?:number}).orientation??0));
+   if(previous!==undefined&&Math.abs(headingDelta(previous,value))<2)return;
+   previous=previous===undefined?value:smoothHeading(previous,value,1-Math.exp(-elapsed/180));setHeading(previous);
   }
   window.addEventListener('deviceorientation',update);window.addEventListener('deviceorientationabsolute',update);
-  return()=>{clearTimeout(timer);window.removeEventListener('deviceorientation',update);window.removeEventListener('deviceorientationabsolute',update)};
+  return()=>{clearTimeout(timer);clearInterval(expiry);window.removeEventListener('deviceorientation',update);window.removeEventListener('deviceorientationabsolute',update)};
  },[enabled,active]);
  return {enabled,heading,issue,enable};
 }

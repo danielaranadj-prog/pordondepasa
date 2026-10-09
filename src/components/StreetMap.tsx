@@ -3,16 +3,19 @@ import type {Map,Marker,GeoJSONSource} from 'maplibre-gl';
 import type {Option,Point} from '../lib/router';
 import type {RouteStop} from '../lib/navigation';
 import {visibleMapPadding} from '../lib/mapCamera';
+import {headingDelta} from '../lib/heading';
 import '../styles/vector-map.css';
-type Props={origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number};
+type Props={origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
 export default function StreetMap(props:Props){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
  latest.current=props;
  const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{});
  const [ready,setReady]=useState(false),[error,setError]=useState('');
- function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');return visibleMapPadding(rect,main?.querySelector('.navigation-top')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect())}
- useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;
+ function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');const p=visibleMapPadding(rect,main?.querySelector('.navigation-top')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect());if(latest.current.navigation)p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;return p}
+ useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;let frame=0,lastFrame=0,initialized=false;
+  let visual:Point|undefined,visualHeading=0;
+  let cameraPadding=padding();
   const theme=window.matchMedia('(prefers-color-scheme: dark)'),style=()=>`https://tiles.openfreemap.org/styles/${theme.matches?'dark':'positron'}`;
   const change=()=>instance?.setStyle(style());
   Promise.all([import('maplibre-gl'),import('../lib/vectorBasemap')]).then(([M,base])=>{
@@ -25,6 +28,7 @@ export default function StreetMap(props:Props){
    theme.addEventListener('change',change);
    instance.on('click',event=>latest.current.onPick?.({lat:event.lngLat.lat,lng:event.lngLat.lng}));
    instance.on('dragstart',event=>{if(event.originalEvent)latest.current.onPan?.()});
+   instance.on('zoomstart',event=>{if(event.originalEvent)latest.current.onPan?.()});
    instance.on('error',()=>{if(!disposed)setError('No se pudieron cargar algunas calles. Revisa tu conexión.')});
    instance.on('idle',()=>{if(!disposed)setError('')});
    draw.current=()=>{
@@ -32,14 +36,19 @@ export default function StreetMap(props:Props){
     const current=latest.current,features=current.option?.legs.flatMap((leg,index)=>{
      if(leg.kind==='walk'&&!leg.geometry)return [];
      const coordinates=(leg.geometry??[leg.from,leg.to]).map(coord);if(coordinates.length<2)return [];
-     return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':'#2563eb',walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?(current.navigation?9:7):5}}];
+     return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':'#2563eb',walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?6:4}}];
     })??[],data={type:'FeatureCollection' as const,features};
     const source=instance.getSource('trip-lines') as GeoJSONSource|undefined;
     if(source)source.setData(data);else{
      instance.addSource('trip-lines',{type:'geojson',data});
-     instance.addLayer({id:'trip-halo',type:'line',source:'trip-lines',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':['+',['get','width'],5]}});
-     for(const walk of [false,true])instance.addLayer({id:walk?'trip-walk':'trip-bus',type:'line',source:'trip-lines',filter:['==',['get','walk'],walk],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','color'],'line-width':['get','width'],...(walk?{'line-dasharray':[1.5,1]}:{})}});
+     instance.addLayer({id:'trip-halo',type:'line',source:'trip-lines',filter:['==',['get','walk'],false],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#123459','line-opacity':.85,'line-width':['interpolate',['linear'],['zoom'],12,4,18,['+',['get','width'],2]]}});
+     for(const walk of [false,true])instance.addLayer({id:walk?'trip-walk':'trip-bus',type:'line',source:'trip-lines',filter:['==',['get','walk'],walk],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','color'],'line-width':['interpolate',['linear'],['zoom'],12,2.5,18,walk?4:['get','width']],...(walk?{'line-dasharray':[.2,1.7]}:{})}});
     }
+    const point=current.live,radius=current.accuracy??0;
+    const ring=point?Array.from({length:65},(_,i)=>{const angle=i*Math.PI/32;return [point.lng+Math.cos(angle)*radius/(111320*Math.cos(point.lat*Math.PI/180)),point.lat+Math.sin(angle)*radius/111320]}):[];
+    const area={type:'FeatureCollection' as const,features:ring.length?[{type:'Feature' as const,properties:{},geometry:{type:'Polygon' as const,coordinates:[ring]}}]:[]};
+    const uncertainty=instance.getSource('location-accuracy') as GeoJSONSource|undefined;
+    if(uncertainty)uncertainty.setData(area);else{instance.addSource('location-accuracy',{type:'geojson',data:area});instance.addLayer({id:'location-accuracy',type:'fill',source:'location-accuracy',paint:{'fill-color':'#2684ff','fill-opacity':.09}},'trip-halo')}
    };
    instance.on('style.load',()=>{
     if(!instance)return;
@@ -65,22 +74,40 @@ export default function StreetMap(props:Props){
     });
    };
    camera.current=()=>{
-    if(!instance||!container.current)return;const current=latest.current;
-    if(current.navigation){if(current.follow)instance.jumpTo({center:coord(current.live??current.origin),zoom:18,bearing:current.heading??0,padding:padding()})}
+    if(!instance||!container.current)return;const current=latest.current;cameraPadding=padding();
+    if(current.navigation){if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}}
     else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.destination));current.option?.legs.forEach(leg=>leg.geometry?.forEach(p=>bounds.extend(coord(p))));instance.fitBounds(bounds,{padding:padding(),maxZoom:16,duration:0})}
     else instance.jumpTo({center:coord(current.origin),zoom:13,padding:padding()});
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
    const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
    instance.on('load',()=>{if(disposed)return;draw.current();updateMarkers.current();camera.current();setReady(true)});
+   function animate(now:number){
+    if(disposed||!instance)return;
+    const dt=Math.min(64,now-lastFrame||16);lastFrame=now;
+    const current=latest.current,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,a=reduced?1:1-Math.exp(-dt/240);
+    const target=current.live??current.origin;
+    visual=visual?{lat:visual.lat+(target.lat-visual.lat)*a,lng:visual.lng+(target.lng-visual.lng)*a}:target;
+    visualHeading+=headingDelta(visualHeading,current.heading??visualHeading)*a;
+    if(current.live&&liveMarker.current){liveMarker.current.setLngLat(coord(visual)).setRotation(visualHeading);liveMarker.current.getElement().classList.toggle('gps-stale',!!current.stale)}
+    if(current.navigation&&current.follow&&initialized){
+     const bus=current.option?.legs[current.activeLeg??0]?.kind==='bus',near=(current.remaining??Infinity)<120;
+     const zoom=near?18:bus?16.8:17.5,pitch=reduced?0:bus?42:30,c=instance.getCenter(),p=instance.getPadding(),goal=cameraPadding;
+     const moving=Math.abs(c.lng-visual.lng)+Math.abs(c.lat-visual.lat)>1e-8||Math.abs(headingDelta(instance.getBearing(),current.heading??instance.getBearing()))>.03||Math.abs(zoom-instance.getZoom())>.002||Math.abs(pitch-instance.getPitch())>.03||Math.abs(goal.top-(p.top??0))+Math.abs(goal.bottom-(p.bottom??0))>.1;
+     if(moving)instance.jumpTo({center:[c.lng+(visual.lng-c.lng)*a,c.lat+(visual.lat-c.lat)*a],bearing:instance.getBearing()+headingDelta(instance.getBearing(),current.heading??instance.getBearing())*a,zoom:instance.getZoom()+(zoom-instance.getZoom())*a,pitch:instance.getPitch()+(pitch-instance.getPitch())*a,padding:{top:(p.top??0)+(goal.top-(p.top??0))*a,bottom:(p.bottom??0)+(goal.bottom-(p.bottom??0))*a,left:(p.left??0)+(goal.left-(p.left??0))*a,right:(p.right??0)+(goal.right-(p.right??0))*a}});
+    }
+    frame=requestAnimationFrame(animate);
+   }
+   frame=requestAnimationFrame(animate);
   }).catch(()=>{if(!disposed)setError('No se pudo abrir el mapa. Revisa tu conexión o la compatibilidad WebGL del dispositivo.')});
-  return()=>{disposed=true;theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
+  return()=>{disposed=true;cancelAnimationFrame(frame);theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
  },[props.navigation]);
- useEffect(()=>{if(!ready)return;draw.current();updateMarkers.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.stops,!!props.onDestinationChange,props.navigation,props.activeLeg,!!props.live]);
+ useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.navigation,props.activeLeg,props.live,props.accuracy]);
+ useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.stops,!!props.onDestinationChange,props.navigation,!!props.live]);
  useEffect(()=>{if(!ready||!map.current)return;let cancelled=false;
   import('maplibre-gl').then(M=>{if(cancelled||!map.current)return;const {live,heading,navigation,follow}=latest.current;
-   if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.setLngLat(coord(live)).setRotation(heading??0);liveMarker.current.getElement().classList.toggle('directional',heading!==undefined)}
-   if(navigation&&follow)camera.current();else if(navigation)map.current.setBearing(0);
+   if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.getElement().classList.toggle('directional',heading!==undefined);liveMarker.current.getElement().title=latest.current.stale?'Ubicación sin actualizar':`Precisión aproximada: ${Math.round(latest.current.accuracy??0)} m`}
+   if(navigation&&follow)camera.current();
   });return()=>{cancelled=true};
  },[ready,props.live,props.heading,props.follow,props.navigation,props.origin]);
  return <div className="street-map-wrap"><div ref={container} className="street-map" aria-label="Mapa de calles de Tepic"/>{error&&<p role="status" className="vector-map-error">{error}</p>}</div>;

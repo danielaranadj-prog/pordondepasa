@@ -1,5 +1,8 @@
 const assert={equal:(a:unknown,b:unknown)=>{if(a!==b)throw new Error(`Expected ${a} to equal ${b}`)},ok:(value:unknown)=>{if(!value)throw new Error('Assertion failed')}};
-import {compassHeading,movementHeading,normalHeading} from './heading.ts';
+import {compassHeading,movementHeading,normalHeading,headingDelta,smoothHeading} from './heading.ts';
+assert.equal(headingDelta(359,1),2);
+assert.equal(headingDelta(1,359),-2);
+assert.equal(smoothHeading(359,1,.5),0);
 assert.equal(normalHeading(-1),359);
 assert.equal(compassHeading({alpha:90,absolute:true}),270);
 assert.equal(compassHeading({alpha:90,absolute:false}),undefined);

@@ -43,8 +43,14 @@ function snaps(point:Point,route:Indexed,radius:number):Snap[] {
  return distinct.sort((a,b)=>a.along-b.along);
 }
 function geometry(route:Indexed,a:Snap,b:Snap):Point[] {
- const middle=route.shape.coordinates.filter((_,i)=>route.along[i]>a.along+.01&&route.along[i]<b.along-.01);
- return [a.point,...middle,b.point];
+ if(b.along>a.along){
+  const middle=route.shape.coordinates.filter((_,i)=>route.along[i]>a.along+.01&&route.along[i]<b.along-.01);
+  return [a.point,...middle,b.point];
+ } else {
+  const end=route.shape.coordinates.filter((_,i)=>route.along[i]>a.along+.01);
+  const start=route.shape.coordinates.filter((_,i)=>route.along[i]<b.along-.01);
+  return [a.point,...end,...start,b.point];
+ }
 }
 function walk(a:Point,b:Point,arrival=false):Leg {
  const d=meters(a,b);
@@ -52,7 +58,7 @@ function walk(a:Point,b:Point,arrival=false):Leg {
  instruction:arrival?(d<=80?'Baja cerca del destino y camina; si está enfrente, usa un cruce peatonal permitido.':'Baja aquí y camina hasta tu destino.'):undefined};
 }
 function bus(route:Indexed,a:Snap,b:Snap):Leg {
- const d=b.along-a.along;
+ const d=b.along>a.along ? b.along-a.along : (route.length-a.along)+b.along;
  return {kind:'bus',from:a.point,to:b.point,meters:d,minutes:Math.max(1,Math.ceil(d/busSpeed)),route:route.shape,geometry:geometry(route,a,b)};
 }
 function option(id:string,legs:Leg[]):Option {
@@ -88,7 +94,10 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
  for(const start of starts){
   const end=ends.find(e=>e.route===start.route);if(!end)continue;
   for(const a of start.passes)for(const b of end.passes){
-   if(b.along-a.along<100)continue;
+   const circular = meters(start.route.shape.coordinates[0], start.route.shape.coordinates.at(-1)!) < 350;
+   let validPass = b.along-a.along>=100;
+   if (!validPass && circular && (start.route.length-a.along)+b.along>=100) validPass = true;
+   if(!validPass)continue;
    const legs=[walk(origin,a.point),bus(start.route,a,b),walk(b.point,destination,true)];
    if(valid(legs))candidates.push(option('direct-'+start.route.shape.id,legs));
   }
@@ -98,7 +107,11 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
   let best:Option|undefined;
   for(const connection of connect(start.route,end.route)){
    for(const a of start.passes)for(const b of end.passes){
-    if(connection.a.along-a.along<100||b.along-connection.b.along<100)continue;
+    const startCircular = meters(start.route.shape.coordinates[0], start.route.shape.coordinates.at(-1)!) < 350;
+    const endCircular = meters(end.route.shape.coordinates[0], end.route.shape.coordinates.at(-1)!) < 350;
+    const validStart = connection.a.along-a.along>=100 || (startCircular && (start.route.length-a.along)+connection.a.along>=100);
+    const validEnd = b.along-connection.b.along>=100 || (endCircular && (end.route.length-connection.b.along)+b.along>=100);
+    if(!validStart||!validEnd)continue;
     const walking=a.distance+connection.b.distance+b.distance;if(walking>1250)continue;
     const legs=[walk(origin,a.point),bus(start.route,a,connection.a),walk(connection.a.point,connection.b.point),bus(end.route,connection.b,b),walk(b.point,destination,true)];
     const candidate=option('transfer-'+start.route.shape.id+'-'+end.route.shape.id,legs);

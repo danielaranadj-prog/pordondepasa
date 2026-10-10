@@ -1,0 +1,6 @@
+.welcome-screen .welcome-brand .welcome-tagline{display:flex;align-items:baseline;justify-content:center;gap:.32em;width:100%;min-height:1.4em;margin:12px 0 0;white-space:nowrap;font-size:clamp(20px,5vw,27px);font-weight:700;letter-spacing:-.04em;line-height:1.2;color:var(--ui-text)}
+.welcome-screen .welcome-brand .welcome-tagline span{font-size:inherit;font-weight:inherit}
+.welcome-screen .welcome-brand .welcome-tagline-word{color:var(--glass-blue)}
+.welcome-tagline-word i{display:inline-block;width:2px;height:.8em;margin-left:2px;background:currentColor;vertical-align:-.08em;animation:welcome-caret-blink .8s steps(1) infinite}
+@keyframes welcome-caret-blink{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.welcome-tagline-word i{display:none}}

@@ -1,0 +1,24 @@
+import {projectProgress} from './navigation.ts';
+import {reliableProgressSample,confirmsProgress} from './progressGuard.ts';
+import type {Point} from './router.ts';
+function expect(value:unknown,message:string){if(!value)throw new Error(message)}
+const line:Point[]=[{lat:21.5,lng:-104.9},{lat:21.5,lng:-104.8997},{lat:21.50018,lng:-104.8997},{lat:21.50018,lng:-104.9}];
+const first={lat:21.5,lng:-104.89985},noisy={lat:21.5001,lng:-104.89985};
+const start=reliableProgressSample(first,line,5,1000);
+expect(!!start,'First fix is on the outward pass');
+expect(projectProgress(noisy,line).along-projectProgress(first,line).along>45,'Reproduces a false jump to the return pass');
+expect(reliableProgressSample(noisy,line,5,2000)===null,'Ambiguous parallel pass must not trim the route');
+const next=reliableProgressSample({lat:21.5,lng:-104.89983},line,5,3000);
+expect(!!next&&confirmsProgress(start!,next,'bus'),'Two consistent fixes can advance');
+const ending:Point[]=[{lat:21.5,lng:-104.9},{lat:21.5,lng:-104.896},{lat:21.501,lng:-104.896}];
+const off={lat:21.50175,lng:-104.896};
+expect(projectProgress(off,ending).remaining===0,'Reproduces false arrival at endpoint projection');
+expect(reliableProgressSample(off,ending,15,1000)===null,'83 m off-route fix cannot trigger arrival or alighting');
+const straight:Point[]=[{lat:21.5,lng:-104.9},{lat:21.5,lng:-104.897}];
+const a=reliableProgressSample({lat:21.5,lng:-104.8998},straight,5,1000);
+const b=reliableProgressSample({lat:21.5,lng:-104.8996},straight,5,2000);
+const jump=reliableProgressSample({lat:21.5,lng:-104.8991},straight,5,2000);
+expect(!!a&&!!b&&confirmsProgress(a,b,'bus'),'Normal bus movement is accepted');
+expect(!!a&&!!jump&&!confirmsProgress(a,jump,'bus'),'Implausible advance in one second is rejected');
+expect(!confirmsProgress(undefined,b!,'bus'),'A single fix is not enough');
+console.log('OK: ambiguous parallel pass, off-route endpoint, stable fixes, and implausible jumps');

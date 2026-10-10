@@ -59,3 +59,18 @@
 .trip-screen .walking-tag{background:var(--glass-soft);color:var(--ui-text)}
 @media(min-width:760px){.trip-screen:not(.navigation-screen) .map-sheet{right:auto;left:20px;width:380px;top:84px;bottom:auto}.trip-screen:not(.navigation-screen) .sheet-content{max-height:calc(100dvh - 178px)}}
 @media(max-height:650px){.sheet-content{max-height:58dvh}.sheet-handle{min-height:58px;font-size:16px}.navigation-panel .sheet-content{max-height:36dvh}}
+.endpoint-editor-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;background:#07111b80;padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+.endpoint-editor{width:min(100%,480px);max-height:min(78dvh,650px);display:flex;flex-direction:column;gap:12px;padding:20px;background:var(--ui-panel);color:var(--ui-text);border:1px solid var(--ui-line);border-radius:26px;box-shadow:0 20px 55px #0005}
+.endpoint-editor header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.endpoint-editor header small{font-size:10px;letter-spacing:.12em;color:var(--ui-muted);font-weight:700}
+.endpoint-editor h2{font-size:20px;line-height:1.2;margin:3px 0 0}
+.endpoint-editor header button{width:44px;height:44px;flex:none;border:0;border-radius:50%;background:var(--ui-soft);color:var(--ui-text);font-size:19px;cursor:pointer}
+.endpoint-editor input{width:100%;min-height:48px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-soft);color:var(--ui-text);padding:0 14px;font:inherit;font-size:16px;outline-offset:2px}
+.endpoint-editor-results{overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.endpoint-editor-results button{display:block;width:100%;min-height:48px;padding:10px 4px;border:0;border-bottom:1px solid var(--ui-line);background:none;color:var(--ui-text);text-align:left;cursor:pointer}
+.endpoint-editor-results button:disabled{opacity:.55}
+.endpoint-editor-results button strong{display:block;font-size:14px}
+.endpoint-editor-results button small{display:block;margin-top:3px;color:var(--ui-muted);font-size:11px}
+.endpoint-editor-results p,.endpoint-editor-message{margin:10px 0;color:var(--ui-muted);font-size:13px;line-height:1.4}
+.endpoint-map-choice{min-height:48px;flex:none;border:0;border-radius:14px;background:var(--ui-soft);color:var(--glass-blue);font:inherit;font-weight:650;cursor:pointer}
+@media(min-width:760px){.endpoint-editor-backdrop{align-items:center}}

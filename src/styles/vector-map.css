@@ -12,3 +12,5 @@
 .navigation-screen .maplibregl-ctrl-top-left{top:145px}
 .navigation-screen .maplibregl-ctrl-bottom-right{bottom:52px}
 @media(prefers-color-scheme:dark){.maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}}
+.place-access-marker{width:18px;height:18px;background:#fff;border:3px solid #2563eb;border-radius:50%;box-shadow:0 2px 8px #0005}
+.place-access-note{margin:4px 16px 8px;padding:8px 10px;border-radius:10px;background:var(--ui-panel,#fff);color:var(--ui-text,#222);font-size:11px;line-height:1.3}

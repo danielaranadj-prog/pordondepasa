@@ -6,7 +6,7 @@ import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import '../styles/vector-map.css';
-type Props={origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
+type Props={origin:Point;destination?:Point;access?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
 export default function StreetMap(props:Props){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
@@ -80,6 +80,7 @@ export default function StreetMap(props:Props){
     markers.current.forEach(item=>item.remove());markers.current=[];const current=latest.current;
     if(!current.navigation||!current.live)markers.current.push(marker(current.origin,'vector-origin','Origen'));
     if(current.destination){const item=marker(current.destination,'destination-drag-marker','Destino: arrastra para cambiarlo',!!current.onDestinationChange);item.on('dragend',()=>{const p=item.getLngLat();latest.current.onDestinationChange?.({lat:p.lat,lng:p.lng})});markers.current.push(item)}
+    if(current.access)markers.current.push(marker(current.access,'place-access-marker','Fin de ruta en calle; acceso al lugar estimado'));
     current.stops?.forEach(stop=>{
      const item=marker(stop.coordinates,`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,stop.name);item.getElement().style.background=current.option?.legs[stop.legIndex]?.route?.color??'#2563eb';
      const content=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('small');name.textContent=stop.name;detail.textContent=stop.type==='oficial'?'Parada oficial':stop.type==='base'?'Base':'Bajada habitual';content.append(name,document.createElement('br'),detail);item.setPopup(new M.Popup({offset:12}).setDOMContent(content));markers.current.push(item);
@@ -111,11 +112,11 @@ export default function StreetMap(props:Props){
     frame=requestAnimationFrame(animate);
    }
    frame=requestAnimationFrame(animate);
-  }).catch(()=>{if(!disposed)setError('No se pudo abrir el mapa. Revisa tu conexión o la compatibilidad WebGL del dispositivo.')});
+  }).catch(cause=>{console.error('No se pudo iniciar MapLibre',cause);if(!disposed)setError('No se pudo abrir el mapa. Revisa tu conexión o la compatibilidad WebGL del dispositivo.')});
   return()=>{disposed=true;cancelAnimationFrame(frame);theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
  },[props.navigation]);
  useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.navigation,props.activeLeg,props.live,props.accuracy]);
- useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.stops,!!props.onDestinationChange,props.navigation,!!props.live]);
+ useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.access,props.stops,!!props.onDestinationChange,props.navigation,!!props.live]);
  useEffect(()=>{if(!ready||!map.current)return;let cancelled=false;
   import('maplibre-gl').then(M=>{if(cancelled||!map.current)return;const {live,heading,navigation,follow}=latest.current;
    if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.getElement().classList.toggle('directional',heading!==undefined);liveMarker.current.getElement().title=latest.current.stale?'Ubicación sin actualizar':`Precisión aproximada: ${Math.round(latest.current.accuracy??0)} m`}

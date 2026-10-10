@@ -4,6 +4,7 @@ import type {Option,Point} from '../lib/router';
 import type {RouteStop} from '../lib/navigation';
 import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
+import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import '../styles/vector-map.css';
 type Props={origin:Point;destination?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
@@ -50,6 +51,15 @@ export default function StreetMap(props:Props){
     const uncertainty=instance.getSource('location-accuracy') as GeoJSONSource|undefined;
     if(uncertainty)uncertainty.setData(area);else{instance.addSource('location-accuracy',{type:'geojson',data:area});instance.addLayer({id:'location-accuracy',type:'fill',source:'location-accuracy',paint:{'fill-color':'#2684ff','fill-opacity':.09}},'trip-halo')}
    };
+   function drawClosure(){
+    if(!instance?.getStyle()?.layers)return;
+    // Keep this independent of the selected transit option and GPS updates.
+    if(!instance.getSource('closed-colosio'))instance.addSource('closed-colosio',{type:'geojson',data:{type:'FeatureCollection',features:closedColosioLines.map(coordinates=>({type:'Feature' as const,properties:{},geometry:{type:'LineString' as const,coordinates:coordinates.map(point=>[...point])}}))}});
+    if(!instance.getLayer('closed-colosio-base'))instance.addLayer({id:'closed-colosio-base',type:'line',source:'closed-colosio',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':theme.matches?'#351d1d':'#fff','line-width':['interpolate',['linear'],['zoom'],11,4,16,12,19,18]}});
+    if(!instance.getLayer('closed-colosio-line'))instance.addLayer({id:'closed-colosio-line',type:'line',source:'closed-colosio',layout:{'line-cap':'butt','line-join':'round'},paint:{'line-color':theme.matches?'#ff796b':'#d83c32','line-width':['interpolate',['linear'],['zoom'],11,2.5,16,7,19,11],'line-dasharray':[2,1.3]}});
+    if(!instance.getSource('closed-colosio-label'))instance.addSource('closed-colosio-label',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'Point',coordinates:[...closedColosioLabel]}}});
+    if(!instance.getLayer('closed-colosio-label'))instance.addLayer({id:'closed-colosio-label',type:'symbol',source:'closed-colosio-label',minzoom:12,layout:{'text-field':'Tramo en construcción','text-size':['interpolate',['linear'],['zoom'],12,11,16,14],'text-anchor':'bottom','text-offset':[0,-.8],'text-allow-overlap':true},paint:{'text-color':theme.matches?'#ffb4a8':'#9b251c','text-halo-color':theme.matches?'#202328':'#fff','text-halo-width':2.5}});
+   }
    instance.on('style.load',()=>{
     if(!instance)return;
     for(const item of instance.getStyle().layers??[]){
@@ -58,7 +68,9 @@ export default function StreetMap(props:Props){
      if(item.type==='background')instance.setPaintProperty(item.id,'background-color','#202328');
      if(item.type==='line'&&/highway/.test(item.id))instance.setPaintProperty(item.id,'line-color',/casing/.test(item.id)?'#30343b':/minor|path/.test(item.id)?'#454b54':'#626b76');
      if(item.type==='symbol'&&item.layout?.['text-field']){instance.setPaintProperty(item.id,'text-color','#bdc6d2');instance.setPaintProperty(item.id,'text-halo-color','#202328');instance.setPaintProperty(item.id,'text-halo-width',1.2)}
-    }draw.current();
+    }
+    draw.current();
+    drawClosure();
    });
    function marker(point:Point,className:string,label:string,draggable=false){
     const element=document.createElement('div');element.className=className;element.setAttribute('aria-label',label);element.title=label;element.appendChild(document.createElement('span'));element.addEventListener('click',event=>event.stopPropagation());
@@ -81,7 +93,7 @@ export default function StreetMap(props:Props){
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
    const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
-   instance.on('load',()=>{if(disposed)return;draw.current();updateMarkers.current();camera.current();setReady(true)});
+   instance.on('load',()=>{if(disposed)return;draw.current();drawClosure();updateMarkers.current();camera.current();setReady(true)});
    function animate(now:number){
     if(disposed||!instance)return;
     const dt=Math.min(64,now-lastFrame||16);lastFrame=now;

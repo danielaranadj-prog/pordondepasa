@@ -3,6 +3,8 @@ import {meters} from './router.ts';
 function expect(value:unknown,message:string){if(!value)throw new Error(message)}
 const data:WalkNetwork={nodes:[[21.5,-104.9],[21.501,-104.9],[21.501,-104.899]],edges:[[0,1,'Primera'],[1,2,'Segunda']]};
 const router=new WalkingRouter(data),from={lat:21.5,lng:-104.9},to={lat:21.501,lng:-104.899};
+expect(router.snaps(from).length>0,'A point on a street must be accepted');
+expect(router.snaps({lat:21.5,lng:-104.899}).length===0,'A point outside the street snap radius needs repositioning');
 const path=router.route(from,to)!;
 expect(path,'Route should exist');expect(path.geometry!.some(p=>p.lat===21.501&&p.lng===-104.9),'Must pass around the corner');
 expect(path.meters>meters(from,to)*1.3,'Street distance must replace diagonal distance');

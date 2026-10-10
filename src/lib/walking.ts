@@ -1,4 +1,4 @@
-import {meters,type Point,type Leg,type Option} from './router.ts';
+import {ESTIMATED_WAIT_MINUTES,meters,type Point,type Leg,type Option} from './router.ts';
 export type WalkNetwork={nodes:[number,number][];edges:[number,number,string|number][];names?:string[];source?:string;updated?:string};
 type Edge={a:number;b:number;name:string;distance:number};
 type Snap={edge:Edge;point:Point;t:number;distance:number};
@@ -54,7 +54,7 @@ export class WalkingRouter{
   for(const option of options){const legs:Leg[]=[];let valid=true;
    for(const leg of option.legs){const next=leg.kind==='walk'?this.route(leg.from,leg.to):leg;if(!next){valid=false;break}legs.push(next)}
    if(!valid)continue;const walks=legs.filter(l=>l.kind==='walk');if(walks.reduce((n,l)=>n+l.meters,0)>1250)continue;
-   const walk=walks.reduce((n,l)=>n+l.minutes,0),rides=legs.filter(l=>l.kind==='bus').length,minutes=legs.reduce((n,l)=>n+l.minutes,0)+rides*7;
+   const walk=walks.reduce((n,l)=>n+l.minutes,0),rides=legs.filter(l=>l.kind==='bus').length,minutes=legs.reduce((n,l)=>n+l.minutes,0)+rides*ESTIMATED_WAIT_MINUTES;
    result.push({...option,legs,walk,minutes,score:minutes+walk*.8+option.transfers*8});
   }
   return result.sort((a,b)=>a.score-b.score).slice(0,5);

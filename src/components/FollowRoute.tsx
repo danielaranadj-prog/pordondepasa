@@ -9,12 +9,13 @@ import MapIcon from './MapIcon';
 import {useCompass} from './useCompass';
 import {movementHeading} from '../lib/heading';
 import {nextManeuver} from '../lib/maneuver';
+import {remainingTripMinutes} from '../lib/tripEstimate';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 import '../styles/navigation-refined.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,origin,destination,destinationName,compassStart,onExit}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;destinationName:string;compassStart:{enabled:boolean;issue:string};onExit:()=>void}){
- const [step,setStep]=useState(0),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(false);
+export default function FollowRoute({option,stops,origin,destination,destinationName,compassStart,onExit,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;destinationName:string;compassStart:{enabled:boolean;issue:string};onExit:()=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+ const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived);
  const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
  const previous=useRef<{point:Point;accuracy:number}|undefined>(undefined);
@@ -74,12 +75,12 @@ export default function FollowRoute({option,stops,origin,destination,destination
    setLive(point);setFixAt(p.timestamp);setAccuracy(p.coords.accuracy);setLocationIssue('')},error=>setLocationIssue(error.code===1?'Permite tu ubicación para seguir tu avance. Puedes continuar con los pasos.':'No pudimos actualizar tu ubicación. Sigue los pasos en el mapa.'),{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
   return()=>navigator.geolocation.clearWatch(id);
  },[arrived]);
- function advance(){if(step<option.legs.length-1)setStep(step+1);else setArrived(true)}
+ function advance(){if(step<option.legs.length-1){setStep(step+1);onProgress?.(step+1,false)}else{setArrived(true);onProgress?.(step,true)}}
  const title=arrived?'Llegaste a tu destino':leg.kind==='bus'?(nearAlighting?'Prepárate para bajar':`Viaja en ${leg.route?.name}`):step===option.legs.length-1?'Camina a tu destino':step===0?'Camina al punto de abordaje':'Camina al siguiente abordaje';
  const remaining=confident&&progress&&progress.distance<=40?progress.remaining:leg.meters;
  const maneuver=leg.kind==='walk'&&confident&&progress&&progress.distance<=35?nextManeuver(line,accepted.step===step?accepted.along:0):undefined;
  const totalMeters=remaining+option.legs.slice(step+1).reduce((sum,l)=>sum+l.meters,0);
- const totalMinutes=Math.max(1,Math.ceil(leg.minutes*(leg.meters?Math.min(1,remaining/leg.meters):1)+option.legs.slice(step+1).reduce((sum,l)=>sum+l.minutes,0)));
+ const totalMinutes=remainingTripMinutes(option,step,remaining);
  const action=step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya abordé la unidad':'Continuar';
  return <main className="trip-screen navigation-screen">
   <StreetMap fullscreen origin={origin} destination={destination} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)}/>

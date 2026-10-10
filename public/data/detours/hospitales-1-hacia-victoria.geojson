@@ -1,0 +1,114 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "hospitales-1-hacia-victoria",
+        "routeId": "cantera-hospitales-1",
+        "active": true,
+        "status": "active-via-21-de-febrero-junction",
+        "direction": "21 de Febrero a avenida Victoria, confirmado por el responsable",
+        "source": "GeoJSON proporcionado por el responsable del proyecto",
+        "note": "Hospitales 1 llega desde el extremo sur por 21 de Febrero y toma esta geometría desde el cruce compartido (vértice 7). Los vértices 0-6 documentan el antiguo acceso desde Colosio y no se aplican."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -104.8836411,
+            21.5153572
+          ],
+          [
+            -104.8842309,
+            21.5147992
+          ],
+          [
+            -104.8844426,
+            21.5147029
+          ],
+          [
+            -104.8846844,
+            21.5142385
+          ],
+          [
+            -104.8846887,
+            21.5141258
+          ],
+          [
+            -104.885103,
+            21.5132512
+          ],
+          [
+            -104.8855627,
+            21.5122764
+          ],
+          [
+            -104.8860886,
+            21.5111883
+          ],
+          [
+            -104.8866025,
+            21.510109
+          ],
+          [
+            -104.8870493,
+            21.5102687
+          ],
+          [
+            -104.8876162,
+            21.5104973
+          ],
+          [
+            -104.8884662,
+            21.510838
+          ],
+          [
+            -104.8896245,
+            21.5112707
+          ],
+          [
+            -104.8907867,
+            21.511717
+          ],
+          [
+            -104.8906894,
+            21.5119842
+          ],
+          [
+            -104.8906949,
+            21.5120178
+          ],
+          [
+            -104.8903733,
+            21.5127923
+          ],
+          [
+            -104.8900942,
+            21.5135214
+          ],
+          [
+            -104.8898271,
+            21.5142415
+          ],
+          [
+            -104.889648,
+            21.5146861
+          ],
+          [
+            -104.8896497,
+            21.5147575
+          ],
+          [
+            -104.889678,
+            21.5147915
+          ],
+          [
+            -104.8903796,
+            21.5151933
+          ]
+        ]
+      }
+    }
+  ]
+}

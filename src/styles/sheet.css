@@ -1,7 +1,11 @@
 /* Structural map-first layout, shared by planning and navigation. */
 .trip-screen .sheet-endpoints.compact-endpoints{grid-template-columns:1fr}
 .trip-screen .compact-endpoints{display:grid;grid-template-columns:1fr 38px;align-items:center;padding:0 12px 4px;gap:6px}
-.trip-screen .compact-endpoints .trip-endpoints{grid-column:1;padding:2px 10px;border-radius:16px}
+.trip-screen .sheet-endpoints.compact-endpoints .trip-endpoints{grid-column:1;position:relative;padding:2px 56px 2px 10px;border-radius:16px}
+.swap-endpoints{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-panel);color:var(--glass-blue);cursor:pointer}
+.swap-endpoints svg{width:21px;height:21px}
+.swap-endpoints:disabled{opacity:.4;cursor:not-allowed}
+.swap-endpoints:focus-visible,.sheet-handle:focus-visible{outline:3px solid var(--glass-blue);outline-offset:2px}
 .trip-screen .compact-endpoints .location-retry{grid-column:2;grid-row:1;width:38px;height:44px}
 .endpoint-edit{position:relative;display:block;text-align:left;width:100%;min-height:44px;padding:5px 24px 5px 19px;background:none;border:0;color:var(--ui-text);font:inherit;cursor:pointer}
 .endpoint-edit+.endpoint-edit{border-top:1px solid var(--ui-line)}
@@ -10,8 +14,9 @@
 .endpoint-edit strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .endpoint-pencil{position:absolute;right:0;top:14px;font-size:20px;color:var(--glass-blue)}
 .endpoint-edit[aria-pressed=true]{color:var(--glass-blue)}
-.trip-screen:not(.navigation-screen) .sheet-handle{min-height:48px;font-size:16px;padding-top:14px;padding-bottom:6px}
+.trip-screen:not(.navigation-screen) .sheet-handle{min-height:66px;font-size:16px;padding-top:18px;padding-bottom:8px}
 .trip-screen:not(.navigation-screen) .sheet-content{max-height:46dvh}
+.trip-screen:not(.navigation-screen) .map-sheet.sheet-expanded .sheet-content{max-height:min(72dvh,calc(100dvh - 150px))}
 .trip-screen .map-sheet .route-slide{padding:8px 12px}
 .trip-screen .map-sheet .time strong{font-size:22px}
 .trip-screen .map-sheet .legs{margin:5px 0}
@@ -30,6 +35,7 @@
 .sheet-content{max-height:65dvh;overflow-y:auto;overscroll-behavior:contain;padding-bottom:10px;scrollbar-width:thin}
 .sheet-content[hidden]{display:none}
 .trip-screen .map-sheet.sheet-closed{max-height:64px}
+@media(max-width:759px){.trip-screen:not(.navigation-screen) .map-sheet.sheet-closed{bottom:max(72px,calc(env(safe-area-inset-bottom) + 28px));left:24px;right:24px;max-width:340px;border-radius:24px;max-height:72px}.trip-screen:not(.navigation-screen) .map-sheet.sheet-closed .sheet-handle{min-height:72px}}
 .sheet-endpoints{display:grid;grid-template-columns:1fr 1fr 44px;gap:4px 8px;padding:0 14px 8px}
 .trip-screen .sheet-endpoints .trip-endpoints{grid-column:1/-1;background:var(--glass-soft);border:0;box-shadow:none;border-radius:20px;padding:10px 14px}
 .trip-screen .sheet-endpoints .trip-endpoints strong{max-width:100%;font-size:14px}

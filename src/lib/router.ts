@@ -3,7 +3,11 @@ export type Shape = { id: string; name: string; color: string; groupName: string
 export type Place = { name: string; address: string; point: Point };
 export type Leg = { kind: 'walk' | 'bus'; from: Point; to: Point; minutes: number; meters: number; route?: Shape; geometry?: Point[]; instruction?: string };
 export type Option = { id: string; minutes: number; walk: number; transfers: number; fare: number; score: number; legs: Leg[] };
-const walkSpeed = 78, busSpeed = 270, wait = 7;
+export const ESTIMATED_WAIT_MINUTES = 7;
+const walkSpeed = 78, busSpeed = 270;
+// A kilometre-long edge with no intermediate surveyed vertices must be
+// reviewed before it is used to direct someone through the city.
+export const MAX_UNVERIFIED_BUS_EDGE_METERS = 1000;
 export function meters(a: Point,b: Point) {
  const x=(b.lng-a.lng)*Math.cos((a.lat+b.lat)/2*Math.PI/180);
  return Math.hypot(x,b.lat-a.lat)*111320;
@@ -35,7 +39,7 @@ function projection(point:Point, route:Indexed,i:number):Snap {
 function snaps(point:Point,route:Indexed,radius:number):Snap[] {
  const projections:Snap[]=[];
  for(let i=0;i<route.shape.coordinates.length-1;i++)projections.push(projection(point,route,i));
- const candidates=projections.filter((s,i)=>s.distance<=radius &&
+ const candidates=projections.filter((s,i)=>route.along[i+1]-route.along[i]<=MAX_UNVERIFIED_BUS_EDGE_METERS&&s.distance<=radius &&
    (i===0||s.distance<=projections[i-1].distance) &&
    (i===projections.length-1||s.distance<=projections[i+1].distance));
  const distinct:Snap[]=[];
@@ -64,11 +68,14 @@ function bus(route:Indexed,a:Snap,b:Snap):Leg {
 function option(id:string,legs:Leg[]):Option {
  const rides=legs.filter(l=>l.kind==='bus').length;
  const walking=legs.filter(l=>l.kind==='walk').reduce((s,l)=>s+l.minutes,0);
- const minutes=legs.reduce((s,l)=>s+l.minutes,0)+wait*rides;
+ const minutes=legs.reduce((s,l)=>s+l.minutes,0)+ESTIMATED_WAIT_MINUTES*rides;
  return {id,legs,minutes,walk:walking,transfers:Math.max(0,rides-1),fare:rides*10,score:minutes+walking*.8+Math.max(0,rides-1)*8};
 }
 function valid(legs:Leg[]) {
  return legs.filter(l=>l.kind==='walk').reduce((s,l)=>s+l.meters,0)<=1250;
+}
+function hasUnverifiedBusEdge(legs:Leg[]):boolean {
+ return legs.some(leg=>leg.kind==='bus'&&leg.geometry?.some((p,i)=>i>0&&meters(leg.geometry![i-1],p)>MAX_UNVERIFIED_BUS_EDGE_METERS));
 }
 type Connection={a:Snap;b:Snap};
 const connections=new WeakMap<Shape,WeakMap<Shape,Connection[]>>();
@@ -99,11 +106,13 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
    if (!validPass && circular && (start.route.length-a.along)+b.along>=100) validPass = true;
    if(!validPass)continue;
    const legs=[walk(origin,a.point),bus(start.route,a,b),walk(b.point,destination,true)];
-   if(valid(legs))candidates.push(option('direct-'+start.route.shape.id,legs));
+   if(valid(legs)&&!hasUnverifiedBusEdge(legs))candidates.push(option('direct-'+start.route.shape.id,legs));
   }
  }
  for(const start of starts)for(const end of ends){
-  if(start.route===end.route)continue;
+  // Different fragments of the same named route are not evidence of a
+  // physical transfer or a second fare. Do not bridge a missing segment.
+  if(start.route.shape.id===end.route.shape.id)continue;
   let best:Option|undefined;
   for(const connection of connect(start.route,end.route)){
    for(const a of start.passes)for(const b of end.passes){
@@ -114,6 +123,7 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
     if(!validStart||!validEnd)continue;
     const walking=a.distance+connection.b.distance+b.distance;if(walking>1250)continue;
     const legs=[walk(origin,a.point),bus(start.route,a,connection.a),walk(connection.a.point,connection.b.point),bus(end.route,connection.b,b),walk(b.point,destination,true)];
+    if(hasUnverifiedBusEdge(legs))continue;
     const candidate=option('transfer-'+start.route.shape.id+'-'+end.route.shape.id,legs);
     if(candidate.minutes<=90&&(!best||candidate.score<best.score))best=candidate;
    }

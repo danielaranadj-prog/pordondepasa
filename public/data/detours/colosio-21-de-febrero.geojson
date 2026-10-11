@@ -9,8 +9,8 @@
       "active": true,
       "source": "Geometría proporcionada por el responsable del proyecto",
       "endDate": null,
-      "candidateRouteIds": ["cantera-hospitales-1", "cantera-hospitales-2"],
-      "appliedRouteIds": ["cantera-hospitales-1", "cantera-hospitales-2"],
+      "candidateRouteIds": ["cantera-hospitales-1", "cantera-hospitales-2", "sauces-1"],
+      "appliedRouteIds": ["cantera-hospitales-1", "cantera-hospitales-2", "sauces-1"],
       "note": "Hospitales 1 toma el trazo en sentido sur a norte hasta el vértice 4, donde conecta con la continuación a avenida Victoria. Hospitales 2 recorre la línea norte a sur."
     },
     "geometry": {

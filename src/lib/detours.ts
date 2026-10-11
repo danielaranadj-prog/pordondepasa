@@ -12,6 +12,7 @@ const febreroSections: Record<string, {start:number;end:number;reverse:boolean}[
  // surveyed Victoria continuation; Hospitales 2 continues north to south.
  'cantera-hospitales-1': [{start:96,end:128,reverse:false}],
  'cantera-hospitales-2': [{start:397,end:418,reverse:false}],
+ 'sauces-1': [{start:187,end:198,reverse:false}],
 };
 type Detour = {features:{properties:{active?:boolean};geometry:{type:string;coordinates:number[][]}}[]};
 function join(point:Point,a:Point,b:Point):Point {
@@ -59,6 +60,7 @@ export function apply21Febrero(shapes:Shape[],data:Detour,continuation:Detour):S
   throw new Error('Geometría de Hospitales 1 inválida');
  const victoria=coords.map(([lng,lat])=>({lat,lng}));
  return applyDetour(shapes,data,febreroSections,(id,path)=>{
+  if(id==='sauces-1')return path.slice(0,7);
   if(id!=='cantera-hospitales-1')return path;
   if(path.length!==33||meters(path[4],victoria[7])>10)
    throw new Error('No coincide el cruce de Hospitales 1 con 21 de Febrero');

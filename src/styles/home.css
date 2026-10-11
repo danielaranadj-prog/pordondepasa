@@ -1,31 +1,156 @@
-.pdp-home{box-sizing:border-box;color-scheme:light;position:relative;isolation:isolate;overflow-x:hidden;overflow-y:auto;max-width:none;height:100svh;margin:0;background:#fff;color:#171717;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.pdp-home .home-content{--home-inset:clamp(48px,10svh,100px);position:relative;align-self:stretch;display:grid;grid-template-rows:1fr auto;width:100%;max-width:320px;text-align:center;padding:calc(clamp(24px,8svh,80px) + var(--home-inset)) 0 calc(clamp(16px,5svh,48px) + var(--home-inset))}
-.pdp-home .home-main{align-self:center;display:flex;flex-direction:column;align-items:center;gap:clamp(26px,4svh,40px);width:100%}
-.pdp-home .home-brand{display:flex;flex-direction:column;gap:8px;margin:0;align-items:center}
-.pdp-home .home-brand>div{display:flex;align-items:center;gap:10px}
-.pdp-home svg{width:18px;height:18px;flex-shrink:0}
-.pdp-home .home-brand svg{color:#2563eb;width:29px;height:29px}
-.pdp-home .home-brand h1{font-size:25px;font-weight:750;letter-spacing:-.9px;color:#171717;margin:0}
-.pdp-home .home-brand small{display:flex;align-items:center;justify-content:center;gap:7px;color:#737373;font-size:14px;letter-spacing:.1px}
-.pdp-home .home-search{align-self:center;width:100%;max-width:254px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
-.pdp-home .home-field{display:flex;align-items:center;gap:8px;padding:0 12px;min-height:46px;border:1px solid #e5e7eb;border-radius:12px;background:#f3f4f6;color:#737373}
-.pdp-home input{font:inherit;font-size:16px;color:#171717;background:none;border:0;width:100%;min-width:0;padding:0;box-shadow:none}
-.pdp-home input::placeholder{color:#737373;opacity:1}
-.pdp-home button{font:inherit;cursor:pointer}
-.pdp-home .home-submit{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;background:#171717;color:#fff;border:0;border-radius:12px;font-size:13px;font-weight:600}
-.pdp-home .home-submit:disabled{background:#4b4b4b;cursor:not-allowed}
-.pdp-home .home-map{display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:0;color:#2563eb;border-radius:12px;font-size:12px;min-height:44px}
-.pdp-home .home-caption{display:flex;align-items:center;justify-content:center;color:#737373;font-size:12px;font-weight:550;letter-spacing:1.8px;margin:0}
-.pdp-home .home-city{position:absolute;z-index:-1;top:50%;left:50%;width:505px;height:505px;margin:-252px 0 0 -252px;opacity:.3;pointer-events:none;mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent);animation:home-city-drift 12s ease-in-out infinite alternate}
-.pdp-home .home-city span{position:absolute;border:1px solid #e5e7eb;border-radius:3px}
-.pdp-home .home-suggestions{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;text-align:left}
-.pdp-home .home-suggestions button{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid #eee;background:#fff;color:#171717;text-align:left;padding:11px 14px;min-height:46px;box-sizing:border-box}
-.pdp-home .home-suggestion-icon{font-size:20px;line-height:1;width:24px;text-align:center;flex-shrink:0}
-.pdp-home .home-suggestion-text{min-width:0;flex:1}
-.pdp-home .home-suggestions button:last-child{border-bottom:0}
-.pdp-home .home-suggestions button:hover{background:#f3f4f6}
-.pdp-home .home-suggestions strong{display:block;font-size:13px;line-height:1.25}
-.pdp-home .home-suggestions small{display:block;font-size:11px;color:#737373;margin-top:2px}
-.pdp-home .home-message{color:#737373;font-size:12px;margin:6px 0;line-height:1.4}
-@keyframes home-city-drift{from{transform:translate(-35px,26px) rotate(-20deg) scale(1.55)}to{transform:translate(35px,-26px) rotate(-10deg) scale(1.7)}}
-@media(prefers-reduced-motion:reduce){.pdp-home .home-city{animation:none;transform:rotate(-16deg) scale(1.6)}}
+.pdp-home {
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  max-width: none;
+  height: 100svh;
+  min-height: 520px;
+  margin: 0;
+  padding: 0;
+  background: var(--ui-bg, #fff);
+  color: var(--ui-text, #171717);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pdp-home .home-content {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  height: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pdp-home .home-main {display: contents}
+.pdp-home .home-brand {
+  position: absolute;
+  top: clamp(108px, 19.4%, 184px);
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.pdp-home svg {width: 18px;height: 18px;flex-shrink: 0}
+.pdp-home .home-brand svg {width: 60px;height: 60px;color: var(--glass-blue, #2563eb);margin-bottom: 8px}
+.pdp-home .home-brand h1 {margin: 0;font-size: 25px;font-weight: 750;letter-spacing: -.9px;line-height: 1.15;white-space: nowrap}
+.pdp-home .home-brand small {font-size: 12px;line-height: 1.35;color: var(--ui-muted, #737373)}
+
+.pdp-home .home-search {
+  position: absolute;
+  top: 48.2%;
+  left: 50%;
+  width: min(278px, calc(100% - 32px));
+  transform: translateX(-50%);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  z-index: 2;
+}
+.pdp-home .home-search-row {display: flex;align-items: stretch;gap: 5px;width: 100%}
+.pdp-home .home-field {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-line, #e5e7eb);
+  border-radius: 10px;
+  background: var(--ui-soft, #f3f4f6);
+}
+.pdp-home input {font: inherit;font-size: 13px;text-align: center;color: var(--ui-text, #171717);background: none;border: 0;outline: none;width: 100%;min-width: 0;padding: 0}
+.pdp-home input::placeholder {color: var(--ui-muted, #737373);opacity: 1}
+.pdp-home .home-field:focus-within {outline: 2px solid var(--glass-blue, #2563eb);outline-offset: 2px}
+.pdp-home button {font: inherit;cursor: pointer}
+.pdp-home .home-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 34px;
+  min-width: 86px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ui-action, #171717);
+  color: var(--ui-action-text, #fff);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.pdp-home .home-submit svg {width: 17px;height: 17px}
+.pdp-home .home-submit:disabled {opacity: .58;cursor: not-allowed}
+.pdp-home .home-submit:focus-visible,.pdp-home .home-map:focus-visible {outline: 2px solid var(--glass-blue, #2563eb);outline-offset: 3px}
+.pdp-home .home-map {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--glass-blue, #2563eb);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.pdp-home .home-map svg {width: 15px;height: 15px}
+.pdp-home .home-caption {
+  position: absolute;
+  bottom: 12.8%;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  color: var(--ui-muted, #737373);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .15px;
+}
+
+.pdp-home .home-city {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 505px;
+  height: 505px;
+  margin: -252px 0 0 -252px;
+  opacity: .3;
+  pointer-events: none;
+  mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+  animation: home-city-drift 12s ease-in-out infinite alternate;
+}
+.pdp-home .home-city span {position: absolute;border: 1px solid var(--ui-line, #e5e7eb);border-radius: 3px}
+.pdp-home .home-suggestions {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 100%;
+  max-height: min(38svh, 310px);
+  overflow-y: auto;
+  background: var(--ui-panel, #fff);
+  border: 1px solid var(--ui-line, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px #0002;
+  text-align: left;
+  z-index: 3;
+}
+.pdp-home .home-suggestions button {display: flex;align-items: center;gap: 12px;width: 100%;border: 0;border-bottom: 1px solid var(--ui-line, #e5e7eb);background: var(--ui-panel, #fff);color: var(--ui-text, #171717);text-align: left;padding: 11px 14px;min-height: 46px;box-sizing: border-box}
+.pdp-home .home-suggestion-icon {font-size: 20px;line-height: 1;width: 24px;text-align: center;flex-shrink: 0}
+.pdp-home .home-suggestion-text {min-width: 0;flex: 1}
+.pdp-home .home-suggestions button:last-child {border-bottom: 0}
+.pdp-home .home-suggestions button:hover,.pdp-home .home-suggestions button:focus-visible {background: var(--ui-soft, #f3f4f6)}
+.pdp-home .home-suggestions strong {display: block;font-size: 13px;line-height: 1.25}
+.pdp-home .home-suggestions small {display: block;font-size: 11px;color: var(--ui-muted, #737373);margin-top: 2px}
+.pdp-home .home-message {color: var(--ui-muted, #737373);font-size: 12px;margin: 4px 0;line-height: 1.4}
+@keyframes home-city-drift {from {transform: translate(-15px, 12px) rotate(-4deg) scale(1.08)}to {transform: translate(15px, -12px) rotate(4deg) scale(1.13)}}
+@media (prefers-reduced-motion: reduce) {.pdp-home .home-city {animation: none;transform: none}}
+@media (max-height: 620px) {.pdp-home .home-brand {top: 15%}.pdp-home .home-search {top: 49%}.pdp-home .home-caption {bottom: 7%}}

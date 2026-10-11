@@ -11,13 +11,15 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
   <div className="home-city" aria-hidden="true">{rows.slice(0,-1).flatMap((y,r)=>columns.slice(0,-1).map((x,c)=><span key={`${r}-${c}`} style={{left:x+8,top:y+8,width:columns[c+1]-x-15,height:rows[r+1]-y-15}}/>))}</div>
   <div className="home-content">
    <div className="home-main">
-   <header className="home-brand"><div><Icon kind="bus"/><h1>PorDóndePasa</h1></div><small> Tu transporte público</small></header>
+   <header className="home-brand"><Icon kind="bus"/><h1>PorDóndePasa</h1><small>Tu transporte público</small></header>
    <form className="home-search" aria-label="Buscar destino" onSubmit={event=>{event.preventDefault();if(ready)onSearch()}}>
-    <label className="home-field"><Icon kind="search"/><input aria-label="¿A dónde vas hoy?" placeholder="¿A dónde vas hoy?" value={query} autoComplete="off" onChange={event=>onQuery(event.target.value)} /></label>
+    <div className="home-search-row">
+     <label className="home-field"><input aria-label="¿A dónde vas hoy?" placeholder="¿A dónde vas hoy?" value={query} autoComplete="off" onChange={event=>onQuery(event.target.value)} /></label>
+     <button className="home-submit" disabled={!ready} type="submit">Buscar<Icon kind="arrow"/></button>
+    </div>
     {!!(places.length||stops.length)&&<div className="home-suggestions" aria-label="Sugerencias de destino">{places.map(place=><button type="button" key={`place:${place.id}`} onClick={()=>onChoosePlace(place)}><span className="home-suggestion-icon" aria-hidden="true">{getPlaceCategoryIcon(place)}</span><div className="home-suggestion-text"><strong>{place.name}</strong><small>{place.neighborhood||place.municipality||getPlaceCategoryLabel(place.category)}{place.status!=='verificado'?' · Por verificar':''}</small></div></button>)}{stops.map(stop=><button type="button" key={`stop:${stop.id}`} onClick={()=>onChoose(stop)}><span className="home-suggestion-icon" aria-hidden="true">🚏</span><div className="home-suggestion-text"><strong>{stop.name}</strong><small>Parada · Tepic y Xalisco</small></div></button>)}</div>}
     {!ready&&query.trim().length>=2&&!stops.length&&!places.length&&<p className="home-message">Sin coincidencias. Elige tu destino en el mapa.</p>}
-    <button className="home-submit" disabled={!ready} type="submit">Ver rutas<Icon kind="arrow"/></button>
-    <button className="home-map" type="button" onClick={onMap}><Icon kind="pin"/>Elegir en el mapa</button>
+    <button className="home-map" type="button" onClick={onMap}>Ubícalo en el mapa<Icon kind="pin"/></button>
    {message&&<p className="home-message" role="status">{message}</p>}
    </form>
    </div>

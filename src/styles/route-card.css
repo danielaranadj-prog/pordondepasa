@@ -1,0 +1,163 @@
+/* Route-choice sheet: compact layout based on the editable Figma card. */
+.trip-screen:not(.navigation-screen) .map-sheet {
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-line);
+  box-shadow: var(--ui-shadow);
+}
+
+.trip-screen:not(.navigation-screen) .map-sheet .sheet-content {
+  max-height: min(46dvh, 420px);
+  padding-bottom: 10px;
+}
+
+.trip-screen .map-sheet .carousel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: none;
+  margin: 0;
+  padding: 1px 16px 7px;
+  color: var(--ui-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.trip-screen .map-sheet .carousel-heading span,
+.trip-screen .map-sheet .carousel-heading strong {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+.trip-screen .map-sheet .route-carousel {
+  gap: 10px;
+  padding: 0 16px 2px;
+}
+
+.trip-screen .map-sheet .route-slide {
+  flex-basis: 100%;
+  min-width: 0;
+  padding: 11px 15px 12px;
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-line);
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.trip-screen .map-sheet .route-slide.active {
+  border-color: var(--ui-line);
+  box-shadow: none;
+}
+
+.trip-screen .map-sheet .time {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trip-screen .map-sheet .time strong {
+  color: var(--ui-text);
+  font-size: 24px;
+  line-height: 1.05;
+  letter-spacing: -.7px;
+}
+
+.trip-screen .map-sheet .time small {
+  padding: 0;
+  background: none;
+  color: var(--glass-blue);
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.trip-screen .map-sheet .legs {
+  display: flex;
+  gap: 6px;
+  margin: 11px 0 12px;
+}
+
+.trip-screen .map-sheet .legs span {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 29px;
+  padding: 4px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+.trip-screen .map-sheet .legs .walk {
+  background: var(--ui-soft);
+  color: var(--ui-text);
+}
+
+.trip-screen .map-sheet .route-metrics {
+  grid-template-columns: 1fr 1.05fr 1fr;
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 12px;
+  background: none;
+}
+
+.trip-screen .map-sheet .route-metrics > div + div {
+  border: 0;
+  padding: 0;
+}
+
+.trip-screen .map-sheet .route-metrics small {
+  margin: 0 0 3px;
+  color: var(--ui-muted);
+  font-size: 10px;
+}
+
+.trip-screen .map-sheet .route-metrics strong,
+.trip-screen .map-sheet .route-metrics strong span {
+  color: var(--ui-text);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.trip-screen .map-sheet .journey-details {
+  border: 0;
+  margin: 0;
+}
+
+.trip-screen .map-sheet .journey-details summary {
+  min-height: 36px;
+  color: var(--ui-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.trip-screen .map-sheet .card-primary {
+  width: 100%;
+  min-height: 44px;
+  margin: 1px 0 0;
+  border-radius: 12px;
+  background: var(--ui-action);
+  color: var(--ui-action-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.trip-screen .map-sheet .carousel-dots {
+  height: 22px;
+}
+
+@media (max-width: 360px) {
+  .trip-screen .map-sheet .carousel-heading { font-size: 11px; }
+  .trip-screen .map-sheet .route-carousel { padding-inline: 12px; }
+  .trip-screen .map-sheet .route-slide { padding-inline: 11px; }
+  .trip-screen .map-sheet .legs span { font-size: 10px; padding-inline: 4px; }
+}

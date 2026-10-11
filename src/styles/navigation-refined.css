@@ -62,7 +62,7 @@
    ========================================================= */
 .nav-top-card {
   position: absolute;
-  top: max(16px, calc(env(safe-area-inset-top) + 50px));
+  top: max(16px, calc(env(safe-area-inset-top) + 30px));
   left: max(18px, calc(env(safe-area-inset-left) + 20px));
   right: max(18px, calc(env(safe-area-inset-right) + 20px));
   max-width: 420px;
@@ -195,7 +195,7 @@
 .trip-screen.navigation-screen .nav-bottom-sheet,
 .nav-bottom-sheet {
   position: absolute;
-bottom: max(36px, calc(env(safe-area-inset-bottom) + 60px));
+bottom: max(36px, calc(env(safe-area-inset-bottom) + 80px));
   left: max(16px, calc(env(safe-area-inset-left) + 20px));
   right: max(16px, calc(env(safe-area-inset-right) + 20px));
   margin: 0 auto;

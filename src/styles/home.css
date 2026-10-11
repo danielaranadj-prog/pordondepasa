@@ -19,11 +19,13 @@
 .pdp-home .home-city{position:absolute;z-index:-1;top:50%;left:50%;width:505px;height:505px;margin:-252px 0 0 -252px;opacity:.3;pointer-events:none;mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent);animation:home-city-drift 12s ease-in-out infinite alternate}
 .pdp-home .home-city span{position:absolute;border:1px solid #e5e7eb;border-radius:3px}
 .pdp-home .home-suggestions{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;text-align:left}
-.pdp-home .home-suggestions button{display:block;width:100%;border:0;border-bottom:1px solid #eee;background:#fff;color:#171717;text-align:left;padding:12px;min-height:44px}
+.pdp-home .home-suggestions button{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid #eee;background:#fff;color:#171717;text-align:left;padding:11px 14px;min-height:46px;box-sizing:border-box}
+.pdp-home .home-suggestion-icon{font-size:20px;line-height:1;width:24px;text-align:center;flex-shrink:0}
+.pdp-home .home-suggestion-text{min-width:0;flex:1}
 .pdp-home .home-suggestions button:last-child{border-bottom:0}
 .pdp-home .home-suggestions button:hover{background:#f3f4f6}
-.pdp-home .home-suggestions strong{display:block;font-size:13px}
-.pdp-home .home-suggestions small{display:block;font-size:11px;color:#737373;margin-top:4px}
+.pdp-home .home-suggestions strong{display:block;font-size:13px;line-height:1.25}
+.pdp-home .home-suggestions small{display:block;font-size:11px;color:#737373;margin-top:2px}
 .pdp-home .home-message{color:#737373;font-size:12px;margin:6px 0;line-height:1.4}
 @keyframes home-city-drift{from{transform:translate(-35px,26px) rotate(-20deg) scale(1.55)}to{transform:translate(35px,-26px) rotate(-10deg) scale(1.7)}}
 @media(prefers-reduced-motion:reduce){.pdp-home .home-city{animation:none;transform:rotate(-16deg) scale(1.6)}}

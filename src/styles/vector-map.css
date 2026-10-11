@@ -1,6 +1,7 @@
 .street-map.maplibregl-map{background:var(--ui-bg);font-family:inherit}
 .vector-origin{width:18px;height:18px;border-radius:50%;background:#171717;border:3px solid #fff;box-shadow:0 1px 6px #0006}
 .maplibregl-marker.destination-drag-marker{width:32px;height:32px;cursor:grab}
+.maplibregl-marker.destination-drag-marker.with-icon{width:36px;height:36px}
 .maplibregl-marker.stop-pin{width:14px;height:14px}
 .maplibregl-marker.tracking-arrow{width:22px;height:22px}
 .maplibregl-ctrl-group,.maplibregl-popup-content{background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-line)}
@@ -8,8 +9,7 @@
 .maplibregl-ctrl-attrib{background:var(--ui-panel)!important;color:var(--ui-muted)!important}
 .maplibregl-ctrl-attrib a{color:var(--ui-muted)}
 .vector-map-error{position:absolute;top:64px;left:16px;right:16px;z-index:400;background:var(--ui-panel);color:var(--ui-text);padding:12px;border-radius:12px}
-.trip-screen .maplibregl-ctrl-top-left{top:76px}
-.navigation-screen .maplibregl-ctrl-top-left{top:145px}
+.maplibregl-ctrl-top-left, .leaflet-control-zoom { display: none !important; }
 .navigation-screen .maplibregl-ctrl-bottom-right{bottom:52px}
 @media(prefers-color-scheme:dark){.maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}}
 .place-access-marker{width:18px;height:18px;background:#fff;border:3px solid #2563eb;border-radius:50%;box-shadow:0 2px 8px #0005}

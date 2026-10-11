@@ -5,8 +5,9 @@ import type {RouteStop} from '../lib/navigation';
 import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
+import {getPlaceCategoryIcon, type Place} from '../lib/places';
 import '../styles/vector-map.css';
-type Props={origin:Point;destination?:Point;access?:Point;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
+type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
 export default function StreetMap(props:Props){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
@@ -23,8 +24,8 @@ export default function StreetMap(props:Props){
    if(disposed||!container.current)return;
    M.setWorkerUrl(base.workerUrl);
    instance=new M.Map({container:container.current,style:style(),center:coord(latest.current.origin),zoom:props.navigation?18:13,maxZoom:19,attributionControl:false,dragRotate:false,pitchWithRotate:false});map.current=instance;
+   instance.touchZoomRotate.enable();
    instance.touchZoomRotate.disableRotation();
-   instance.addControl(new M.NavigationControl({showCompass:false}),'top-left');
    instance.addControl(new M.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org/">OpenFreeMap</a>'}),'bottom-right');
    theme.addEventListener('change',change);
    instance.on('click',event=>latest.current.onPick?.({lat:event.lngLat.lat,lng:event.lngLat.lng}));
@@ -79,7 +80,13 @@ export default function StreetMap(props:Props){
    updateMarkers.current=()=>{
     markers.current.forEach(item=>item.remove());markers.current=[];const current=latest.current;
     if(!current.navigation||!current.live)markers.current.push(marker(current.origin,'vector-origin','Origen'));
-    if(current.destination){const item=marker(current.destination,'destination-drag-marker','Destino: arrastra para cambiarlo',!!current.onDestinationChange);item.on('dragend',()=>{const p=item.getLngLat();latest.current.onDestinationChange?.({lat:p.lat,lng:p.lng})});markers.current.push(item)}
+    if(current.destination){
+     const placeIcon=current.place?getPlaceCategoryIcon(current.place):undefined;
+     const item=marker(current.destination,`destination-drag-marker ${placeIcon?'with-icon':''}`,current.place?.name?`Destino: ${current.place.name}`:'Destino: arrastra para cambiarlo',!!current.onDestinationChange);
+     if(placeIcon){const span=item.getElement().querySelector('span');if(span)span.textContent=placeIcon}
+     item.on('dragend',()=>{const p=item.getLngLat();latest.current.onDestinationChange?.({lat:p.lat,lng:p.lng})});
+     markers.current.push(item);
+    }
     if(current.access)markers.current.push(marker(current.access,'place-access-marker','Fin de ruta en calle; acceso al lugar estimado'));
     current.stops?.forEach(stop=>{
      const item=marker(stop.coordinates,`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,stop.name);item.getElement().style.background=current.option?.legs[stop.legIndex]?.route?.color??'#2563eb';

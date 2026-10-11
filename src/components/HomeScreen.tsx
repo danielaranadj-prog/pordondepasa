@@ -1,5 +1,5 @@
 import type {TransitStop} from '../lib/navigation';
-import type {Place} from '../lib/places';
+import {type Place, getPlaceCategoryIcon, getPlaceCategoryLabel} from '../lib/places';
 import '../styles/home.css';
 type Props={query:string;ready:boolean;stops:TransitStop[];places:Place[];message:string;onQuery:(value:string)=>void;onChoose:(stop:TransitStop)=>void;onChoosePlace:(place:Place)=>void;onSearch:()=>void;onMap:()=>void};
 function Icon({kind}:{kind:'search'|'pin'|'bus'|'arrow'}){
@@ -14,7 +14,7 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
    <header className="home-brand"><div><Icon kind="bus"/><h1>PorDóndePasa</h1></div><small> Tu transporte público</small></header>
    <form className="home-search" aria-label="Buscar destino" onSubmit={event=>{event.preventDefault();if(ready)onSearch()}}>
     <label className="home-field"><Icon kind="search"/><input aria-label="¿A dónde vas hoy?" placeholder="¿A dónde vas hoy?" value={query} autoComplete="off" onChange={event=>onQuery(event.target.value)} /></label>
-    {!!(places.length||stops.length)&&<div className="home-suggestions" aria-label="Sugerencias de destino">{places.map(place=><button type="button" key={`place:${place.id}`} onClick={()=>onChoosePlace(place)}><strong>{place.name}</strong><small>{place.neighborhood||place.municipality||'Lugar'}{place.status!=='verificado'?' · Por verificar':''}</small></button>)}{stops.map(stop=><button type="button" key={`stop:${stop.id}`} onClick={()=>onChoose(stop)}><strong>{stop.name}</strong><small>Parada · Tepic y Xalisco</small></button>)}</div>}
+    {!!(places.length||stops.length)&&<div className="home-suggestions" aria-label="Sugerencias de destino">{places.map(place=><button type="button" key={`place:${place.id}`} onClick={()=>onChoosePlace(place)}><span className="home-suggestion-icon" aria-hidden="true">{getPlaceCategoryIcon(place)}</span><div className="home-suggestion-text"><strong>{place.name}</strong><small>{place.neighborhood||place.municipality||getPlaceCategoryLabel(place.category)}{place.status!=='verificado'?' · Por verificar':''}</small></div></button>)}{stops.map(stop=><button type="button" key={`stop:${stop.id}`} onClick={()=>onChoose(stop)}><span className="home-suggestion-icon" aria-hidden="true">🚏</span><div className="home-suggestion-text"><strong>{stop.name}</strong><small>Parada · Tepic y Xalisco</small></div></button>)}</div>}
     {!ready&&query.trim().length>=2&&!stops.length&&!places.length&&<p className="home-message">Sin coincidencias. Elige tu destino en el mapa.</p>}
     <button className="home-submit" disabled={!ready} type="submit">Ver rutas<Icon kind="arrow"/></button>
     <button className="home-map" type="button" onClick={onMap}><Icon kind="pin"/>Elegir en el mapa</button>

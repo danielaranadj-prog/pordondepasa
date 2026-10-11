@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import type { Point } from '../lib/router';
-import { searchPlaces, type Place } from '../lib/places';
+import { searchPlaces, getPlaceCategoryIcon, getPlaceCategoryLabel, type Place } from '../lib/places';
 import type { TransitStop as Stop } from '../lib/navigation';
 
 const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -279,10 +279,10 @@ export default function DynamicIsland({
                   className="di-result-item"
                   onClick={() => handleSelectPlace(place)}
                 >
-                  <span className="di-item-icon">🏛️</span>
+                  <span className="di-item-icon">{getPlaceCategoryIcon(place)}</span>
                   <div className="di-item-text">
                     <strong>{place.name}</strong>
-                    <small>{place.neighborhood || place.municipality || 'Lugar'}{place.status !== 'verificado' ? ' · Por verificar' : ''}</small>
+                    <small>{place.neighborhood || place.municipality || getPlaceCategoryLabel(place.category)}{place.status !== 'verificado' ? ' · Por verificar' : ''}</small>
                   </div>
                 </button>
               ))}

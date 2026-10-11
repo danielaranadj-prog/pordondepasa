@@ -22,7 +22,25 @@
 .maplibregl-marker.tracking-arrow.gps-stale{opacity:.5}
 @media(max-height:600px){.trip-screen.navigation-screen .navigation-banner p{display:none}.trip-screen.navigation-screen .navigation-panel .sheet-content{max-height:18dvh}.navigation-panel .walking-safety{display:none}.trip-screen.navigation-screen .apple-map-controls{top:95px}}
 
-/* ── Premium Floating Navigation Dock (Dynamic Island) ── */
+/* Compact navigation sheet, shared with the device's light/dark appearance. */
+.navigation-screen {
+  --dock-surface: rgba(255,255,255,.97);
+  --dock-text: #171b22;
+  --dock-muted: #647184;
+  --dock-line: rgba(19,31,46,.12);
+  --dock-soft: #f3f5f8;
+  --dock-shadow: 0 14px 36px rgba(20,30,45,.18);
+}
+@media (prefers-color-scheme: dark) {
+  .navigation-screen {
+    --dock-surface: rgba(26,28,32,.96);
+    --dock-text: #f7f8fa;
+    --dock-muted: #aab3c1;
+    --dock-line: rgba(255,255,255,.13);
+    --dock-soft: #292d33;
+    --dock-shadow: 0 14px 36px rgba(0,0,0,.36);
+  }
+}
 .nav-floating-dock {
   position: absolute;
   bottom: max(20px, calc(env(safe-area-inset-bottom) + 16px));
@@ -31,45 +49,50 @@
   margin: 0 auto;
   max-width: 420px;
   z-index: 500;
-  background: rgba(13, 17, 23, 0.94);
+  background: var(--dock-surface);
+  color: var(--dock-text);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 28px;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  padding: 14px 16px;
+  border: 1px solid var(--dock-line);
+  border-radius: 24px;
+  box-shadow: var(--dock-shadow);
+  padding: 12px 14px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
 .nav-floating-dock.is-expanded {
   border-radius: 24px;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.14);
+  box-shadow: var(--dock-shadow);
 }
 
 .navigation-screen .leaflet-bottom {
   bottom: max(112px, calc(env(safe-area-inset-bottom) + 104px)) !important;
 }
 
-/* Row 1: Action CTA on Left | Time & Distance on Right */
 .nav-dock-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
+.nav-dock-route {display:flex;align-items:center;gap:8px;min-width:0;color:var(--dock-text);font-size:13px;font-weight:700}
+.nav-dock-route span:last-child {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-dock-route-dot {width:9px;height:9px;border-radius:50%;background:#2563eb;flex:none}
 
 .nav-dock-cta {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: #2563eb;
   color: #fff;
   border: 0;
-  border-radius: 999px;
+  border-radius: 14px;
   padding: 0 20px;
-  height: 48px;
+  min-height: 48px;
+  width: 100%;
+  justify-content: center;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.2px;
@@ -77,7 +100,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  box-shadow: none;
   transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -86,8 +109,7 @@
 }
 
 .nav-dock-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55);
+  background: #1d4ed8;
 }
 
 .nav-dock-cta:active {
@@ -95,10 +117,8 @@
 }
 
 .nav-dock-cta-arrow {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,9 +144,9 @@
 }
 
 .nav-dock-minutes {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
-  color: #fff;
+  color: var(--dock-text);
   letter-spacing: -0.6px;
   line-height: 1;
 }
@@ -134,13 +154,13 @@
 .nav-dock-unit {
   font-size: 13.5px;
   font-weight: 600;
-  color: #34d399;
+  color: #2563eb;
   letter-spacing: -0.2px;
 }
 
 .nav-dock-distance {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: var(--dock-muted);
   font-weight: 550;
   letter-spacing: 0.1px;
   margin-top: 3px;
@@ -153,12 +173,13 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--dock-line);
+  border-radius: 0;
   min-height: 44px;
-  padding: 10px 14px;
-  color: #cbd5e1;
+  padding: 7px 2px 0;
+  color: var(--dock-muted);
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 600;
@@ -168,8 +189,7 @@
 }
 
 .nav-dock-toggle-bar:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: #fff;
+  color: var(--dock-text);
 }
 
 .nav-dock-toggle-left {
@@ -187,8 +207,8 @@
 }
 
 .nav-dock-toggle-count {
-  background: rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
+  background: var(--dock-soft);
+  color: var(--dock-muted);
   font-size: 11px;
   font-weight: 700;
   padding: 1px 7px;
@@ -197,7 +217,7 @@
 
 .nav-dock-toggle-caret {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--dock-muted);
   font-weight: 700;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -232,9 +252,8 @@
 
 /* Dynamic Island Upwards Expanding Stops Drawer */
 .nav-dock-stops-drawer {
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0;
+  padding-top: 0;
   animation: island-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -244,11 +263,11 @@
 }
 
 .nav-dock-stops-list {
-  max-height: min(40dvh, 290px);
+  max-height: min(28dvh, 240px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   padding-right: 2px;
   overscroll-behavior: contain;
 }
@@ -258,7 +277,7 @@
 }
 
 .nav-dock-stops-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--dock-line);
   border-radius: 4px;
 }
 
@@ -268,18 +287,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 44px;
-  padding: 9px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  min-height: 40px;
+  padding: 7px 2px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--dock-line);
   transition: background 0.15s, border-color 0.15s;
   box-sizing: border-box;
 }
 
 .nav-dock-stop-item.is-next {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.3);
+  background: transparent;
 }
 
 .nav-dock-stop-left {
@@ -295,7 +314,7 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 6px currentColor;
+  box-shadow: none;
 }
 
 .nav-dock-stop-info {
@@ -309,7 +328,7 @@
 .nav-dock-stop-name {
   font-size: 12px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--dock-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -328,20 +347,19 @@
 }
 
 .nav-dock-stop-distance {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--dock-muted);
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 /* Final Destination Item */
 .nav-dock-stop-item.nav-dock-stop-destination {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.25);
-  margin-top: 4px;
-  min-height: 48px;
-  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  min-height: 44px;
+  padding: 8px 2px;
 }
 
 .nav-dock-stop-icon-dest {
@@ -353,7 +371,7 @@
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #34d399;
+  color: #2563eb;
   letter-spacing: 0.3px;
   display: block;
   line-height: 1.1;
@@ -362,7 +380,7 @@
 .nav-dock-stop-destination .nav-dock-stop-name {
   font-size: 12.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--dock-text);
 }
 
 .nav-dock-stop-destination .nav-dock-stop-distance {

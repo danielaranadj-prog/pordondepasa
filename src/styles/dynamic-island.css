@@ -626,3 +626,47 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   line-height: 1.3;
 }
+
+/* Islands follow the system theme across search, route selection and navigation. */
+:root {
+  --di-surface: rgba(255,255,255,.97);
+  --di-text: #171b22;
+  --di-muted: #687384;
+  --di-soft: #f3f5f8;
+  --di-border: rgba(19,31,46,.12);
+  --di-shadow: 0 12px 32px rgba(20,30,45,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --di-surface: rgba(25,27,31,.97);
+    --di-text: #f7f8fa;
+    --di-muted: #abb5c3;
+    --di-soft: #2b2f35;
+    --di-border: rgba(255,255,255,.14);
+    --di-shadow: 0 14px 36px rgba(0,0,0,.38);
+  }
+}
+.dynamic-island {background:var(--di-surface);color:var(--di-text);border:1px solid var(--di-border);box-shadow:var(--di-shadow)}
+.di-back,.di-ctrl-btn,.di-close-btn,.di-clear-btn {background:var(--di-soft);border:1px solid var(--di-border);color:var(--di-text)}
+.di-back:hover,.di-ctrl-btn:hover,.di-close-btn:hover,.di-action-btn:hover {background:var(--di-soft);color:var(--di-text)}
+.di-row-btn,.di-result-item,.di-search-title,.di-nav-title {color:var(--di-text)}
+.di-row-btn:hover,.di-result-item:hover {background:var(--di-soft)}
+.di-row-divider {background:var(--di-border)}
+.di-row-tag,.di-arrow,.di-item-text small,.di-no-results,.di-search-input::placeholder {color:var(--di-muted)}
+.di-row-value,.di-item-text strong,.di-feedback-content span,.di-nav-desc {color:var(--di-text)}
+.di-dot--origin {background:var(--di-text)}
+.di-search-input,.di-action-btn {background:var(--di-soft);border-color:var(--di-border);color:var(--di-text)}
+.di-search-input:focus {background:var(--di-soft)}
+.di-feedback-banner {color:var(--di-text)}
+.di-nav-badge--step {background:var(--di-soft);color:var(--di-muted)}
+.di-nav-badge--dist {background:rgba(37,99,235,.1);color:#1d4ed8;border-color:rgba(37,99,235,.16)}
+.di-nav-icon {color:#2563eb;background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.16)}
+@media (prefers-color-scheme: dark) {
+  .di-nav-badge--dist {color:#8ab6ff}
+  .di-nav-icon {color:#8ab6ff}
+  .di-row-value--dest {color:#ffad73}
+}
+@media (prefers-color-scheme: light) {
+  .di-row-value--dest {color:#b65114}
+  .di-feedback-content strong {color:#087e58}
+}

@@ -92,7 +92,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
  const maneuver=leg.kind==='walk'&&trusted?nextManeuver(line,accepted.along):undefined;
  const totalMeters=remaining+option.legs.slice(step+1).reduce((sum,l)=>sum+l.meters,0);
  const totalMinutes=remainingTripMinutes(option,step,remaining);
- const action=arrived?'Finalizar viaje':step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya estoy en la unidad':'Continuar';
+ const action=arrived?'Finalizar viaje':step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya abordé la unidad':'Continuar';
  const currentBusRoute=leg.kind==='bus'?leg.route:undefined;
  const nextBusRoute=option.legs[step+1]?.kind==='bus'?option.legs[step+1]?.route:undefined;
  function formatNavInstruction():string{
@@ -146,7 +146,8 @@ export default function FollowRoute({option,stops,origin,destination,originName,
   return `${walkPhrase} hasta llegar a ${targetPlace}`;
  }
  const instructionText=formatNavInstruction();
- const currentPoint=live??origin;
+ const routeForDock=currentBusRoute??nextBusRoute;
+ const dockRouteLabel=routeForDock?(/^(ruta|camión)\b/i.test(routeForDock.name)?routeForDock.name:`Ruta ${routeForDock.name}`):'A pie';
  const displayStops=useMemo(()=>{
   if(routeStops.length>0)return routeStops;
   const synthetic:Array<{id:string;name:string;coordinates:Point;legIndex:number;color?:string}>=[];
@@ -191,23 +192,11 @@ export default function FollowRoute({option,stops,origin,destination,originName,
     </h1>
     <p className="di-nav-desc">{instructionText}</p>
    </div>
-   {!arrived&&(
-    <button className="di-nav-advance-btn" onClick={advance} aria-label={action} title={action}>
-     {step===option.legs.length-1?'✓':'→'}
-    </button>
-   )}
   </section>
   {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
   <footer className={`nav-floating-dock map-sheet ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
    <div className="nav-dock-top-row">
-    <button
-     className="nav-dock-cta"
-     onClick={arrived?onExit:advance}
-     aria-label={action}
-    >
-     <span className="nav-dock-cta-text">{action}</span>
-     <span className="nav-dock-cta-arrow" aria-hidden="true">{arrived?'✓':'→'}</span>
-    </button>
+    <div className="nav-dock-route"><span className="nav-dock-route-dot" style={routeForDock?{backgroundColor:routeForDock.color}:undefined}/><span>{dockRouteLabel}</span></div>
     <div className="nav-dock-metrics">
      <div className="nav-dock-time">
       <span className="nav-dock-minutes">{arrived?'✓':`${totalMinutes}`}</span>
@@ -218,6 +207,10 @@ export default function FollowRoute({option,stops,origin,destination,originName,
      </span>
     </div>
    </div>
+   <button className="nav-dock-cta" onClick={arrived?onExit:advance} aria-label={action}>
+    <span className="nav-dock-cta-text">{action}</span>
+    <span className="nav-dock-cta-arrow" aria-hidden="true">{arrived?'✓':'→'}</span>
+   </button>
    <button
     type="button"
     className="nav-dock-toggle-bar"
@@ -227,7 +220,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
    >
     <div className="nav-dock-toggle-left">
      <span className="nav-dock-toggle-icon">🚏</span>
-     <span className="nav-dock-toggle-text">Paradas en el recorrido</span>
+     <span className="nav-dock-toggle-text">{routeStops.length?'Paradas de referencia':'Puntos del viaje'}</span>
      {displayStops.length>0&&(
       <span className="nav-dock-toggle-count">{displayStops.length}</span>
      )}
@@ -244,9 +237,11 @@ export default function FollowRoute({option,stops,origin,destination,originName,
     <div className="nav-dock-stops-drawer">
      <div className="nav-dock-stops-list">
       {displayStops.map((s,idx)=>{
-       const dist=meters(currentPoint,s.coordinates);
        const stopColor=('legIndex' in s?option.legs[s.legIndex]?.route?.color:undefined)??'#3b82f6';
        const isNext=trusted&&nextStop&&nextStop.id===s.id;
+       const stopLeg=option.legs[s.legIndex];
+       const stopAlong='along' in s?s.along:stopLeg?projectProgress(s.coordinates,stopLeg.geometry??[stopLeg.from,stopLeg.to]).along:undefined;
+       const dist=stopAlong===undefined||s.legIndex<step?undefined:s.legIndex===step?Math.max(0,stopAlong-(trusted?accepted.along:0)):remaining+option.legs.slice(step+1,s.legIndex).reduce((sum,item)=>sum+item.meters,0)+stopAlong;
        return (
         <div key={`${'legIndex' in s?s.legIndex:idx}-${s.id}`} className={`nav-dock-stop-item ${isNext?'is-next':''}`}>
          <div className="nav-dock-stop-left">
@@ -256,7 +251,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
            {isNext&&<span className="nav-dock-next-badge">Próxima</span>}
           </div>
          </div>
-         <span className="nav-dock-stop-distance">{distanceLabel(dist)}</span>
+         {dist!==undefined&&<span className="nav-dock-stop-distance">{distanceLabel(dist)} aprox.</span>}
         </div>
        );
       })}
@@ -264,11 +259,10 @@ export default function FollowRoute({option,stops,origin,destination,originName,
        <div className="nav-dock-stop-left">
         <span className="nav-dock-stop-icon-dest">🏁</span>
         <div className="nav-dock-stop-info">
-         <span className="nav-dock-stop-label-dest">Última parada ó destino</span>
+         <span className="nav-dock-stop-label-dest">Destino</span>
          <strong className="nav-dock-stop-name">{destinationName||'Destino final'}</strong>
         </div>
        </div>
-       <span className="nav-dock-stop-distance">{distanceLabel(meters(currentPoint,destination))}</span>
       </div>
      </div>
     </div>

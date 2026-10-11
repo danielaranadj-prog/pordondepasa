@@ -6,17 +6,18 @@ import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import {getPlaceCategoryIcon, type Place} from '../lib/places';
-import {getActivePinAds, type AdCampaign} from '../lib/ads';
+import {getVisiblePinAds, type AdCampaign} from '../lib/ads';
 import '../styles/vector-map.css';
-type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number;ads?:AdCampaign[]};
+type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;adOption?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;onAdDestinationChange?:(point:Point,name:string)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number;ads?:AdCampaign[]};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
 export default function StreetMap(props:Props){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
  latest.current=props;
- const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{});
+ const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{}),updateAds=useRef<()=>void>(()=>{});
  const [ready,setReady]=useState(false),[error,setError]=useState('');
  function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');const p=visibleMapPadding(rect,main?.querySelector('.dynamic-island, .navigation-top, .map-top-minimal')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect());if(latest.current.navigation)p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;return p}
  useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;let frame=0,lastFrame=0,initialized=false;
+  const adTimer=window.setInterval(()=>updateAds.current(),60000);
   let visual:Point|undefined,visualHeading=0;
   let cameraPadding=padding();
   const theme=window.matchMedia('(prefers-color-scheme: dark)'),style=()=>`https://tiles.openfreemap.org/styles/${theme.matches?'dark':'positron'}`;
@@ -29,7 +30,6 @@ export default function StreetMap(props:Props){
    instance.touchZoomRotate.disableRotation();
    instance.addControl(new M.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org/">OpenFreeMap</a>'}),'bottom-right');
    theme.addEventListener('change',change);
-   instance.on('click',event=>latest.current.onPick?.({lat:event.lngLat.lat,lng:event.lngLat.lng}));
    instance.on('dragstart',event=>{if(event.originalEvent)latest.current.onPan?.()});
    instance.on('zoomstart',event=>{if(event.originalEvent)latest.current.onPan?.()});
    instance.on('error',()=>{if(!disposed)setError('No se pudieron cargar algunas calles. Revisa tu conexión.')});
@@ -73,6 +73,7 @@ export default function StreetMap(props:Props){
     }
     draw.current();
     drawClosure();
+    updateAds.current();
    });
    function marker(point:Point,className:string,label:string,draggable=false){
     const element=document.createElement('div');element.className=className;element.setAttribute('aria-label',label);element.title=label;element.appendChild(document.createElement('span'));element.addEventListener('click',event=>event.stopPropagation());
@@ -93,47 +94,39 @@ export default function StreetMap(props:Props){
      const item=marker(stop.coordinates,`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,stop.name);item.getElement().style.background=current.option?.legs[stop.legIndex]?.route?.color??'#2563eb';
      const content=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('small');name.textContent=stop.name;detail.textContent=stop.type==='oficial'?'Parada oficial':stop.type==='base'?'Base':'Bajada habitual';content.append(name,document.createElement('br'),detail);item.setPopup(new M.Popup({offset:12}).setDOMContent(content));markers.current.push(item);
     });
-    getActivePinAds(current.ads).forEach(ad=>{
-     if(!ad.coordinates)return;
-     const pinEl=document.createElement('div');
-     pinEl.className='golden-pin-marker';
-     pinEl.setAttribute('aria-label',`Patrocinado: ${ad.title}`);
-     pinEl.title=`${ad.title} (Patrocinador)`;
-     const pulse=document.createElement('div');pulse.className='golden-pin-pulse';
-     const body=document.createElement('div');body.className='golden-pin-body';
-     const iconSpan=document.createElement('span');iconSpan.className='golden-pin-icon';iconSpan.textContent=ad.icon||'⭐';
-     const badgeSpan=document.createElement('span');badgeSpan.className='golden-pin-badge';badgeSpan.textContent='★';
-     body.append(iconSpan,badgeSpan);
-     const pointer=document.createElement('div');pointer.className='golden-pin-pointer';
-     pinEl.append(pulse,body,pointer);
-     pinEl.addEventListener('click',event=>event.stopPropagation());
-
-     const popupEl=document.createElement('div');popupEl.className='golden-pin-popup';
-     const header=document.createElement('div');header.className='golden-pin-header';
-     const tag=document.createElement('span');tag.className='golden-pin-tag';tag.textContent='★ Patrocinado';
-     header.appendChild(tag);
-     if(ad.promoText){const discount=document.createElement('span');discount.className='golden-pin-discount';discount.textContent=ad.promoText;header.appendChild(discount)}
-     const titleRow=document.createElement('div');titleRow.className='golden-pin-title-row';
-     const emoji=document.createElement('span');emoji.textContent=ad.icon||'📍';
-     const titleText=document.createElement('strong');titleText.textContent=ad.title;
-     titleRow.append(emoji,titleText);
-     popupEl.append(header,titleRow);
-     if(ad.description){const desc=document.createElement('p');desc.className='golden-pin-desc';desc.textContent=ad.description;popupEl.appendChild(desc)}
-     const actions=document.createElement('div');actions.className='golden-pin-actions';
-     const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent=ad.callToAction||'Cómo llegar aquí →';
-     cta.addEventListener('click',event=>{
-      event.stopPropagation();
-      popup.remove();
-      if(ad.coordinates)latest.current.onDestinationChange?.(ad.coordinates);
-     });
-     actions.appendChild(cta);
-     popupEl.appendChild(actions);
-
-     const popup=new M.Popup({offset:[0,-34],closeButton:true,closeOnClick:true,className:'golden-pin-popup-wrapper'}).setDOMContent(popupEl);
-     const item=new M.Marker({element:pinEl,anchor:'bottom'}).setLngLat(coord(ad.coordinates)).setPopup(popup).addTo(instance!);
-     markers.current.push(item);
-    });
    };
+   updateAds.current=()=>{
+    if(!instance?.getStyle()?.layers)return;
+    const current=latest.current;
+    const visible=getVisiblePinAds(current.ads,current.adOption??current.option,current.stops);
+    const data={type:'FeatureCollection' as const,features:visible.map(ad=>({type:'Feature' as const,geometry:{type:'Point' as const,coordinates:coord(ad.coordinates!)},properties:{id:ad.id,title:ad.title}}))};
+    const source=instance.getSource('sponsor-pins') as GeoJSONSource|undefined;
+    if(source){source.setData(data);return}
+    instance.addSource('sponsor-pins',{type:'geojson',data});
+    instance.addLayer({id:'sponsor-pin-halo',type:'circle',source:'sponsor-pins',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,8,16,18],'circle-color':'#b45309','circle-opacity':.15,'circle-blur':.45}});
+    instance.addLayer({id:'sponsor-pin-point',type:'circle',source:'sponsor-pins',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,6,16,12],'circle-color':'#b77908','circle-stroke-color':'#fff','circle-stroke-width':2.5}});
+    instance.addLayer({id:'sponsor-pin-core',type:'circle',source:'sponsor-pins',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,2,16,4],'circle-color':'#fff'}});
+   };
+   function openSponsor(ad:AdCampaign){
+    if(!ad.coordinates||!instance)return;
+    const popupEl=document.createElement('div');popupEl.className='golden-pin-popup';
+    const tag=document.createElement('span');tag.className='golden-pin-tag';tag.textContent='Patrocinado';popupEl.appendChild(tag);
+    const titleRow=document.createElement('div');titleRow.className='golden-pin-title-row';
+    const emoji=document.createElement('span');emoji.textContent=ad.icon||'📍';
+    const titleText=document.createElement('strong');titleText.textContent=ad.title;titleRow.append(emoji,titleText);popupEl.appendChild(titleRow);
+    if(ad.description){const desc=document.createElement('p');desc.className='golden-pin-desc';desc.textContent=ad.description;popupEl.appendChild(desc)}
+    if(ad.promoText){const promo=document.createElement('p');promo.className='golden-pin-discount';promo.textContent=ad.promoText;popupEl.appendChild(promo)}
+    const action=latest.current.onAdDestinationChange??(latest.current.onDestinationChange?((point:Point)=>latest.current.onDestinationChange?.(point)):undefined);
+    if(action){const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent='Crear ruta a este negocio →';cta.addEventListener('click',event=>{event.stopPropagation();popup.remove();action(ad.coordinates!,ad.title)});popupEl.appendChild(cta)}
+    const popup=new M.Popup({offset:18,closeButton:true,className:'golden-pin-popup-wrapper'}).setLngLat(coord(ad.coordinates)).setDOMContent(popupEl).addTo(instance);
+   }
+   instance.on('click',event=>{
+    if(!instance)return;
+    const hit=instance.getLayer('sponsor-pin-point')?instance.queryRenderedFeatures(event.point,{layers:['sponsor-pin-point']})[0]:undefined;
+    const ad=hit&&getVisiblePinAds(latest.current.ads,latest.current.adOption??latest.current.option,latest.current.stops).find(item=>item.id===hit.properties?.id);
+    if(ad){openSponsor(ad);return}
+    latest.current.onPick?.({lat:event.lngLat.lat,lng:event.lngLat.lng});
+   });
    camera.current=()=>{
     if(!instance||!container.current)return;const current=latest.current;cameraPadding=padding();
     if(current.navigation){if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}}
@@ -142,7 +135,7 @@ export default function StreetMap(props:Props){
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
    const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.dynamic-island']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
-   instance.on('load',()=>{if(disposed)return;draw.current();drawClosure();updateMarkers.current();camera.current();setReady(true)});
+   instance.on('load',()=>{if(disposed)return;draw.current();drawClosure();updateMarkers.current();updateAds.current();camera.current();setReady(true)});
    function animate(now:number){
     if(disposed||!instance)return;
     const dt=Math.min(64,now-lastFrame||16);lastFrame=now;
@@ -161,10 +154,11 @@ export default function StreetMap(props:Props){
    }
    frame=requestAnimationFrame(animate);
   }).catch(cause=>{console.error('No se pudo iniciar MapLibre',cause);if(!disposed)setError('No se pudo abrir el mapa. Revisa tu conexión o la compatibilidad WebGL del dispositivo.')});
-  return()=>{disposed=true;cancelAnimationFrame(frame);theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
+  return()=>{disposed=true;window.clearInterval(adTimer);cancelAnimationFrame(frame);theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
  },[props.navigation]);
  useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.navigation,props.activeLeg,props.live,props.accuracy]);
- useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.access,props.stops,!!props.onDestinationChange,props.navigation,!!props.live,props.ads]);
+ useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.access,props.stops,!!props.onDestinationChange,props.navigation,!!props.live]);
+ useEffect(()=>{if(ready)updateAds.current()},[ready,props.ads,props.navigation?props.adOption:props.option,props.stops]);
  useEffect(()=>{if(!ready||!map.current)return;let cancelled=false;
   import('maplibre-gl').then(M=>{if(cancelled||!map.current)return;const {live,heading,navigation,follow}=latest.current;
    if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.getElement().classList.toggle('directional',heading!==undefined);liveMarker.current.getElement().title=latest.current.stale?'Ubicación sin actualizar':`Precisión aproximada: ${Math.round(latest.current.accuracy??0)} m`}

@@ -141,6 +141,11 @@ export default function TransitApp(){
  }
  function plan(){if(destination)void calculate(chosenPlace?.access??destination)}
  function moveDestination(point:Point,name='Destino ajustado en el mapa'){choose(point,name);setPickDestination(false);setPickOrigin(false);void calculate(point);}
+ function planSponsorTrip(point:Point,name:string,from:Point){
+  request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=from;originAccess.current=undefined;originPlace.current=undefined;
+  setOrigin(from);setOriginLabel('Punto de partida actual');
+  moveDestination(point,name);
+ }
  function swapEndpoints(){
   if(!destination||!originConfirmed.current)return;
   const previousOrigin=originValue.current,previousDestination=destination,previousOriginPlace=originPlace.current;
@@ -152,10 +157,10 @@ export default function TransitApp(){
   void calculate(previousOriginPlace?.access??previousOrigin);
  }
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();setPickOrigin(false);setPickDestination(false)}
- if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')}/>;
+ if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen"><div className="welcome-brand"><svg viewBox="0 0 80 80" aria-hidden="true"><path d="M20 60V26a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v34M20 40h40M28 53h1m22 0h1M28 62v4m24-4v4" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/><path d="M34 10h12" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg><h1>PorDóndePasa</h1><p>Muévete por Tepic.</p><AnimatedTagline/></div><div className="welcome-action"><div className="welcome-progress" aria-hidden="true"><span/></div><small>Tepic · Xalisco</small></div></main>;
  if(view==='trip')return <main className="trip-screen">
-  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} onDestinationChange={moveDestination} onPick={pickOrigin?point=>{request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;setOrigin(point);setOriginLabel('Origen seleccionado');setPickOrigin(false);setOptions([]);setBusy(false);setMessage('');if(destination)void calculate(chosenPlace?.access??destination);}:pickDestination||(!options.length&&!busy)?moveDestination:undefined}/>
+  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} onDestinationChange={moveDestination} onAdDestinationChange={moveDestination} onPick={pickOrigin?point=>{request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;setOrigin(point);setOriginLabel('Origen seleccionado');setPickOrigin(false);setOptions([]);setBusy(false);setMessage('');if(destination)void calculate(chosenPlace?.access??destination);}:pickDestination||(!options.length&&!busy)?moveDestination:undefined}/>
   <DynamicIsland
    originLabel={originLabel}
    destinationLabel={query}

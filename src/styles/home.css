@@ -58,13 +58,13 @@
   align-items: center;
   flex: 1;
   min-width: 0;
-  height: 34px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--ui-line, #e5e7eb);
   border-radius: 10px;
   background: var(--ui-soft, #f3f4f6);
 }
-.pdp-home input {font: inherit;font-size: 13px;text-align: center;color: var(--ui-text, #171717);background: none;border: 0;outline: none;width: 100%;min-width: 0;padding: 0}
+.pdp-home input {font: inherit;font-size: 16px;text-align: center;color: var(--ui-text, #171717);background: none;border: 0;outline: none;width: 100%;min-width: 0;padding: 0}
 .pdp-home input::placeholder {color: var(--ui-muted, #737373);opacity: 1}
 .pdp-home .home-field:focus-within {outline: 2px solid var(--glass-blue, #2563eb);outline-offset: 2px}
 .pdp-home button {font: inherit;cursor: pointer}
@@ -73,14 +73,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 34px;
+  height: 38px;
   min-width: 86px;
   padding: 0 10px;
   border: 0;
   border-radius: 10px;
   background: var(--ui-action, #171717);
   color: var(--ui-action-text, #fff);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
 }

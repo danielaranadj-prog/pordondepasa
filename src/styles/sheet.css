@@ -26,7 +26,7 @@
 .trip-screen .map-sheet .uber-link{min-height:36px}
 .trip-screen .map-top-minimal{display:block;max-width:none;pointer-events:none}
 .map-top-minimal .back-button{pointer-events:auto}
-.trip-screen .map-sheet{left:max(18px,calc(env(safe-area-inset-left) + 16px));right:max(18px,calc(env(safe-area-inset-right) + 16px));bottom:max(20px,calc(env(safe-area-inset-bottom) + 16px));padding:0;overflow:hidden;border-radius:30px;max-width:440px;margin:auto;pointer-events:auto}
+.trip-screen:not(.navigation-screen) .map-sheet{left:max(18px,calc(env(safe-area-inset-left) + 16px));right:max(18px,calc(env(safe-area-inset-right) + 16px));bottom:max(20px,calc(env(safe-area-inset-bottom) + 16px));padding:0;overflow:hidden;border-radius:30px;max-width:440px;margin:auto;pointer-events:auto}
 .trip-screen .map-sheet::before{display:none}
 .sheet-handle{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:100%;border:0;background:none;color:var(--ui-text);min-height:64px;padding:20px 20px 10px;position:relative;font:inherit;font-size:18px;font-weight:650;letter-spacing:-.4px;touch-action:none;cursor:pointer}
 .sheet-grip{position:absolute;top:8px;left:calc(50% - 20px);width:40px;height:4px;border-radius:4px;background:var(--ui-muted);opacity:.4}

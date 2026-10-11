@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajuste de Altura e Isla de Navegación · PorDóndePasa</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      background: #0b0f17;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+
+    .phone-mockup {
+      width: 380px;
+      height: 760px;
+      border-radius: 46px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7), 0 0 0 10px #1e2532, 0 0 0 12px #2d3748;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    /* Map Background simulator */
+    .map-bg-light {
+      background: radial-gradient(circle at 40% 30%, #e2e8f0 0%, #cbd5e1 60%, #94a3b8 100%);
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .map-bg-dark {
+      background: radial-gradient(circle at 40% 30%, #1e293b 0%, #0f172a 60%, #020617 100%);
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-size: 40px 40px;
+      opacity: 0.25;
+      pointer-events: none;
+    }
+    .map-bg-light .map-grid {
+      background-image: linear-gradient(to right, #94a3b8 1px, transparent 1px), linear-gradient(to bottom, #94a3b8 1px, transparent 1px);
+    }
+    .map-bg-dark .map-grid {
+      background-image: linear-gradient(to right, #334155 1px, transparent 1px), linear-gradient(to bottom, #334155 1px, transparent 1px);
+    }
+
+    .map-route-line {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Safe-zone overlays */
+    .safe-zone-overlay {
+      position: absolute;
+      inset: 0;
+      border: 2px dashed rgba(239, 68, 68, 0.4);
+      margin: 16px;
+      border-radius: 36px;
+      pointer-events: none;
+      z-index: 99;
+      display: none;
+    }
+    .show-safezones .safe-zone-overlay {
+      display: block;
+    }
+
+    /* Top Card Specifications */
+    .nav-top-card {
+      position: relative;
+      z-index: 10;
+      margin: 20px 16px 0;
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-sizing: border-box;
+      transition: all 0.25s ease;
+    }
+    .theme-light .nav-top-card {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 14px 38px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.04);
+      color: #0f172a;
+    }
+    .theme-dark .nav-top-card {
+      background: rgba(21, 25, 33, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+    }
+
+    .nav-top-icon-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .theme-light .nav-top-icon-circle {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .theme-dark .nav-top-icon-circle {
+      background: #242c38;
+      color: #ffffff;
+    }
+
+    .nav-top-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .nav-top-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .nav-top-dist-light {
+      font-weight: 800;
+      font-size: 13px;
+      color: #0284c7;
+      letter-spacing: -0.2px;
+    }
+    .nav-top-dist-dark {
+      font-weight: 800;
+      font-size: 13px;
+      color: #38bdf8;
+      letter-spacing: -0.2px;
+    }
+    .nav-top-dot {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .nav-top-step {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .nav-top-title {
+      font-size: 15.5px;
+      font-weight: 750;
+      line-height: 1.25;
+      letter-spacing: -0.3px;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .theme-light .nav-top-title { color: #0f172a; }
+    .theme-dark .nav-top-title { color: #ffffff; }
+
+    .nav-top-subtitle {
+      font-size: 12px;
+      line-height: 1.35;
+      margin: 2px 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .theme-light .nav-top-subtitle { color: #64748b; }
+    .theme-dark .nav-top-subtitle { color: #94a3b8; }
+
+    .nav-top-back {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .theme-light .nav-top-back {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .theme-dark .nav-top-back {
+      background: #242c38;
+      color: #94a3b8;
+    }
+
+    /* =======================================================
+       BOTTOM BAR: UNA SOLA LÍNEA (SQUIRCLE / CUADRADOS)
+       ======================================================= */
+    .nav-bottom-sheet {
+      position: relative;
+      z-index: 10;
+      margin-left: 16px;
+      margin-right: 16px;
+      margin-bottom: 20px; /* Dinámico mediante el slider */
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-radius: 16px;
+      padding: 8px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: margin-bottom 0.15s ease, border-radius 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+    }
+    .theme-light .nav-bottom-sheet {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 14px 38px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.04);
+      color: #0f172a;
+    }
+    .theme-dark .nav-bottom-sheet {
+      background: rgba(21, 25, 33, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+    }
+
+    .nav-bottom-sheet.is-expanded {
+      border-radius: 20px;
+      padding: 8px 8px 16px;
+    }
+
+    .nav-single-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 1. Botón de Ruta: Squircle 12px, solo nombre/número, alto 52px */
+    .nav-btn-route {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 52px;
+      min-height: 52px;
+      border-radius: 12px;
+      padding: 0 16px;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.28);
+      transition: transform 0.15s ease;
+      outline: none;
+    }
+    .nav-btn-route:active {
+      transform: scale(0.96);
+    }
+
+    /* 2. Botón de Estatus: Squircle 12px, prioridad de ancho */
+    .nav-btn-action {
+      flex: 1;
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 52px;
+      min-height: 52px;
+      border-radius: 12px;
+      padding: 0 16px;
+      background: #1d70f5;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 750;
+      letter-spacing: -0.2px;
+      box-shadow: 0 4px 14px rgba(29, 112, 245, 0.35);
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    .nav-btn-action:hover {
+      background: #155ecc;
+      box-shadow: 0 6px 18px rgba(29, 112, 245, 0.42);
+    }
+    .nav-btn-action:active {
+      transform: scale(0.97);
+    }
+    .nav-btn-action-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 3. Botón de Tiempo y Distancia: Verde, Squircle 12px */
+    .nav-btn-metrics {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 52px;
+      min-height: 52px;
+      border-radius: 12px;
+      padding: 4px 12px;
+      min-width: 72px;
+      background: #059669;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    .nav-btn-metrics:hover {
+      background: #047857;
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.42);
+    }
+    .nav-btn-metrics:active {
+      transform: scale(0.96);
+    }
+
+    .nav-btn-metrics-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.15;
+      text-align: center;
+    }
+    .nav-btn-metrics-time {
+      font-weight: 800;
+      font-size: 13.5px;
+      letter-spacing: -0.2px;
+      color: #ffffff;
+    }
+    .nav-btn-metrics-dist {
+      font-weight: 550;
+      font-size: 11px;
+      margin-top: 1px;
+      letter-spacing: -0.1px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* Drawer de paradas */
+    .nav-sheet-timeline-drawer {
+      margin-top: 4px;
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+      transition: all 0.3s ease;
+    }
+    .theme-light .nav-sheet-timeline-drawer { border-top: 1px solid rgba(15, 23, 42, 0.08); }
+    .theme-dark .nav-sheet-timeline-drawer { border-top: 1px solid rgba(255, 255, 255, 0.09); }
+
+    .nav-timeline-row {
+      display: flex;
+      align-items: stretch;
+      gap: 14px;
+      min-height: 42px;
+      position: relative;
+    }
+    .nav-timeline-indicator {
+      width: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .nav-timeline-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+      z-index: 2;
+      background: #06b6d4;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .nav-timeline-track {
+      width: 2px;
+      flex: 1;
+      margin-top: 4px;
+      margin-bottom: -4px;
+      z-index: 1;
+    }
+    .theme-light .nav-timeline-track { background: #e2e8f0; }
+    .theme-dark .nav-timeline-track { background: rgba(255, 255, 255, 0.14); }
+
+    .nav-timeline-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      padding: 2px 0 12px 0;
+      min-width: 0;
+      gap: 12px;
+    }
+    .nav-timeline-name {
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: -0.1px;
+    }
+    .theme-light .nav-timeline-name { color: #0f172a; }
+    .theme-dark .nav-timeline-name { color: #ffffff; }
+
+    .nav-timeline-dist {
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .theme-light .nav-timeline-dist { color: #64748b; }
+    .theme-dark .nav-timeline-dist { color: #94a3b8; }
+
+    .is-dest .nav-timeline-name { font-size: 13.5px; font-weight: 750; }
+    .is-dest .nav-timeline-dist { font-size: 13px; font-weight: 750; }
+    .theme-light .is-dest .nav-timeline-dist { color: #10b981; }
+    .theme-dark .is-dest .nav-timeline-dist { color: #34d399; }
+  </style>
+</head>
+<body>
+
+  <!-- Controls Header -->
+  <header class="text-center mb-6 max-w-3xl w-full">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+      <span>📐 Regulador Visual de Posición</span>
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Elevar la Isla de Botones</h1>
+    <p class="text-slate-400 text-xs sm:text-sm mt-1 max-w-xl mx-auto">
+      Usa el deslizador para subir o bajar la isla inferior en tiempo real y ver exactamente cómo luce antes de fijarla en tu CSS.
+    </p>
+
+    <!-- Interactive Slider Card -->
+    <div class="mt-5 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur max-w-xl mx-auto text-left">
+      <div class="flex items-center justify-between mb-2">
+        <label for="bottomSlider" class="text-xs font-bold text-slate-300 flex items-center gap-2">
+          <span>⬆️ Altura desde abajo (bottom):</span>
+          <span id="sliderValueText" class="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-mono text-xs font-extrabold">20px</span>
+        </label>
+        <span class="text-[11px] text-slate-500">Rango: 10px — 120px</span>
+      </div>
+
+      <input 
+        id="bottomSlider" 
+        type="range" 
+        min="10" 
+        max="120" 
+        value="20" 
+        step="2" 
+        class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+      />
+
+      <!-- Quick Preset Buttons -->
+      <div class="mt-3 flex flex-wrap gap-2 items-center">
+        <span class="text-[11px] text-slate-400 font-medium">Presets:</span>
+        <button onclick="setElevation(18)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 transition">Base (18px)</button>
+        <button onclick="setElevation(36)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 transition">+18px (36px)</button>
+        <button onclick="setElevation(54)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 transition">+36px (54px)</button>
+        <button onclick="setElevation(72)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 transition">Flotante Alta (72px)</button>
+      </div>
+
+      <!-- CSS to Copy -->
+      <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+        <div class="text-[11px] text-slate-400 font-mono overflow-x-auto">
+          <span class="text-slate-500">CSS:</span> <span id="cssPreview" class="text-emerald-400 font-semibold">bottom: max(20px, calc(env(safe-area-inset-bottom) + 18px));</span>
+        </div>
+        <button id="copyCssBtn" onclick="copyCss()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+          <span id="copyIcon">📋</span> <span id="copyText">Copiar regla</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Extra Action Buttons -->
+    <div class="mt-4 flex flex-wrap justify-center items-center gap-3">
+      <button id="toggleStopsBtn" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2">
+        <span id="stopsIcon">⌄</span> <span id="stopsText">Ver Paradas Desplegadas</span>
+      </button>
+      <button id="toggleSafeBtn" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2">
+        <span>📏</span> <span>Safe Zones (16px)</span>
+      </button>
+      <a href="/" target="_blank" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2">
+        <span>🚀</span> <span>Abrir App Local</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Side-by-side Mobile Viewports -->
+  <main class="flex flex-wrap justify-center gap-10 items-start w-full max-w-5xl">
+
+    <!-- Phone 1: MODO CLARO -->
+    <div class="flex flex-col items-center gap-3">
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+        <span>Modo Claro · Regulador en vivo</span>
+      </div>
+
+      <div class="phone-mockup theme-light">
+        <div class="map-bg-light">
+          <div class="map-grid"></div>
+          <svg class="map-route-line" width="380" height="760" viewBox="0 0 380 760">
+            <path d="M 120 70 Q 150 250 190 380 T 260 600" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+            <path d="M 120 70 L 140 180" fill="none" stroke="#3b82f6" stroke-width="4" stroke-dasharray="6 6" opacity="0.6"/>
+            <circle cx="120" cy="70" r="8" fill="#2563eb" stroke="#ffffff" stroke-width="3"/>
+            <circle cx="190" cy="380" r="7" fill="#06b6d4" stroke="#ffffff" stroke-width="2.5"/>
+            <circle cx="260" cy="600" r="9" fill="#10b981" stroke="#ffffff" stroke-width="3"/>
+          </svg>
+        </div>
+
+        <div class="safe-zone-overlay"></div>
+
+        <!-- TOP CARD -->
+        <section class="nav-top-card">
+          <div class="nav-top-icon-circle">🚶</div>
+          <div class="nav-top-content">
+            <div class="nav-top-meta-line">
+              <span class="nav-top-dist-light">350 m</span>
+              <span class="nav-top-dot">·</span>
+              <span class="nav-top-step">Paso 1 de 2</span>
+            </div>
+            <h1 class="nav-top-title">Camina al punto de abordaje</h1>
+            <p class="nav-top-subtitle">Calle Federico Loaiza Rodríguez</p>
+          </div>
+          <button class="nav-top-back" title="Salir">✕</button>
+        </section>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- BOTTOM DOCK: UNA SOLA LÍNEA (SQUIRCLE) -->
+        <footer class="nav-bottom-sheet sheet-dock">
+          <div class="nav-single-row">
+            <!-- 1. Botón de Ruta: Sin ícono, solo número/nombre de la ruta -->
+            <button type="button" class="nav-btn-route" style="background-color: #0284c7;" title="Ruta 2">
+              <span class="nav-btn-route-label">2</span>
+            </button>
+
+            <!-- 2. Botón de Estatus de Viaje: Ancho prioritario -->
+            <button type="button" class="nav-btn-action">
+              <span class="nav-btn-action-text">Ya abordé la unidad</span>
+              <span class="font-extrabold text-sm">→</span>
+            </button>
+
+            <!-- 3. Botón de Tiempo y Distancia: Verde con salto de línea -->
+            <button type="button" class="nav-btn-metrics toggle-stops-trigger" title="Toca para ver paradas">
+              <div class="nav-btn-metrics-stack">
+                <strong class="nav-btn-metrics-time">39 min</strong>
+                <span class="nav-btn-metrics-dist">5.7 km</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Drawer de paradas -->
+          <div class="nav-sheet-timeline-drawer drawer-content" style="display: none;">
+            <div class="nav-timeline-row">
+              <div class="nav-timeline-indicator">
+                <span class="nav-timeline-dot"></span>
+                <span class="nav-timeline-track"></span>
+              </div>
+              <div class="nav-timeline-info">
+                <span class="nav-timeline-name">Calle Federico Loaiza</span>
+                <span class="nav-timeline-dist">350 m</span>
+              </div>
+            </div>
+
+            <div class="nav-timeline-row">
+              <div class="nav-timeline-indicator">
+                <span class="nav-timeline-dot"></span>
+                <span class="nav-timeline-track"></span>
+              </div>
+              <div class="nav-timeline-info">
+                <span class="nav-timeline-name">Av. México y Victoria</span>
+                <span class="nav-timeline-dist">1.8 km</span>
+              </div>
+            </div>
+
+            <div class="nav-timeline-row is-dest">
+              <div class="nav-timeline-indicator">
+                <span class="text-sm mt-1">🏁</span>
+              </div>
+              <div class="nav-timeline-info">
+                <strong class="nav-timeline-name">Baja cerca de Catedral</strong>
+                <span class="nav-timeline-dist">5.7 km</span>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Phone 2: MODO OSCURO -->
+    <div class="flex flex-col items-center gap-3">
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+        <span>Modo Oscuro · Regulador en vivo</span>
+      </div>
+
+      <div class="phone-mockup theme-dark">
+        <div class="map-bg-dark">
+          <div class="map-grid"></div>
+          <svg class="map-route-line" width="380" height="760" viewBox="0 0 380 760">
+            <path d="M 120 70 Q 150 250 190 380 T 260 600" fill="none" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+            <path d="M 120 70 L 140 180" fill="none" stroke="#60a5fa" stroke-width="4" stroke-dasharray="6 6" opacity="0.7"/>
+            <circle cx="120" cy="70" r="8" fill="#38bdf8" stroke="#0f172a" stroke-width="3"/>
+            <circle cx="190" cy="380" r="7" fill="#06b6d4" stroke="#0f172a" stroke-width="2.5"/>
+            <circle cx="260" cy="600" r="9" fill="#34d399" stroke="#0f172a" stroke-width="3"/>
+          </svg>
+        </div>
+
+        <div class="safe-zone-overlay"></div>
+
+        <!-- TOP CARD -->
+        <section class="nav-top-card">
+          <div class="nav-top-icon-circle">🚶</div>
+          <div class="nav-top-content">
+            <div class="nav-top-meta-line">
+              <span class="nav-top-dist-dark">350 m</span>
+              <span class="nav-top-dot">·</span>
+              <span class="nav-top-step">Paso 1 de 2</span>
+            </div>
+            <h1 class="nav-top-title">Camina al punto de abordaje</h1>
+            <p class="nav-top-subtitle">Calle Federico Loaiza Rodríguez</p>
+          </div>
+          <button class="nav-top-back" title="Salir">✕</button>
+        </section>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+        <!-- BOTTOM DOCK: UNA SOLA LÍNEA (SQUIRCLE) -->
+        <footer class="nav-bottom-sheet sheet-dock">
+          <div class="nav-single-row">
+            <!-- 1. Botón de Ruta: Sin ícono, solo número/nombre de la ruta -->
+            <button type="button" class="nav-btn-route" style="background-color: #0284c7;" title="Ruta 2">
+              <span class="nav-btn-route-label">2</span>
+            </button>
+
+            <!-- 2. Botón de Estatus de Viaje: Ancho prioritario -->
+            <button type="button" class="nav-btn-action">
+              <span class="nav-btn-action-text">Ya abordé la unidad</span>
+              <span class="font-extrabold text-sm">→</span>
+            </button>
+
+            <!-- 3. Botón de Tiempo y Distancia: Verde con salto de línea -->
+            <button type="button" class="nav-btn-metrics toggle-stops-trigger" title="Toca para ver paradas">
+              <div class="nav-btn-metrics-stack">
+                <strong class="nav-btn-metrics-time">39 min</strong>
+                <span class="nav-btn-metrics-dist">5.7 km</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Drawer de paradas -->
+          <div class="nav-sheet-timeline-drawer drawer-content" style="display: none;">
+            <div class="nav-timeline-row">
+              <div class="nav-timeline-indicator">
+                <span class="nav-timeline-dot"></span>
+                <span class="nav-timeline-track"></span>
+              </div>
+              <div class="nav-timeline-info">
+                <span class="nav-timeline-name">Calle Federico Loaiza</span>
+                <span class="nav-timeline-dist">350 m</span>
+              </div>
+            </div>
+
+            <div class="nav-timeline-row">
+              <div class="nav-timeline-indicator">
+                <span class="nav-timeline-dot"></span>
+                <span class="nav-timeline-track"></span>
+              </div>
+              <div class="nav-timeline-info">
+                <span class="nav-timeline-name">Av. México y Victoria</span>
+                <span class="nav-timeline-dist">1.8 km</span>
+              </div>
+            </div>
+
+            <div class="nav-timeline-row is-dest">
+              <div class="nav-timeline-indicator">
+                <span class="text-sm mt-1">🏁</span>
+              </div>
+              <div class="nav-timeline-info">
+                <strong class="nav-timeline-name">Baja cerca de Catedral</strong>
+                <span class="nav-timeline-dist">5.7 km</span>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const slider = document.getElementById('bottomSlider');
+    const sliderText = document.getElementById('sliderValueText');
+    const cssPreview = document.getElementById('cssPreview');
+    const sheetDocks = document.querySelectorAll('.sheet-dock');
+    const toggleStopsBtn = document.getElementById('toggleStopsBtn');
+    const toggleSafeBtn = document.getElementById('toggleSafeBtn');
+    const drawerElements = document.querySelectorAll('.drawer-content');
+    const stopsText = document.getElementById('stopsText');
+    const stopsIcon = document.getElementById('stopsIcon');
+    const triggers = document.querySelectorAll('.toggle-stops-trigger');
+
+    let stopsOpen = false;
+    let safeOpen = false;
+
+    function updateBottom(val) {
+      val = parseInt(val, 10);
+      slider.value = val;
+      sliderText.textContent = `${val}px`;
+      
+      const safeVal = Math.max(14, val - 2);
+      cssPreview.textContent = `bottom: max(${val}px, calc(env(safe-area-inset-bottom) + ${safeVal}px));`;
+
+      sheetDocks.forEach(sheet => {
+        sheet.style.marginBottom = `${val}px`;
+      });
+    }
+
+    function setElevation(val) {
+      updateBottom(val);
+    }
+
+    slider.addEventListener('input', (e) => {
+      updateBottom(e.target.value);
+    });
+
+    function copyCss() {
+      const code = cssPreview.textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const copyIcon = document.getElementById('copyIcon');
+        const copyText = document.getElementById('copyText');
+        copyIcon.textContent = '✓';
+        copyText.textContent = '¡Copiado!';
+        setTimeout(() => {
+          copyIcon.textContent = '📋';
+          copyText.textContent = 'Copiar regla';
+        }, 1800);
+      });
+    }
+
+    function toggleStops() {
+      stopsOpen = !stopsOpen;
+      drawerElements.forEach(d => {
+        d.style.display = stopsOpen ? 'flex' : 'none';
+      });
+      sheetDocks.forEach(s => {
+        s.classList.toggle('is-expanded', stopsOpen);
+      });
+      stopsText.textContent = stopsOpen ? 'Contraer a Una Sola Línea' : 'Ver Paradas Desplegadas';
+      stopsIcon.textContent = stopsOpen ? '⌃' : '⌄';
+    }
+
+    toggleStopsBtn.addEventListener('click', toggleStops);
+    triggers.forEach(t => t.addEventListener('click', toggleStops));
+
+    toggleSafeBtn.addEventListener('click', () => {
+      safeOpen = !safeOpen;
+      document.body.classList.toggle('show-safezones', safeOpen);
+      toggleSafeBtn.classList.toggle('border-red-500', safeOpen);
+      toggleSafeBtn.classList.toggle('text-red-400', safeOpen);
+    });
+  </script>
+</body>
+</html>
+

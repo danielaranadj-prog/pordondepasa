@@ -14,7 +14,7 @@ export default function StreetMap(props:Props){
  latest.current=props;
  const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{});
  const [ready,setReady]=useState(false),[error,setError]=useState('');
- function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');const p=visibleMapPadding(rect,main?.querySelector('.navigation-top')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect());if(latest.current.navigation)p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;return p}
+ function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');const p=visibleMapPadding(rect,main?.querySelector('.dynamic-island, .navigation-top, .map-top-minimal')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect());if(latest.current.navigation)p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;return p}
  useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;let frame=0,lastFrame=0,initialized=false;
   let visual:Point|undefined,visualHeading=0;
   let cameraPadding=padding();
@@ -96,11 +96,11 @@ export default function StreetMap(props:Props){
    camera.current=()=>{
     if(!instance||!container.current)return;const current=latest.current;cameraPadding=padding();
     if(current.navigation){if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}}
-    else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.origin));bounds.extend(coord(current.destination));current.option?.legs.forEach(leg=>leg.geometry?.forEach(p=>bounds.extend(coord(p))));instance.fitBounds(bounds,{padding:padding(),maxZoom:16,duration:800})}
+    else if(current.destination){const bounds=new M.LngLatBounds(coord(current.origin),coord(current.origin));bounds.extend(coord(current.destination));if(current.access)bounds.extend(coord(current.access));current.option?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(p=>bounds.extend(coord(p)))});current.stops?.forEach(stop=>bounds.extend(coord(stop.coordinates)));instance.fitBounds(bounds,{padding:padding(),maxZoom:15,duration:800})}
     else instance.jumpTo({center:coord(current.origin),zoom:13,padding:padding()});
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
-   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
+   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.dynamic-island']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
    instance.on('load',()=>{if(disposed)return;draw.current();drawClosure();updateMarkers.current();camera.current();setReady(true)});
    function animate(now:number){
     if(disposed||!instance)return;

@@ -14,6 +14,8 @@ export default function JourneySteps({option,stops}:{option:Option;stops:Transit
   if(leg.kind==='bus')return <li key={index}><strong>Toma {leg.route?.name}</strong><span>Sube {reference(index,false)}. Baja {reference(index,true)}.</span></li>;
   if(leg.minutes===0)return null;
   const next=option.legs[index+1];
-  return <li key={index}><strong>{next?.kind==='bus'?`${index===0?'Camina para subir':'Cambia de unidad'} · ${leg.minutes} min`:`Camina hasta tu destino · ${leg.minutes} min`}</strong><span>{next?.kind==='bus'?`Punto para subir a ${next.route?.name}: ${reference(index+1,false)}. ${leg.instruction??''}`:leg.instruction??'Usa calles y cruces permitidos.'}</span></li>;
+  const streets=leg.streetNames?.length?`por ${leg.streetNames.join(' → ')} `:'' ;
+  const walkInfo=next?.kind==='bus'?`Camina ${streets}hasta llegar a ${reference(index+1,false)} donde pasa ${next.route?.name?.toLowerCase().startsWith('ruta')?next.route?.name:`la Ruta ${next.route?.name}`}.`:`Camina ${streets}hasta llegar a tu destino.`;
+  return <li key={index}><strong>{next?.kind==='bus'?`${index===0?'Camina para subir':'Cambia de unidad'} · ${leg.minutes} min`:`Camina hasta tu destino · ${leg.minutes} min`}</strong><span>{walkInfo}</span></li>;
  })}</ol></>;
 }

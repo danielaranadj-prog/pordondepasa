@@ -46,7 +46,7 @@ button,input{font-family:inherit}
 .trip-screen .carousel-heading{max-width:460px;padding:5px 16px;font-size:10px}
 .trip-screen .carousel-heading strong,.trip-screen .carousel-heading span{padding:4px 7px;border-radius:8px;font-weight:500}
 .trip-screen .route-carousel{gap:10px;padding:4px max(16px,calc((100vw - 420px)/2)) 8px}
-.trip-screen .route-slide{flex-basis:min(420px,calc(100vw - 32px));min-height:128px;padding:12px 14px;border-radius:14px;border-width:1px;box-shadow:0 3px 16px #00000012}
+.trip-screen .route-slide{flex-basis:min(420px,calc(100vw - 32px));min-height:100px;padding:10px 12px;border-radius:12px;border-width:1px;box-shadow:0 3px 16px #00000012}
 .trip-screen .route-slide.active{border-color:#171717}
 .trip-screen .time{gap:8px}
 .trip-screen .time strong{font-size:22px;letter-spacing:-.8px;font-weight:750;color:#171717}

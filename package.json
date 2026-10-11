@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "data:review": "node scripts/review-draft.mjs",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",

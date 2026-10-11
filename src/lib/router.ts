@@ -1,7 +1,7 @@
 export type Point = { lat: number; lng: number };
 export type Shape = { id: string; name: string; color: string; groupName: string; coordinates: Point[] };
 export type Place = { name: string; address: string; point: Point };
-export type Leg = { kind: 'walk' | 'bus'; from: Point; to: Point; minutes: number; meters: number; route?: Shape; geometry?: Point[]; instruction?: string };
+export type Leg = { kind: 'walk' | 'bus'; from: Point; to: Point; minutes: number; meters: number; route?: Shape; geometry?: Point[]; instruction?: string; streetNames?: string[] };
 export type Option = { id: string; minutes: number; walk: number; transfers: number; fare: number; score: number; legs: Leg[] };
 export const ESTIMATED_WAIT_MINUTES = 7;
 const walkSpeed = 78, busSpeed = 270;
@@ -135,5 +135,14 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
   const key=candidate.legs.filter(l=>l.kind==='bus').map(l=>l.route!.id).join('|')||'walk';
   if(!unique.has(key)||unique.get(key)!.score>candidate.score)unique.set(key,candidate);
  }
- return [...unique.values()].sort((a,b)=>a.score-b.score).slice(0,limit);
+ const sorted=[...unique.values()].sort((a,b)=>a.score-b.score);
+  // Suppress transfer options when a direct route exists and transfer saves < 5 minutes.
+  // Avoids recommending unnecessary transfers that cost extra fare.
+  const bestDirect=sorted.find(o=>o.transfers===0);
+  const filtered=sorted.filter(o=>{
+   if(o.transfers===0)return true;
+   if(!bestDirect)return true;
+   return bestDirect.minutes-o.minutes>=5;
+  });
+  return(filtered.length?filtered:sorted).slice(0,limit);
 }

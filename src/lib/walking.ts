@@ -46,7 +46,7 @@ export class WalkingRouter{
    for(const connection of this.adj[current.node]){const cost=current.cost+connection.edge.distance;if(cost>1800||cost>=(costs.get(connection.to)??Infinity))continue;costs.set(connection.to,cost);previous.set(connection.to,{node:current.node,edge:connection.edge});queue.push({node:connection.to,cost,priority:cost+meters(this.points[connection.to],to)})}
   }
   const names=best?[...new Set(best.names.filter(Boolean))].slice(0,4):[];
-  const result:Leg|null=best?{kind:'walk',from,to,geometry:best.geometry,meters:best.cost,minutes:best.cost<5?0:Math.max(1,Math.ceil(best.cost/78)),instruction:names.length?`Camina por ${names.join(' → ')}. Usa los cruces permitidos.`:'Sigue las calles y pasos del mapa. Usa los cruces permitidos.'}:null;
+  const result:Leg|null=best?{kind:'walk',from,to,geometry:best.geometry,meters:best.cost,minutes:best.cost<5?0:Math.max(1,Math.ceil(best.cost/78)),instruction:names.length?`Camina por ${names.join(' → ')}. Usa los cruces permitidos.`:'Sigue las calles y pasos del mapa. Usa los cruces permitidos.',streetNames:names}:null;
   if(this.cache.size>300)this.cache.clear();this.cache.set(key,result);return result;
  }
  refine(options:Option[]):Option[]{

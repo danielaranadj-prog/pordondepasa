@@ -3,8 +3,6 @@ import type {Option,Point} from '../lib/router';
 import {meters,routeTextColor} from '../lib/router';
 import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
-import WalkingSafety from './WalkingSafety';
-import MapSheet from './MapSheet';
 import MapIcon from './MapIcon';
 import {useCompass} from './useCompass';
 import {movementHeading} from '../lib/heading';
@@ -14,16 +12,16 @@ import {ambiguousProjection,confirmsProgress,reliableProgressSample,type Progres
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 import '../styles/navigation-refined.css';
+import '../styles/dynamic-island.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,origin,destination,destinationName,placeAccess,compassStart,onExit,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;destinationName:string;placeAccess?:{meters:number;entrance:string};compassStart:{enabled:boolean;issue:string};onExit:()=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
- const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived);
+export default function FollowRoute({option,stops,origin,destination,originName,destinationName,placeAccess,compassStart,onExit,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};compassStart:{enabled:boolean;issue:string};onExit:()=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+ const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[showStops,setShowStops]=useState(false);
  const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
  const previous=useRef<{point:Point;accuracy:number}|undefined>(undefined);
  const lastFix=useRef<{point:Point;accuracy:number;time:number}|undefined>(undefined);
  const [clock,setClock]=useState(Date.now()),[fixAt,setFixAt]=useState(0),[courseAt,setCourseAt]=useState(0);
  const stale=!!live&&clock-fixAt>15000;
- const rides=option.legs.flatMap((leg,index)=>leg.kind==='bus'&&leg.route?[{route:leg.route,index}]:[]);
  const routeStops=useMemo(()=>stopsForOption(option,stops),[option,stops]);
  const leg=option.legs[step],line=leg.geometry??[leg.from,leg.to];
  const freshCourse=clock-courseAt<10000?course:undefined;
@@ -94,24 +92,187 @@ export default function FollowRoute({option,stops,origin,destination,destination
  const maneuver=leg.kind==='walk'&&trusted?nextManeuver(line,accepted.along):undefined;
  const totalMeters=remaining+option.legs.slice(step+1).reduce((sum,l)=>sum+l.meters,0);
  const totalMinutes=remainingTripMinutes(option,step,remaining);
- const action=step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya abordé la unidad':'Continuar';
+ const action=arrived?'Finalizar viaje':step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya estoy en la unidad':'Continuar';
+ const currentBusRoute=leg.kind==='bus'?leg.route:undefined;
+ const nextBusRoute=option.legs[step+1]?.kind==='bus'?option.legs[step+1]?.route:undefined;
+ function formatNavInstruction():string{
+  if(arrived)return destinationName?`Llegaste a ${destinationName}.`:'Has llegado a tu destino.';
+  if(leg.kind==='bus'){
+   if(nearAlighting)return 'Prepárate para bajar en la próxima parada. Solicita tu bajada con anticipación.';
+   if(nextStop)return `Siguiente referencia: ${nextStop.name}. Bajada marcada en el mapa.`;
+   return `Viaja en ${leg.route?.name??'la unidad'}. La bajada está marcada en el mapa.`;
+  }
+  let streetNames=leg.streetNames;
+  if((!streetNames||streetNames.length===0)&&leg.instruction&&leg.instruction.startsWith('Camina por ')){
+   const seg=leg.instruction.replace(/^Camina por /,'').split('.')[0];
+   streetNames=seg.split(' → ').map(s=>s.trim()).filter(Boolean);
+  }
+  let walkStreet='';
+  if(streetNames&&streetNames.length>0){
+   walkStreet=streetNames.length===1?streetNames[0]:`${streetNames[0]} y ${streetNames[1]}`;
+  }
+  let walkPhrase='';
+  if(walkStreet){
+   walkPhrase=`Camina por ${walkStreet}`;
+  }else if(originName&&!originName.toLowerCase().includes('mi ubicación')){
+   walkPhrase=`Camina desde ${originName}`;
+  }else{
+   walkPhrase='Camina por la calle';
+  }
+  const nextLeg=option.legs[step+1];
+  let targetPlace='';
+  if(nextLeg&&nextLeg.kind==='bus'){
+   const rawRouteName=nextLeg.route?.name??'la ruta';
+   const routeLabel=/^(ruta\b|camión\b)/i.test(rawRouteName)?rawRouteName:`la Ruta ${rawRouteName}`;
+   const legStops=routeStops.filter(s=>s.legIndex===step+1);
+   let targetStop=legStops.sort((a,b)=>meters(a.coordinates,leg.to)-meters(b.coordinates,leg.to))[0];
+   if(!targetStop||meters(targetStop.coordinates,leg.to)>80){
+    const anyStop=stops.filter(s=>meters(s.coordinates,leg.to)<=80).sort((a,b)=>meters(a.coordinates,leg.to)-meters(b.coordinates,leg.to))[0];
+    if(anyStop)targetStop=anyStop as typeof routeStops[0];
+   }
+   if(targetStop&&meters(targetStop.coordinates,leg.to)<=80){
+    targetPlace=`${targetStop.name} donde pasa ${routeLabel}`;
+   }else if(streetNames&&streetNames.length>1){
+    const arrivalStreet=streetNames[streetNames.length-1];
+    targetPlace=`${arrivalStreet} donde pasa ${routeLabel}`;
+   }else{
+    targetPlace=`donde pasa ${routeLabel}`;
+   }
+  }else if(step===option.legs.length-1||!nextLeg){
+   targetPlace=destinationName||'tu destino';
+  }else{
+   targetPlace='el punto de conexión';
+  }
+  return `${walkPhrase} hasta llegar a ${targetPlace}`;
+ }
+ const instructionText=formatNavInstruction();
+ const currentPoint=live??origin;
+ const displayStops=useMemo(()=>{
+  if(routeStops.length>0)return routeStops;
+  const synthetic:Array<{id:string;name:string;coordinates:Point;legIndex:number;color?:string}>=[];
+  option.legs.forEach((l,idx)=>{
+   if(l.kind==='bus'){
+    synthetic.push({id:`board-${idx}`,name:`Abordaje: ${l.route?.name??'Ruta'}`,coordinates:l.from,legIndex:idx,color:l.route?.color});
+    synthetic.push({id:`alight-${idx}`,name:`Bajada de ${l.route?.name??'Ruta'}`,coordinates:l.to,legIndex:idx,color:l.route?.color});
+   }
+  });
+  return synthetic;
+ },[routeStops,option]);
  return <main className="trip-screen navigation-screen">
   <StreetMap fullscreen origin={origin} destination={destination} access={placeAccess?option.legs.at(-1)?.to:undefined} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)}/>
-  <section className="navigation-top"><button className="back-button" onClick={onExit} aria-label="Salir del seguimiento">←</button><div className="navigation-banner"><span className="maneuver-symbol" aria-hidden="true">{arrived?'✓':leg.kind==='bus'?'▣':maneuver?.icon??'↑'}</span><div><small>{arrived?'VIAJE FINALIZADO':`${distanceLabel(maneuver?.distance??remaining)} · PASO ${step+1}/${option.legs.length}`}</small><h1>{maneuver?.label??title}</h1><p>{arrived?destinationName:leg.kind==='bus'?(nextStop?`Siguiente: ${nextStop.name}`:'Bajada marcada en el mapa'):leg.instruction??'Sigue el recorrido marcado'}</p></div></div></section>
+  <section className="navigation-top dynamic-island dynamic-island--navigation" role="region" aria-label="Indicaciones de viaje">
+   <button className="di-back" onClick={onExit} aria-label="Salir del seguimiento" title="Salir">←</button>
+   <div className="di-nav-icon" style={leg.kind==='bus'&&leg.route?{backgroundColor:leg.route.color,color:routeTextColor(leg.route.color)}:arrived?{backgroundColor:'#10b981',color:'#fff'}:undefined} aria-hidden="true">
+    {arrived?'✓':leg.kind==='bus'?'🚌':(maneuver?.icon??'🚶')}
+   </div>
+   <div className="di-nav-body">
+    <div className="di-nav-meta">
+     <span className="di-nav-badge di-nav-badge--dist">{arrived?'FINALIZADO':distanceLabel(maneuver?.distance??remaining)}</span>
+     <span className="di-nav-badge di-nav-badge--step">PASO {step+1}/{option.legs.length}</span>
+     {nextBusRoute&&!currentBusRoute&&(
+      <span className="di-route-mini-chip" style={{backgroundColor:nextBusRoute.color,color:routeTextColor(nextBusRoute.color)}} title={`Ruta a abordar: ${nextBusRoute.name}`}>
+       {nextBusRoute.name}
+      </span>
+     )}
+    </div>
+    <h1 className="di-nav-title">
+     {maneuver?.label?(
+      maneuver.label
+     ):currentBusRoute?(
+      <span className="di-nav-title-bus">
+       <span>{nearAlighting?'Baja de':'Viaja en'}</span>
+       <span className="di-route-tag" style={{backgroundColor:currentBusRoute.color,color:routeTextColor(currentBusRoute.color)}}>
+        {currentBusRoute.name}
+       </span>
+      </span>
+     ):(
+      title
+     )}
+    </h1>
+    <p className="di-nav-desc">{instructionText}</p>
+   </div>
+   {!arrived&&(
+    <button className="di-nav-advance-btn" onClick={advance} aria-label={action} title={action}>
+     {step===option.legs.length-1?'✓':'→'}
+    </button>
+   )}
+  </section>
   {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
-  <MapSheet className="navigation-panel" title={arrived?"Llegaste":"Tu recorrido"} initialOpen={false} summary={<><div className="navigation-summary"><strong>{arrived?'✓':totalMinutes}<small>{arrived?'Llegaste':'min estimados'}</small></strong><strong>{arrived?'':distanceLabel(totalMeters)}<small>{arrived?'':'restantes'}</small></strong><span className="current-mode" style={leg.route?{backgroundColor:leg.route.color,color:routeTextColor(leg.route.color),padding:'6px 8px',borderRadius:10}:undefined}>{leg.kind==='bus'?leg.route?.name:'A pie'}</span></div>{arrived&&<button className="search" onClick={onExit}>Volver a las opciones</button>}{!arrived&&<><button className="search" onClick={advance}>{action}</button>{leg.kind==='walk'&&<WalkingSafety/>}{(stale||locationIssue)&&<p className="fix-status" role="status">{stale?'Ubicación sin actualizar':locationIssue}</p>}</>}</>}><div className="navigation-route-tags" aria-label="Rutas de tu viaje">{rides.length?rides.map(({route,index},i)=><span className="navigation-route-item" key={`${route.id}-${index}`}>{i>0&&<span className="transfer-arrow" aria-label="Transbordo">→</span>}<span className="navigation-route-tag" style={{backgroundColor:route.color,color:routeTextColor(route.color)}} aria-current={step===index?'step':undefined}>{route.name}{step===index&&<small> · Ahora</small>}</span></span>):<span className="walking-tag">🚶 Viaje a pie</span>}</div>
-   {compass.issue&&!arrived&&<p className="compass-issue" role="status">{compass.issue}</p>}
-   {!live&&!arrived&&!locationIssue&&<p className="tracking-notice" role="status">Buscando tu ubicación para acompañarte…</p>}
-   {locationIssue&&<p className="location-issue" role="status">{locationIssue}</p>}
-   {!arrived&&<><div className="navigation-progress"><strong>{leg.kind==='bus'?'🚌':'🚶'} {leg.kind==='bus'?leg.route?.name:'A pie'}</strong><span>{trusted?distanceLabel(remaining):`${leg.minutes} min estimados`}</span></div>
-   {nextStop&&<p className="next-stop">Siguiente referencia: <b>{nextStop.name}</b></p>}
-   {leg.kind==='bus'&&<p>{nearAlighting?'Solicita tu bajada con anticipación.': 'Las paradas son referencias; la unidad no se detiene automáticamente en todas.'}</p>}
-   {leg.kind==='walk'&&<p>{leg.instruction??'Camina al punto marcado usando calles y cruces permitidos.'}</p>}
-   {placeAccess&&step===option.legs.length-1&&<p>El trazo termina en una calle cercana. Continúa hacia {destinationName}{placeAccess.entrance?` (${placeAccess.entrance})`:''}. Verifica la entrada y cruza con cuidado; este acceso es estimado.</p>}
-   {confident&&progress&&progress.distance>100&&<p className="off-route">Tu ubicación está alejada del trazo. Comprueba el recorrido.</p>}
-   {close&&<small>Estás cerca del final de este tramo. Confirma para continuar.</small>}</>}
-   {arrived&&<button className="search" onClick={onExit}>Volver a las opciones</button>}
-   <details className="navigation-stops"><summary>Paradas de este recorrido ({routeStops.length})</summary>{!routeStops.length?<p>No hay paradas registradas sobre este tramo. La bajada sigue marcada en el mapa.</p>:routeStops.map(s=><div key={`${s.legIndex}-${s.id}`}><span className="stop-type-dot" style={{backgroundColor:option.legs[s.legIndex].route?.color}}/><div><strong>{s.name}</strong><small>{option.legs[s.legIndex].route?.name} · {s.type==='oficial'?'Oficial':s.type==='base'?'Base':'Bajada habitual'}{s.inferred?' · Coincide con el trazo':''}</small></div></div>)}</details>
-  </MapSheet>
+  <footer className={`nav-floating-dock map-sheet ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
+   <div className="nav-dock-top-row">
+    <button
+     className="nav-dock-cta"
+     onClick={arrived?onExit:advance}
+     aria-label={action}
+    >
+     <span className="nav-dock-cta-text">{action}</span>
+     <span className="nav-dock-cta-arrow" aria-hidden="true">{arrived?'✓':'→'}</span>
+    </button>
+    <div className="nav-dock-metrics">
+     <div className="nav-dock-time">
+      <span className="nav-dock-minutes">{arrived?'✓':`${totalMinutes}`}</span>
+      <span className="nav-dock-unit">{arrived?'Llegaste':'min'}</span>
+     </div>
+     <span className="nav-dock-distance">
+      {arrived?'Destino alcanzado':`${distanceLabel(totalMeters)} aprox.`}
+     </span>
+    </div>
+   </div>
+   <button
+    type="button"
+    className="nav-dock-toggle-bar"
+    onClick={()=>setShowStops(!showStops)}
+    aria-expanded={showStops}
+    aria-label={showStops?'Ocultar paradas del recorrido':'Ver paradas del recorrido'}
+   >
+    <div className="nav-dock-toggle-left">
+     <span className="nav-dock-toggle-icon">🚏</span>
+     <span className="nav-dock-toggle-text">Paradas en el recorrido</span>
+     {displayStops.length>0&&(
+      <span className="nav-dock-toggle-count">{displayStops.length}</span>
+     )}
+    </div>
+    <span className="nav-dock-toggle-caret">{showStops?'⌃':'⌄'}</span>
+   </button>
+   {(stale||locationIssue)&&!arrived&&(
+    <div className="nav-dock-status-chip">
+     <span className="nav-dock-status-dot"/>
+     <span>{stale?'Ubicación sin actualizar':locationIssue}</span>
+    </div>
+   )}
+   {showStops&&(
+    <div className="nav-dock-stops-drawer">
+     <div className="nav-dock-stops-list">
+      {displayStops.map((s,idx)=>{
+       const dist=meters(currentPoint,s.coordinates);
+       const stopColor=('legIndex' in s?option.legs[s.legIndex]?.route?.color:undefined)??'#3b82f6';
+       const isNext=trusted&&nextStop&&nextStop.id===s.id;
+       return (
+        <div key={`${'legIndex' in s?s.legIndex:idx}-${s.id}`} className={`nav-dock-stop-item ${isNext?'is-next':''}`}>
+         <div className="nav-dock-stop-left">
+          <span className="nav-dock-stop-indicator" style={{backgroundColor:stopColor}}/>
+          <div className="nav-dock-stop-info">
+           <span className="nav-dock-stop-name">{s.name}</span>
+           {isNext&&<span className="nav-dock-next-badge">Próxima</span>}
+          </div>
+         </div>
+         <span className="nav-dock-stop-distance">{distanceLabel(dist)}</span>
+        </div>
+       );
+      })}
+      <div className="nav-dock-stop-item nav-dock-stop-destination">
+       <div className="nav-dock-stop-left">
+        <span className="nav-dock-stop-icon-dest">🏁</span>
+        <div className="nav-dock-stop-info">
+         <span className="nav-dock-stop-label-dest">Última parada ó destino</span>
+         <strong className="nav-dock-stop-name">{destinationName||'Destino final'}</strong>
+        </div>
+       </div>
+       <span className="nav-dock-stop-distance">{distanceLabel(meters(currentPoint,destination))}</span>
+      </div>
+     </div>
+    </div>
+   )}
+  </footer>
  </main>;
 }

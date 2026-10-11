@@ -1,0 +1,90 @@
+[
+  {
+    "id": "ad-cafe-de-olla-centro",
+    "clientId": "client-cafe-de-olla",
+    "type": "landmark",
+    "title": "Café de Olla Centro",
+    "description": "Café tradicional de olla y desayunos a unos pasos de la Catedral.",
+    "icon": "☕",
+    "referenceText": "frente a Café de Olla (casi esquina Libertad)",
+    "promoText": "15% desc. en barra mostrando tu trayecto",
+    "coordinates": {
+      "lat": 21.51205,
+      "lng": -104.89152
+    },
+    "radiusMeters": 350,
+    "callToAction": "Ver cupón",
+    "isActive": true,
+    "createdAt": "2026-10-11T09:00:00.000Z"
+  },
+  {
+    "id": "ad-burger-lab-forum",
+    "clientId": "client-burger-lab",
+    "type": "landmark",
+    "title": "Burger Lab Forum",
+    "description": "Hamburguesas artesanales y malteadas sobre el boulevard de acceso.",
+    "icon": "🍔",
+    "referenceText": "a pasos de Burger Lab Forum",
+    "promoText": "Combo Viajero 2x1 al descender",
+    "coordinates": {
+      "lat": 21.49179,
+      "lng": -104.86640
+    },
+    "radiusMeters": 350,
+    "callToAction": "Aprovechar 2x1",
+    "isActive": true,
+    "createdAt": "2026-10-11T09:00:00.000Z"
+  },
+  {
+    "id": "ad-farmacia-uan",
+    "clientId": "client-farmacia",
+    "type": "landmark",
+    "title": "Farmacia Popular UAN",
+    "description": "Tu botiquín y refrigerios a metros del acceso principal.",
+    "icon": "💊",
+    "referenceText": "frente a Farmacia Popular UAN",
+    "promoText": "10% adicional en mostrador",
+    "coordinates": {
+      "lat": 21.49203,
+      "lng": -104.89427
+    },
+    "radiusMeters": 350,
+    "callToAction": "Ver ubicación",
+    "isActive": true,
+    "createdAt": "2026-10-11T09:00:00.000Z"
+  },
+  {
+    "id": "ad-pin-burger-lab",
+    "clientId": "client-burger-lab",
+    "type": "pin",
+    "title": "Burger Lab Forum",
+    "description": "Hamburguesas al carbón, papas rústicas y malteadas en zona Forum.",
+    "icon": "🍔",
+    "promoText": "2x1 Viajero en hamburguesas clásicas",
+    "coordinates": {
+      "lat": 21.49179,
+      "lng": -104.86640
+    },
+    "radiusMeters": 400,
+    "callToAction": "Cómo llegar aquí →",
+    "isActive": true,
+    "createdAt": "2026-10-11T09:00:00.000Z"
+  },
+  {
+    "id": "ad-pin-cafe-centro",
+    "clientId": "client-cafe-de-olla",
+    "type": "pin",
+    "title": "Café de Olla Centro",
+    "description": "El mejor café de olla y pan recién horneado del centro histórico.",
+    "icon": "☕",
+    "promoText": "15% de descuento mostrando tu ruta",
+    "coordinates": {
+      "lat": 21.51205,
+      "lng": -104.89152
+    },
+    "radiusMeters": 350,
+    "callToAction": "Cómo llegar aquí →",
+    "isActive": true,
+    "createdAt": "2026-10-11T09:00:00.000Z"
+  }
+]

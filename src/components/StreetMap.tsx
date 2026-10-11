@@ -6,8 +6,9 @@ import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import {getPlaceCategoryIcon, type Place} from '../lib/places';
+import {getActivePinAds, type AdCampaign} from '../lib/ads';
 import '../styles/vector-map.css';
-type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number};
+type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;fullscreen?:boolean;stops?:RouteStop[];live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number;ads?:AdCampaign[]};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
 export default function StreetMap(props:Props){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
@@ -92,6 +93,46 @@ export default function StreetMap(props:Props){
      const item=marker(stop.coordinates,`stop-pin ${stop.type==='oficial'?'official':'habitual'}`,stop.name);item.getElement().style.background=current.option?.legs[stop.legIndex]?.route?.color??'#2563eb';
      const content=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('small');name.textContent=stop.name;detail.textContent=stop.type==='oficial'?'Parada oficial':stop.type==='base'?'Base':'Bajada habitual';content.append(name,document.createElement('br'),detail);item.setPopup(new M.Popup({offset:12}).setDOMContent(content));markers.current.push(item);
     });
+    getActivePinAds(current.ads).forEach(ad=>{
+     if(!ad.coordinates)return;
+     const pinEl=document.createElement('div');
+     pinEl.className='golden-pin-marker';
+     pinEl.setAttribute('aria-label',`Patrocinado: ${ad.title}`);
+     pinEl.title=`${ad.title} (Patrocinador)`;
+     const pulse=document.createElement('div');pulse.className='golden-pin-pulse';
+     const body=document.createElement('div');body.className='golden-pin-body';
+     const iconSpan=document.createElement('span');iconSpan.className='golden-pin-icon';iconSpan.textContent=ad.icon||'⭐';
+     const badgeSpan=document.createElement('span');badgeSpan.className='golden-pin-badge';badgeSpan.textContent='★';
+     body.append(iconSpan,badgeSpan);
+     const pointer=document.createElement('div');pointer.className='golden-pin-pointer';
+     pinEl.append(pulse,body,pointer);
+     pinEl.addEventListener('click',event=>event.stopPropagation());
+
+     const popupEl=document.createElement('div');popupEl.className='golden-pin-popup';
+     const header=document.createElement('div');header.className='golden-pin-header';
+     const tag=document.createElement('span');tag.className='golden-pin-tag';tag.textContent='★ Patrocinado';
+     header.appendChild(tag);
+     if(ad.promoText){const discount=document.createElement('span');discount.className='golden-pin-discount';discount.textContent=ad.promoText;header.appendChild(discount)}
+     const titleRow=document.createElement('div');titleRow.className='golden-pin-title-row';
+     const emoji=document.createElement('span');emoji.textContent=ad.icon||'📍';
+     const titleText=document.createElement('strong');titleText.textContent=ad.title;
+     titleRow.append(emoji,titleText);
+     popupEl.append(header,titleRow);
+     if(ad.description){const desc=document.createElement('p');desc.className='golden-pin-desc';desc.textContent=ad.description;popupEl.appendChild(desc)}
+     const actions=document.createElement('div');actions.className='golden-pin-actions';
+     const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent=ad.callToAction||'Cómo llegar aquí →';
+     cta.addEventListener('click',event=>{
+      event.stopPropagation();
+      popup.remove();
+      if(ad.coordinates)latest.current.onDestinationChange?.(ad.coordinates);
+     });
+     actions.appendChild(cta);
+     popupEl.appendChild(actions);
+
+     const popup=new M.Popup({offset:[0,-34],closeButton:true,closeOnClick:true,className:'golden-pin-popup-wrapper'}).setDOMContent(popupEl);
+     const item=new M.Marker({element:pinEl,anchor:'bottom'}).setLngLat(coord(ad.coordinates)).setPopup(popup).addTo(instance!);
+     markers.current.push(item);
+    });
    };
    camera.current=()=>{
     if(!instance||!container.current)return;const current=latest.current;cameraPadding=padding();
@@ -123,7 +164,7 @@ export default function StreetMap(props:Props){
   return()=>{disposed=true;cancelAnimationFrame(frame);theme.removeEventListener('change',change);observer?.disconnect();instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
  },[props.navigation]);
  useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.navigation,props.activeLeg,props.live,props.accuracy]);
- useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.access,props.stops,!!props.onDestinationChange,props.navigation,!!props.live]);
+ useEffect(()=>{if(ready)updateMarkers.current()},[ready,props.origin,props.destination,props.access,props.stops,!!props.onDestinationChange,props.navigation,!!props.live,props.ads]);
  useEffect(()=>{if(!ready||!map.current)return;let cancelled=false;
   import('maplibre-gl').then(M=>{if(cancelled||!map.current)return;const {live,heading,navigation,follow}=latest.current;
    if(live){if(!liveMarker.current){const element=document.createElement('div');element.className='tracking-arrow';element.setAttribute('aria-label','Tu ubicación');element.appendChild(document.createElement('span'));liveMarker.current=new M.Marker({element,rotationAlignment:'map'}).setLngLat(coord(live)).addTo(map.current)}liveMarker.current.getElement().classList.toggle('directional',heading!==undefined);liveMarker.current.getElement().title=latest.current.stale?'Ubicación sin actualizar':`Precisión aproximada: ${Math.round(latest.current.accuracy??0)} m`}

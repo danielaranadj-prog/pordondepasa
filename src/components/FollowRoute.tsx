@@ -10,12 +10,13 @@ import {movementHeading} from '../lib/heading';
 import {nextManeuver} from '../lib/maneuver';
 import {remainingTripMinutes} from '../lib/tripEstimate';
 import {ambiguousProjection,confirmsProgress,reliableProgressSample,type ProgressSample} from '../lib/progressGuard';
+import {findMatchingLandmarkAd,type AdCampaign} from '../lib/ads';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 import '../styles/navigation-refined.css';
 import '../styles/dynamic-island.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+export default function FollowRoute({option,stops,ads,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
  const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[showStops,setShowStops]=useState(false);
  const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
@@ -66,6 +67,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
  const trusted=projectionSafe&&confident&&accepted.step===step&&acceptedAt.current>0;
  const close=!!progress&&trusted&&accepted.along>=progress.length-70&&meters(live!,leg.to)<60;
  const nearAlighting=leg.kind==='bus'&&!!progress&&trusted&&accepted.along>=progress.length-350&&progress.remaining<=350;
+ const activeLandmarkAd=useMemo(()=>nearAlighting&&leg.kind==='bus'?findMatchingLandmarkAd(leg.to,ads):undefined,[nearAlighting,leg,ads]);
  const currentStops=routeStops.filter(s=>s.legIndex===step);
  const nextStop=trusted?currentStops.find(s=>s.along>accepted.along+20):undefined;
  useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer)},[]);
@@ -99,7 +101,14 @@ export default function FollowRoute({option,stops,origin,destination,originName,
  function formatNavInstruction():string{
   if(arrived)return destinationName?`Llegaste a ${destinationName}.`:'Has llegado a tu destino.';
   if(leg.kind==='bus'){
-   if(nearAlighting)return 'Prepárate para bajar en la próxima parada. Solicita tu bajada con anticipación.';
+   if(nearAlighting){
+    if(activeLandmarkAd?.referenceText){
+     const ref=activeLandmarkAd.referenceText.trim();
+     const phrase=/^(frente|a\s+pasos|cerca)\b/i.test(ref)?ref:`frente a ${ref}`;
+     return `Prepárate para bajar ${phrase}. Solicita tu bajada con anticipación.`;
+    }
+    return 'Prepárate para bajar en la próxima parada. Solicita tu bajada con anticipación.';
+   }
    if(nextStop)return `Siguiente referencia: ${nextStop.name}. Bajada marcada en el mapa.`;
    return `Viaja en ${leg.route?.name??'la unidad'}. La bajada está marcada en el mapa.`;
   }
@@ -150,7 +159,13 @@ export default function FollowRoute({option,stops,origin,destination,originName,
  const streetSubtitle=useMemo(()=>{
   if(arrived)return destinationName?`Llegaste a ${destinationName}`:'Has llegado a tu destino';
   if(leg.kind==='bus'){
-   if(nearAlighting)return nextStop?`Próxima bajada: ${nextStop.name}`:'Solicita tu bajada con anticipación';
+   if(nearAlighting){
+    if(activeLandmarkAd?.referenceText){
+     const ref=activeLandmarkAd.referenceText.trim();
+     return /^(frente|a\s+pasos|cerca)\b/i.test(ref)?ref:`Frente a ${ref}`;
+    }
+    return nextStop?`Próxima bajada: ${nextStop.name}`:'Solicita tu bajada con anticipación';
+   }
    if(nextStop)return `Próxima referencia: ${nextStop.name}`;
    return destinationName?`Hacia ${destinationName}`:`Viaja en ${leg.route?.name??'la unidad'}`;
   }
@@ -163,7 +178,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
    street=originName;
   }
   return street||'Sigue la ruta en el mapa';
- },[arrived,leg,nearAlighting,nextStop,destinationName,originName]);
+ },[arrived,leg,nearAlighting,nextStop,destinationName,originName,activeLandmarkAd]);
  const routeForDock=currentBusRoute??nextBusRoute;
  const dockRouteLabel=routeForDock?(routeForDock.name.replace(/^(ruta|camión)\s*[:.-]?\s*/i,'').trim()||routeForDock.name):'A pie';
  const displayStops=useMemo(()=>{
@@ -178,7 +193,7 @@ export default function FollowRoute({option,stops,origin,destination,originName,
   return synthetic;
  },[routeStops,option]);
  return <main className="trip-screen navigation-screen">
-  <StreetMap fullscreen origin={origin} destination={destination} access={placeAccess?option.legs.at(-1)?.to:undefined} place={place} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)}/>
+  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={placeAccess?option.legs.at(-1)?.to:undefined} place={place} option={displayedOption} stops={routeStops} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)}/>
   <section className="nav-top-card" role="region" aria-label="Indicaciones de viaje">
    <div className="nav-top-icon-circle" style={leg.kind==='bus'&&leg.route?{backgroundColor:leg.route.color,color:routeTextColor(leg.route.color)}:arrived?{backgroundColor:'#10b981',color:'#fff'}:undefined} aria-hidden="true">
     {arrived?'✓':leg.kind==='bus'?'🚌':(maneuver?.icon??'🚶')}
@@ -191,6 +206,34 @@ export default function FollowRoute({option,stops,origin,destination,originName,
     </div>
     <h1 className="nav-top-title">{title}</h1>
     <p className="nav-top-subtitle">{streetSubtitle}</p>
+    {activeLandmarkAd && (
+     <div className="nav-landmark-chip" style={{
+      marginTop: '5px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      background: 'rgba(245, 158, 11, 0.12)',
+      border: '1px solid rgba(245, 158, 11, 0.35)',
+      borderRadius: '999px',
+      padding: '2px 8px',
+      fontSize: '11px',
+      color: '#92400e',
+      fontWeight: 600,
+      maxWidth: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+     }}>
+      <span>{activeLandmarkAd.icon}</span>
+      <span style={{ color: '#78350f' }}>{activeLandmarkAd.title}</span>
+      {activeLandmarkAd.promoText && (
+       <>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <span style={{ fontWeight: 500, color: '#b45309' }}>{activeLandmarkAd.promoText}</span>
+       </>
+      )}
+     </div>
+    )}
    </div>
    <button className="nav-top-back" onClick={onExit} aria-label="Salir del seguimiento" title="Salir">✕</button>
   </section>

@@ -14,3 +14,171 @@
 @media(prefers-color-scheme:dark){.maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}}
 .place-access-marker{width:18px;height:18px;background:#fff;border:3px solid #2563eb;border-radius:50%;box-shadow:0 2px 8px #0005}
 .place-access-note{margin:4px 16px 8px;padding:8px 10px;border-radius:10px;background:var(--ui-panel,#fff);color:var(--ui-text,#222);font-size:11px;line-height:1.3}
+
+/* PINES DORADOS (SPONSORED GOLDEN PINS) */
+.golden-pin-marker {
+  position: relative;
+  width: 38px;
+  height: 46px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 25;
+  user-select: none;
+}
+.golden-pin-pulse {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.45);
+  animation: golden-pulse-ring 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  pointer-events: none;
+}
+@keyframes golden-pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  65% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.golden-pin-body {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 70%, #b45309 100%);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45), 0 2px 4px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+.golden-pin-marker:hover .golden-pin-body,
+.golden-pin-marker:active .golden-pin-body {
+  transform: scale(1.18) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.65), 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.golden-pin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.golden-pin-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #b45309;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.golden-pin-pointer {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #b45309;
+  margin-top: -2px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+}
+
+/* POPUP DEL PIN DORADO */
+.golden-pin-popup-wrapper .maplibregl-popup-content {
+  padding: 14px 16px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.18), 0 6px 12px -3px rgba(0, 0, 0, 0.1);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  background: #ffffff;
+  max-width: 270px;
+  font-family: inherit;
+  backdrop-filter: blur(8px);
+}
+.golden-pin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.golden-pin-tag {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid #fcd34d;
+}
+.golden-pin-discount {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  text-align: right;
+  white-space: nowrap;
+}
+.golden-pin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14.5px;
+  font-weight: 750;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+.golden-pin-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0 0 10px;
+}
+.golden-pin-actions {
+  display: flex;
+  gap: 6px;
+}
+.golden-pin-cta-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+}
+.golden-pin-cta-btn:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  .golden-pin-popup-wrapper .maplibregl-popup-content {
+    background: #1e293b;
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #f8fafc;
+  }
+  .golden-pin-title-row {
+    color: #f8fafc;
+  }
+  .golden-pin-desc {
+    color: #94a3b8;
+  }
+}

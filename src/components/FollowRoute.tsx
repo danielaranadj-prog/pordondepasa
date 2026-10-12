@@ -10,13 +10,15 @@ import {movementHeading} from '../lib/heading';
 import {nextManeuver} from '../lib/maneuver';
 import {remainingTripMinutes} from '../lib/tripEstimate';
 import {ambiguousProjection,confirmsProgress,reliableProgressSample,type ProgressSample} from '../lib/progressGuard';
-import {canShowAlightingAd,findMatchingLandmarkAd,type AdCampaign} from '../lib/ads';
+import {canShowAlightingAd,findMatchingLandmarkAd,isDeliverableAd,type AdCampaign} from '../lib/ads';
+import {isPremiumUser,recordSponsoredTripEvent} from '../lib/sponsoredTrip';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 import '../styles/navigation-refined.css';
 import '../styles/dynamic-island.css';
+import '../styles/sponsored-trip.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,ads,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
  const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[showStops,setShowStops]=useState(false);
  const [dismissedAdStep,setDismissedAdStep]=useState<number|null>(null);
  const compass=useCompass(!arrived,compassStart);
@@ -100,6 +102,8 @@ export default function FollowRoute({option,stops,ads,origin,destination,originN
  const action=arrived?'Finalizar viaje':step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya abordé la unidad':'Continuar';
  const currentBusRoute=leg.kind==='bus'?leg.route:undefined;
  const nextBusRoute=option.legs[step+1]?.kind==='bus'?option.legs[step+1]?.route:undefined;
+ const showTripSponsor=!arrived && !isPremiumUser() && leg.kind==='bus' && !!sponsoredTrip?.sponsoredTrip &&
+  isDeliverableAd(sponsoredTrip,new Date(clock),[leg.route?.id??'']);
  function formatNavInstruction():string{
   if(arrived)return destinationName?`Llegaste a ${destinationName}.`:'Has llegado a tu destino.';
   if(leg.kind==='bus'){
@@ -211,6 +215,10 @@ export default function FollowRoute({option,stops,ads,origin,destination,originN
   </section>
   {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
   <footer className={`nav-bottom-sheet map-sheet ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
+   {showTripSponsor && <div className="nav-trip-sponsor" role="note" aria-label="Patrocinador del viaje">
+    <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
+    <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks')}>Canjear</a>
+   </div>}
    <div className="nav-single-row">
     <button
      type="button"

@@ -9,3 +9,5 @@ dist/
 *.zip
 *.pem
 *.key
+.ads-pilot.json
+.ads-pilot.json.*.tmp

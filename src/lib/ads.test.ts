@@ -17,6 +17,14 @@ expect(!isDeliverableAd({...base,coordinates:{lat:NaN,lng:-104.9}},today),'Inval
 expect(!isDeliverableAd({...base,radiusMeters:-1},today),'Invalid radius fails closed');
 expect(!isDeliverableAd({...base,routeIds:['otra']},today,['mexico']),'Wrong route must not render');
 expect(isDeliverableAd({...base,routeIds:['mexico']},today,['mexico']),'Matching route may render');
+const breakfast={timeZone:'America/Mazatlan' as const,daysOfWeek:[1,2,3,4,5],windows:[{start:'06:00',end:'11:00'}]};
+expect(isDeliverableAd({...base,schedule:breakfast},new Date('2026-10-12T15:00:00Z')),'Breakfast ad appears Monday morning in Tepic');
+expect(!isDeliverableAd({...base,schedule:breakfast},new Date('2026-10-12T20:00:00Z')),'Breakfast ad disappears in the afternoon');
+expect(!isDeliverableAd({...base,schedule:breakfast},new Date('2026-10-11T15:00:00Z')),'Breakfast ad does not run on Sunday');
+expect(!isDeliverableAd({...base,schedule:{...breakfast,daysOfWeek:[]}},new Date('2026-10-12T15:00:00Z')),'Invalid schedule fails closed');
+const overnight={timeZone:'America/Mazatlan' as const,daysOfWeek:[5],windows:[{start:'20:00',end:'02:00'}]};
+expect(isDeliverableAd({...base,schedule:overnight},new Date('2026-10-17T08:00:00Z')),'Friday night ad continues into Saturday morning');
+expect(!isDeliverableAd({...base,schedule:overnight},new Date('2026-10-18T08:00:00Z')),'Friday night ad stops before Sunday morning');
 expect(findMatchingLandmarkAd(at,[{...base,id:'far',coordinates:far},base],'mexico',today)?.id==='base','Only nearby landmark can be selected');
 expect(!findMatchingLandmarkAd(at,[{...base,routeIds:['otra']}],'mexico',today),'Landmark route filter applies');
 expect(!findMatchingLandmarkAd(at,[{...base,referenceText:''}],'mexico',today),'Landmark requires reference text');
@@ -32,4 +40,10 @@ expect(getVisiblePinAds([{...pin,coordinates:far}],option,[],today).length===0,'
 const stop:RouteStop={id:'stop',name:'Parada',coordinates:near,legIndex:0,along:55,distance:0,inferred:false,side:'right'};
 expect(getVisiblePinAds([pin],option,[stop],today).length===0,'Stop wins close visual collision');
 expect(getVisiblePinAds([pin],undefined,[],today).length===0,'Route-targeted pin waits for matching trip');
+expect(getVisiblePinAds([{...pin,routeIds:[]}],undefined,[],today).length===0,'Legacy global pin waits for a selected trip');
+const nearbyPins=[pin,{...pin,id:'close-copy',coordinates:{lat:21.5007,lng:-104.9}},{...pin,id:'second',coordinates:{lat:21.503,lng:-104.9}},{...pin,id:'third',coordinates:{lat:21.506,lng:-104.9}}];
+expect(getVisiblePinAds(nearbyPins,option,[],today).length===2,'At most two separated pins appear on one trip');
+expect(!(getVisiblePinAds(nearbyPins,option,[],today).some(ad=>ad.id==='close-copy')&&getVisiblePinAds(nearbyPins,option,[],today).some(ad=>ad.id==='pin')),'Nearby sponsored pins do not overlap');
+const walkingOnly:Option={...option,legs:[{kind:'walk',from:at,to:{lat:21.51,lng:-104.9},geometry:[at,{lat:21.51,lng:-104.9}],minutes:5,meters:1100}]};
+expect(getVisiblePinAds([pin],walkingOnly,[],today).length===0,'A walking-only trip is not a bus route sponsorship');
 console.log('OK: ad dates, activation, route targeting, proximity and stop collision');

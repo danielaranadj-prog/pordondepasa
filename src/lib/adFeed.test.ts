@@ -1,0 +1,27 @@
+import {loadPublicAds,normalizeAdRouteIds,parsePublicAdFeed} from './adFeed.ts';
+import type {AdCampaign} from './ads.ts';
+
+const expect=(value:unknown,message:string)=>{if(!value)throw Error(message)};
+const campaign:AdCampaign={id:'test',clientId:'client',type:'pin',title:'Café',description:'',icon:'★',createdAt:'2026-10-01',isActive:true,routeIds:['mexico'],coordinates:{lat:21.5,lng:-104.9}};
+const feed={schemaVersion:1,enabled:true,version:'one',campaigns:[campaign]};
+expect(parsePublicAdFeed(feed)?.campaigns.length===1,'Valid feed accepted');
+expect(!parsePublicAdFeed({...feed,schemaVersion:2}),'Unknown schema fails closed');
+expect(!parsePublicAdFeed({...feed,campaigns:[{...campaign,routeIds:'mexico'}]}),'Malformed campaign fails closed');
+const legacy={...campaign,routeIds:['r-o-suchiate']};
+expect(normalizeAdRouteIds([legacy])[0].routeIds?.[0]==='r-rio-suchiate','GPS Rio Suchiate ID matches the app route');
+expect(legacy.routeIds[0]==='r-o-suchiate','Feed normalization does not mutate exported campaigns');
+expect(normalizeAdRouteIds([{...legacy,routeIds:['r-o-suchiate','r-rio-suchiate']}])[0].routeIds?.length===1,'Known aliases do not duplicate route targeting');
+let calls=0;
+const fetcher=((async()=>{calls++;return {ok:true,json:async()=>feed}}) as unknown) as typeof fetch;
+expect((await loadPublicAds('off','/data/ads.json','https://example.com/api/ads',fetcher)).length===0 && calls===0,'Off never fetches');
+expect((await loadPublicAds('remote','/data/ads.json','https://example.com/api/ads',fetcher)).length===1,'Remote feed loads');
+const legacyFetcher=((async()=>({ok:true,json:async()=>({...feed,campaigns:[legacy]})})) as unknown) as typeof fetch;
+expect((await loadPublicAds('remote','/data/ads.json','https://example.com/api/ads',legacyFetcher))[0].routeIds?.[0]==='r-rio-suchiate','Remote campaigns target the current route ID');
+const legacyLocal=((async()=>({ok:true,json:async()=>[legacy]})) as unknown) as typeof fetch;
+expect((await loadPublicAds('local','/data/ads.json','',legacyLocal))[0].routeIds?.[0]==='r-rio-suchiate','Local campaigns target the current route ID');
+expect((await loadPublicAds('remote','/data/ads.json','http://example.com/api/ads',fetcher)).length===0 && calls===1,'Remote cleartext outside loopback rejected');
+const paused=((async()=>({ok:true,json:async()=>({...feed,enabled:false})})) as unknown) as typeof fetch;
+expect((await loadPublicAds('remote','','https://example.com/api/ads',paused)).length===0,'Remote kill switch removes all ads');
+const failure=((async()=>{throw Error('offline')}) as unknown) as typeof fetch;
+expect((await loadPublicAds('remote','/data/ads.json','https://example.com/api/ads',failure)).length===0,'Network failure never falls back to stale local ads');
+console.log('OK: ad feed mode, schema, kill switch and offline failure');

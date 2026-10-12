@@ -1,0 +1,25 @@
+import {canShowSponsoredTrip,isSafeSponsoredUrl,recordSponsoredTripEvent,sponsoredTripReport} from './sponsoredTrip.ts';
+import type {AdCampaign} from './ads.ts';
+
+const expect=(value:unknown,message:string)=>{if(!value)throw new Error(message)};
+const now=new Date(2026,9,11,12);
+const ad:AdCampaign={id:'sponsor',clientId:'client',type:'sponsored_trip',title:'Café',description:'2x1',icon:'☕',routeIds:['m-xico'],isActive:true,createdAt:'2026-10-01',sponsoredTrip:{durationSeconds:3.5,canSkipAfterSeconds:1.5,headline:'Te acompaña Café',promoOffer:'2x1',ctaType:'whatsapp',ctaText:'Canjear',ctaUrl:'https://wa.me/523111234567?text=Hola',dailyCapPerUser:2,cooldownHours:3}};
+const values=new Map<string,string>();
+const storage={getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>{values.set(key,value)}};
+expect(canShowSponsoredTrip(ad,'m-xico',now,storage),'Matching active sponsor can appear without coordinates');
+expect(!canShowSponsoredTrip(ad,'insurgentes',now,storage),'Other route never triggers');
+expect(!canShowSponsoredTrip({...ad,isActive:false},'m-xico',now,storage),'Paused sponsor never triggers');
+expect(!canShowSponsoredTrip({...ad,startDate:'2026-10-12'},'m-xico',now,storage),'Future sponsor never triggers');
+expect(!canShowSponsoredTrip({...ad,sponsoredTrip:{...ad.sponsoredTrip!,ctaUrl:'javascript:alert(1)'}},'m-xico',now,storage),'Unsafe CTA rejected');
+expect(isSafeSponsoredUrl('https://wa.me/523111234567?text=Hola','whatsapp'),'Valid WhatsApp link');
+expect(!isSafeSponsoredUrl('https://example.com','whatsapp'),'Other domain cannot masquerade as WhatsApp');
+recordSponsoredTripEvent(ad.id,'sponsored_trip_views',now.getTime(),storage);
+expect(!canShowSponsoredTrip(ad,'m-xico',new Date(now.getTime()+2*3600000),storage),'Three-hour cooldown');
+expect(canShowSponsoredTrip(ad,'m-xico',new Date(now.getTime()+3*3600000),storage),'Ad resumes after cooldown');
+recordSponsoredTripEvent(ad.id,'sponsored_trip_views',now.getTime()+3*3600000,storage);
+expect(!canShowSponsoredTrip(ad,'m-xico',new Date(now.getTime()+6*3600000),storage),'Daily cap applies');
+recordSponsoredTripEvent(ad.id,'sponsored_trip_cta_clicks',now.getTime(),storage);
+expect(sponsoredTripReport(storage)[ad.id].sponsored_trip_cta_clicks===1,'Anonymous metrics counted');
+values.set('isPremiumUser','true');
+expect(!canShowSponsoredTrip(ad,'m-xico',new Date(now.getTime()+86400000),storage),'Premium skips intro');
+console.log('OK: route gate, schedule, cooldown, daily cap, premium and metrics');

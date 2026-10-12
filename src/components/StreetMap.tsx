@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import type {Map,Marker,GeoJSONSource} from 'maplibre-gl';
 import type {Option,Point} from '../lib/router';
 import type {RouteStop} from '../lib/navigation';
+import {projectProgress} from '../lib/navigation';
 import {visibleMapPadding} from '../lib/mapCamera';
 import {headingDelta} from '../lib/heading';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
@@ -114,10 +115,13 @@ export default function StreetMap(props:Props){
     const titleRow=document.createElement('div');titleRow.className='golden-pin-title-row';
     const emoji=document.createElement('span');emoji.textContent=ad.icon||'📍';
     const titleText=document.createElement('strong');titleText.textContent=ad.title;titleRow.append(emoji,titleText);popupEl.appendChild(titleRow);
+    const trip=latest.current.adOption??latest.current.option;
+    const distances=trip?.legs.filter(leg=>leg.kind==='bus'&&leg.route&&(!ad.routeIds?.length||ad.routeIds.includes(leg.route.id))).map(leg=>projectProgress(ad.coordinates!,leg.geometry??[leg.from,leg.to]).distance)??[];
+    if(distances.length){const distance=Math.min(...distances);const detail=document.createElement('small');detail.className='golden-pin-distance';detail.textContent=distance<30?'Sobre el recorrido':`A ~${Math.round(distance/10)*10} m del recorrido`;popupEl.appendChild(detail)}
     if(ad.description){const desc=document.createElement('p');desc.className='golden-pin-desc';desc.textContent=ad.description;popupEl.appendChild(desc)}
     if(ad.promoText){const promo=document.createElement('p');promo.className='golden-pin-discount';promo.textContent=ad.promoText;popupEl.appendChild(promo)}
     const action=latest.current.onAdDestinationChange??(latest.current.onDestinationChange?((point:Point)=>latest.current.onDestinationChange?.(point)):undefined);
-    if(action){const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent='Crear ruta a este negocio →';cta.addEventListener('click',event=>{event.stopPropagation();popup.remove();action(ad.coordinates!,ad.title)});popupEl.appendChild(cta)}
+    if(action){const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent=`${ad.callToAction?.trim()||'Crear ruta a este negocio'} →`;cta.title='Cambiar destino a este negocio';cta.addEventListener('click',event=>{event.stopPropagation();popup.remove();action(ad.coordinates!,ad.title)});popupEl.appendChild(cta)}
     const popup=new M.Popup({offset:18,closeButton:true,className:'golden-pin-popup-wrapper'}).setLngLat(coord(ad.coordinates)).setDOMContent(popupEl).addTo(instance);
    }
    instance.on('click',event=>{

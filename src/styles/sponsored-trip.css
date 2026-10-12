@@ -1,0 +1,25 @@
+.sponsored-trip-screen{min-height:100dvh;background:#f6f7f8;color:#152027;display:flex;justify-content:center;align-items:center;padding:24px 18px;font-family:inherit}
+.sponsored-trip-content{width:min(100%,430px);display:flex;flex-direction:column;gap:18px}
+.sponsored-trip-header{display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:#4a5963}
+.sponsored-trip-header span:last-child{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#69777e}
+.sponsored-trip-card{background:#fff;border:1px solid #e2e7ea;border-radius:24px;padding:28px 22px;box-shadow:0 12px 40px #16252b12;text-align:center;display:flex;align-items:center;flex-direction:column;gap:16px}
+.sponsored-trip-badge{border-radius:999px;background:#eaf5ef;color:#0b6945;padding:6px 11px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.sponsored-trip-icon{width:74px;height:74px;display:grid;place-items:center;border-radius:21px;background:#f0f4f6;font-size:42px}
+.sponsored-trip-card h1{font-size:clamp(23px,6vw,30px);line-height:1.12;letter-spacing:-.035em;margin:0}
+.sponsored-trip-offer{font-size:16px;line-height:1.4;font-weight:650;margin:0;color:#30424d}
+.sponsored-trip-card small{color:#66767f;line-height:1.4}
+.sponsored-trip-cta{width:100%;min-height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:8px;background:#0b8f62;color:#fff;text-decoration:none;font-size:14px;font-weight:800;padding:10px 14px}
+.sponsored-trip-cta:focus-visible,.sponsored-trip-footer button:focus-visible{outline:3px solid #2a7be5;outline-offset:3px}
+.sponsored-trip-footer{min-height:96px;display:flex;flex-direction:column;align-items:center;gap:9px}
+.sponsored-trip-progress{height:5px;width:100%;border-radius:10px;overflow:hidden;background:#dce4e8}
+.sponsored-trip-progress span{display:block;height:100%;background:#2179e4;transition:width .05s linear}
+.sponsored-trip-footer p{margin:0;font-size:12px;color:#65757e}
+.sponsored-trip-footer button{border:0;background:transparent;color:#1367c2;font-size:14px;font-weight:800;min-height:44px;padding:8px 18px;cursor:pointer}
+@media(prefers-color-scheme:dark){.sponsored-trip-screen{background:#111719;color:#f7f9fa}.sponsored-trip-header{color:#c2ced3}.sponsored-trip-header span:last-child,.sponsored-trip-footer p{color:#a8b7bf}.sponsored-trip-card{background:#1c262b;border-color:#37474e;box-shadow:none}.sponsored-trip-icon{background:#2b3940}.sponsored-trip-offer{color:#d5e0e4}.sponsored-trip-card small{color:#adbdc5}.sponsored-trip-badge{background:#123d2e;color:#78e4b5}.sponsored-trip-progress{background:#35454c}.sponsored-trip-footer button{color:#86bcff}}
+@media(prefers-reduced-motion:reduce){.sponsored-trip-progress span{transition:none}}
+.nav-trip-sponsor{display:flex;align-items:center;gap:12px;justify-content:space-between;min-width:0;padding:8px 14px;border-bottom:1px solid #dfe5e7;background:#f4faf7;color:#142d25}
+.nav-trip-sponsor-copy{display:flex;flex-direction:column;gap:1px;min-width:0;font-size:12px}
+.nav-trip-sponsor-copy small{font-size:10px;color:#537366}
+.nav-trip-sponsor-copy strong,.nav-trip-sponsor-copy span{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.nav-trip-sponsor a{font-size:12px;font-weight:800;color:#086743;text-decoration:none;padding:9px 6px;flex-shrink:0}
+@media(prefers-color-scheme:dark){.nav-trip-sponsor{background:#1c3028;color:#e5f4eb;border-color:#375247}.nav-trip-sponsor-copy small{color:#aad4bd}.nav-trip-sponsor a{color:#8ce3b6}}

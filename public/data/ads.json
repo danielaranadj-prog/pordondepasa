@@ -1,90 +1,115 @@
 [
   {
-    "id": "ad-cafe-de-olla-centro",
-    "clientId": "client-cafe-de-olla",
-    "type": "landmark",
-    "title": "Café de Olla Centro",
-    "description": "Café tradicional de olla y desayunos a unos pasos de la Catedral.",
-    "icon": "☕",
-    "referenceText": "frente a Café de Olla (casi esquina Libertad)",
-    "promoText": "15% desc. en barra mostrando tu trayecto",
-    "coordinates": {
-      "lat": 21.51205,
-      "lng": -104.89152
-    },
-    "radiusMeters": 350,
-    "callToAction": "Ver cupón",
-    "isActive": true,
-    "createdAt": "2026-10-11T09:00:00.000Z"
-  },
-  {
-    "id": "ad-burger-lab-forum",
-    "clientId": "client-burger-lab",
-    "type": "landmark",
-    "title": "Burger Lab Forum",
-    "description": "Hamburguesas artesanales y malteadas sobre el boulevard de acceso.",
+    "id": "ad-1791775399359",
+    "type": "sponsored_trip",
+    "title": "Tacos la prueba",
+    "description": "Promoción especial para pasajeros de PorDóndePasa",
     "icon": "🍔",
-    "referenceText": "a pasos de Burger Lab Forum",
-    "promoText": "Combo Viajero 2x1 al descender",
-    "coordinates": {
-      "lat": 21.49179,
-      "lng": -104.86640
-    },
-    "radiusMeters": 350,
-    "callToAction": "Aprovechar 2x1",
+    "routeIds": [
+      "m-xico"
+    ],
+    "callToAction": "Quiero la promo",
     "isActive": true,
-    "createdAt": "2026-10-11T09:00:00.000Z"
+    "sponsoredTrip": {
+      "durationSeconds": 4,
+      "canSkipAfterSeconds": 1.5,
+      "headline": "Tacos 2x1 en horario especial",
+      "promoOffer": "Promoción especial para pasajeros de PorDóndePasa",
+      "promoDisclaimer": "Valido luenes a vienes de 9:00 am a 2:00 pm",
+      "ctaType": "whatsapp",
+      "ctaText": "Quiero la promo",
+      "ctaUrl": "https://wa.me/523111469700?text=Hola%2C%20vi%20tu%20promoci%C3%B3n%20en%20PorD%C3%B3ndePasa.",
+      "brandBadgeText": "Patrocinador de este viaje",
+      "dailyCapPerUser": 2,
+      "cooldownHours": 3
+    },
+    "startDate": "2026-10-12",
+    "endDate": "2026-10-16",
+    "schedule": {
+      "timeZone": "America/Mazatlan",
+      "daysOfWeek": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "windows": [
+        {
+          "start": "08:30",
+          "end": "22:00"
+        }
+      ]
+    }
   },
   {
-    "id": "ad-farmacia-uan",
-    "clientId": "client-farmacia",
+    "id": "ad-1791775703487",
     "type": "landmark",
-    "title": "Farmacia Popular UAN",
-    "description": "Tu botiquín y refrigerios a metros del acceso principal.",
-    "icon": "💊",
-    "referenceText": "frente a Farmacia Popular UAN",
-    "promoText": "10% adicional en mostrador",
+    "title": "¡Ya casi llegas! Descuento relámpago",
+    "description": "Estás a 3 minutos a pie de tu parada. Presenta este cupón y llévate un postre sin costo en el menú nocturno.",
+    "icon": "🏃‍♂️💨",
+    "referenceText": "cerca de Los Golovanes",
+    "routeIds": [
+      "r-o-suchiate"
+    ],
     "coordinates": {
-      "lat": 21.49203,
-      "lng": -104.89427
+      "lat": 21.474181510525952,
+      "lng": -104.88635927438737
     },
-    "radiusMeters": 350,
-    "callToAction": "Ver ubicación",
+    "radiusMeters": 200,
+    "callToAction": "📍 Trazar ruta al local",
     "isActive": true,
-    "createdAt": "2026-10-11T09:00:00.000Z"
+    "startDate": "2026-10-13",
+    "endDate": "2026-10-17",
+    "schedule": {
+      "timeZone": "America/Mazatlan",
+      "daysOfWeek": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "windows": [
+        {
+          "start": "17:00",
+          "end": "20:00"
+        }
+      ]
+    }
   },
   {
-    "id": "ad-pin-burger-lab",
-    "clientId": "client-burger-lab",
+    "id": "ad-1791775835478",
     "type": "pin",
-    "title": "Burger Lab Forum",
-    "description": "Hamburguesas al carbón, papas rústicas y malteadas en zona Forum.",
-    "icon": "🍔",
-    "promoText": "2x1 Viajero en hamburguesas clásicas",
+    "title": "¡Ya casi llegas! Descuento relámpago",
+    "description": "Hoy especial en Frappe\n(Promo no real es una prueba)",
+    "icon": "🏃‍♂️💨",
+    "routeIds": [
+      "m-xico"
+    ],
     "coordinates": {
-      "lat": 21.49179,
-      "lng": -104.86640
+      "lat": 21.519145265950577,
+      "lng": -104.88538295030595
     },
-    "radiusMeters": 400,
-    "callToAction": "Cómo llegar aquí →",
+    "radiusMeters": 500,
+    "callToAction": "📍 Trazar ruta al local",
     "isActive": true,
-    "createdAt": "2026-10-11T09:00:00.000Z"
-  },
-  {
-    "id": "ad-pin-cafe-centro",
-    "clientId": "client-cafe-de-olla",
-    "type": "pin",
-    "title": "Café de Olla Centro",
-    "description": "El mejor café de olla y pan recién horneado del centro histórico.",
-    "icon": "☕",
-    "promoText": "15% de descuento mostrando tu ruta",
-    "coordinates": {
-      "lat": 21.51205,
-      "lng": -104.89152
-    },
-    "radiusMeters": 350,
-    "callToAction": "Cómo llegar aquí →",
-    "isActive": true,
-    "createdAt": "2026-10-11T09:00:00.000Z"
+    "startDate": "2026-10-12",
+    "endDate": "2026-10-16",
+    "schedule": {
+      "timeZone": "America/Mazatlan",
+      "daysOfWeek": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "windows": [
+        {
+          "start": "08:40",
+          "end": "11:00"
+        }
+      ]
+    }
   }
 ]

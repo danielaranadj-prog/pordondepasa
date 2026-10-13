@@ -15,9 +15,9 @@ export function ambiguousProjection(point:Point,line:Point[],accuracy:number,alo
 }
 
 export function reliableProgressSample(point:Point,line:Point[],accuracy:number,time:number):ProgressSample|null{
- if(!Number.isFinite(time)||!Number.isFinite(accuracy)||accuracy>25||line.length<2)return null;
+ if(!Number.isFinite(time)||!Number.isFinite(accuracy)||accuracy<0||accuracy>40||line.length<2)return null;
  const progress=projectProgress(point,line);
- if(progress.distance>25||ambiguousProjection(point,line,accuracy,progress.along,progress.distance))return null;
+ if(progress.distance>Math.max(25,accuracy)||ambiguousProjection(point,line,accuracy,progress.along,progress.distance))return null;
  return {point,accuracy,time,along:progress.along};
 }
 
@@ -28,4 +28,20 @@ export function confirmsProgress(previous:ProgressSample|undefined,current:Progr
  if(elapsed>15)return false;
  const maxAdvance=elapsed*(mode==='bus'?25:3)+previous.accuracy+current.accuracy+5;
  return Math.abs(current.along-previous.along)<=Math.max(8,maxAdvance);
+}
+
+export type ProgressState={along:number;accepted?:ProgressSample;pending?:ProgressSample};
+/** Two consistent fixes may initialize anywhere on the current leg. This also
+ * supports a passenger who confirms boarding after the vehicle has moved. */
+export function updateProgress(state:ProgressState,sample:ProgressSample|null,mode:'walk'|'bus'):ProgressState{
+ if(!sample)return {...state,pending:undefined};
+ const next={...state,pending:sample};
+ if(!confirmsProgress(state.pending,sample,mode)||sample.along<state.along)return next;
+ if(!state.accepted&&state.pending&&mode==='bus'&&sample.along<state.pending.along-10)return next;
+ if(state.accepted){
+  const elapsed=(sample.time-state.accepted.time)/1000;
+  const allowance=Math.max(50,elapsed*(mode==='bus'?25:3)+state.accepted.accuracy+sample.accuracy);
+  if(elapsed<=0||sample.along-state.along>allowance)return next;
+ }
+ return {along:sample.along,accepted:sample,pending:sample};
 }

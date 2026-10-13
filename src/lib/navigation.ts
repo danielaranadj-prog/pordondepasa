@@ -48,7 +48,10 @@ export function stopsForOption(option:Option,stops:TransitStop[]):RouteStop[]{
    const full=assigned?projectProgress(stop.coordinates,whole):undefined;
    const onTrace=!!full&&full.distance<=1.5;
    if(onTrace){
-    if(end.along<=start.along||full!.along<start.along-.5||full!.along>end.along+.5)continue;
+    const wraps=end.along<start.along&&meters(whole[0],whole.at(-1)!)<350;
+    const inLeg=wraps?full!.along>=start.along-.5||full!.along<=end.along+.5:
+     full!.along>=start.along-.5&&full!.along<=end.along+.5;
+    if(!inLeg)continue;
    }else if(p.rightOffset<=1.5)continue;
    const existing=result.find(s=>s.legIndex===legIndex&&meters(s.coordinates,stop.coordinates)<15);
    if(existing){if(existing.type!=='oficial'&&stop.type==='oficial')Object.assign(existing,stop);continue;}

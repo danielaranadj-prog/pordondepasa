@@ -69,7 +69,9 @@ function option(id:string,legs:Leg[]):Option {
  const rides=legs.filter(l=>l.kind==='bus').length;
  const walking=legs.filter(l=>l.kind==='walk').reduce((s,l)=>s+l.minutes,0);
  const minutes=legs.reduce((s,l)=>s+l.minutes,0)+ESTIMATED_WAIT_MINUTES*rides;
- return {id,legs,minutes,walk:walking,transfers:Math.max(0,rides-1),fare:rides*10,score:minutes+walking*.8+Math.max(0,rides-1)*8};
+ // The displayed ranking prioritizes arrival time. Walking and a transfer
+ // break near-ties, but must not hide a materially faster trip.
+ return {id,legs,minutes,walk:walking,transfers:Math.max(0,rides-1),fare:rides*10,score:minutes+walking*.15+Math.max(0,rides-1)*2};
 }
 function valid(legs:Leg[]) {
  return legs.filter(l=>l.kind==='walk').reduce((s,l)=>s+l.meters,0)<=1250;
@@ -125,7 +127,7 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
     const legs=[walk(origin,a.point),bus(start.route,a,connection.a),walk(connection.a.point,connection.b.point),bus(end.route,connection.b,b),walk(b.point,destination,true)];
     if(hasUnverifiedBusEdge(legs))continue;
     const candidate=option('transfer-'+start.route.shape.id+'-'+end.route.shape.id,legs);
-    if(candidate.minutes<=90&&(!best||candidate.score<best.score))best=candidate;
+    if(!best||candidate.minutes<best.minutes||(candidate.minutes===best.minutes&&candidate.walk<best.walk))best=candidate;
    }
   }
   if(best)candidates.push(best);
@@ -133,16 +135,9 @@ export function findRoutes(origin:Point,destination:Point,shapes:Shape[],limit=5
  const unique=new Map<string,Option>();
  for(const candidate of candidates){
   const key=candidate.legs.filter(l=>l.kind==='bus').map(l=>l.route!.id).join('|')||'walk';
-  if(!unique.has(key)||unique.get(key)!.score>candidate.score)unique.set(key,candidate);
+  if(!unique.has(key)||unique.get(key)!.minutes>candidate.minutes||(unique.get(key)!.minutes===candidate.minutes&&unique.get(key)!.walk>candidate.walk))unique.set(key,candidate);
  }
- const sorted=[...unique.values()].sort((a,b)=>a.score-b.score);
-  // Suppress transfer options when a direct route exists and transfer saves < 5 minutes.
-  // Avoids recommending unnecessary transfers that cost extra fare.
-  const bestDirect=sorted.find(o=>o.transfers===0);
-  const filtered=sorted.filter(o=>{
-   if(o.transfers===0)return true;
-   if(!bestDirect)return true;
-   return bestDirect.minutes-o.minutes>=5;
-  });
-  return(filtered.length?filtered:sorted).slice(0,limit);
+ // Never suppress a valid transfer solely because a direct ride exists.
+ // The passenger can compare its extra fare against the time saved.
+ return [...unique.values()].sort((a,b)=>a.minutes-b.minutes||a.walk-b.walk||a.transfers-b.transfers).slice(0,limit);
 }

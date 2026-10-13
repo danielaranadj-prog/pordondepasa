@@ -55,8 +55,14 @@ export class WalkingRouter{
    for(const leg of option.legs){const next=leg.kind==='walk'?this.route(leg.from,leg.to):leg;if(!next){valid=false;break}legs.push(next)}
    if(!valid)continue;const walks=legs.filter(l=>l.kind==='walk');if(walks.reduce((n,l)=>n+l.meters,0)>1250)continue;
    const walk=walks.reduce((n,l)=>n+l.minutes,0),rides=legs.filter(l=>l.kind==='bus').length,minutes=legs.reduce((n,l)=>n+l.minutes,0)+rides*ESTIMATED_WAIT_MINUTES;
-   result.push({...option,legs,walk,minutes,score:minutes+walk*.8+option.transfers*8});
+   result.push({...option,legs,walk,minutes,score:minutes+walk*.15+option.transfers*2});
   }
-  return result.sort((a,b)=>a.score-b.score).slice(0,5);
+  result.sort((a,b)=>a.minutes-b.minutes||a.walk-b.walk||a.transfers-b.transfers);
+  const selected=result.slice(0,5);
+  // Keep a reasonably competitive no-transfer/cheaper option visible even
+  // when fast transfer combinations occupy all five slots.
+  const simple=result.find(option=>option.transfers===0&&option.minutes<=result[0]?.minutes+25);
+  if(simple&&!selected.includes(simple))selected[selected.length-1]=simple;
+  return selected.sort((a,b)=>a.minutes-b.minutes||a.walk-b.walk||a.transfers-b.transfers);
  }
 }

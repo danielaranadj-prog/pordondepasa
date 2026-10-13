@@ -1,4 +1,4 @@
-const assert={ok:(value:unknown)=>{if(!value)throw new Error('Assertion failed');},equal:(a:unknown,b:unknown)=>{if(a!==b)throw new Error(`Expected ${a} to equal ${b}`);}};
+const assert={ok:(value:unknown,message='Assertion failed')=>{if(!value)throw new Error(message);},equal:(a:unknown,b:unknown)=>{if(a!==b)throw new Error(`Expected ${a} to equal ${b}`);}};
 import { findRoutes, meters, type Shape } from './router.ts';
 const point=(x:number,y=0)=>({lat:21.5+y/111320,lng:-104.9+x/(111320*Math.cos(21.5*Math.PI/180))});
 const shape=(id:string,xy:number[][]):Shape=>{
@@ -35,4 +35,12 @@ const broken:Shape={id:'broken',name:'broken',color:'#065F46',groupName:'broken'
 assert.ok(!findRoutes(point(0),point(2300),[broken]).some(o=>o.legs.some(l=>l.kind==='bus')));
 assert.ok(!findRoutes(point(1100),point(2300),[broken]).some(o=>o.legs.some(l=>l.kind==='bus')));
 assert.ok(findRoutes(point(0),point(2300),[shape('continuous',[[0,0],[2300,0]])]).some(o=>o.legs.some(l=>l.kind==='bus')));
+// A slower one-fare ride must not suppress a faster, valid two-bus trip.
+const slow=shape('slow',[[0,0],[0,2000],[2000,2000],[2000,0]]);
+const quickA=shape('quick-a',[[0,0],[1000,0]]);
+const quickB=shape('quick-b',[[1000,0],[2000,0]]);
+const ranked=findRoutes(point(0),point(2000),[slow,quickA,quickB]);
+assert.ok(ranked.some(o=>o.transfers===1),'Keep a useful transfer when a direct route exists');
+assert.ok(ranked[0].transfers===1,'Fastest valid journey must lead, even with an extra fare');
+assert.ok(ranked.some(o=>o.transfers===0),'Keep the cheaper direct journey available');
 console.log('OK: bajada antes de vuelta, transbordo temprano, distancia sobre trazo, ruta 24 excluida y caminata sin tarifa/espera.');

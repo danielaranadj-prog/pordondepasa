@@ -16,7 +16,17 @@ export default function StreetMap(props:Props){
  latest.current=props;
  const draw=useRef<()=>void>(()=>{}),camera=useRef<()=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{}),updateAds=useRef<()=>void>(()=>{});
  const [ready,setReady]=useState(false),[error,setError]=useState('');
- function padding(){const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');const p=visibleMapPadding(rect,main?.querySelector('.dynamic-island, .navigation-top, .map-top-minimal')?.getBoundingClientRect(),main?.querySelector('.map-sheet')?.getBoundingClientRect());if(latest.current.navigation)p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;return p}
+ function padding(){
+  const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');
+  const top=main?.querySelector('.dynamic-island, .navigation-top, .nav-top-card, .map-top-minimal')?.getBoundingClientRect(),bottom=main?.querySelector('.map-sheet')?.getBoundingClientRect();
+  const p=visibleMapPadding(rect,top,bottom);
+  if(latest.current.navigation){
+   const controlsHeight=rect.height<650?46:138,freeTop=(top?.bottom??rect.top+50)-rect.top+12,freeBottom=(bottom?.top??rect.bottom)-rect.top-12;
+   main?.style.setProperty('--nav-controls-top',`${Math.max(freeTop,(freeTop+freeBottom-controlsHeight)/2)}px`);
+   p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;
+  }
+  return p;
+ }
  useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;let frame=0,lastFrame=0,initialized=false;
   const adTimer=window.setInterval(()=>updateAds.current(),60000);
   let visual:Point|undefined,visualHeading=0;
@@ -138,7 +148,7 @@ export default function StreetMap(props:Props){
     else instance.jumpTo({center:coord(current.origin),zoom:13,padding:padding()});
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current()});observer.observe(container.current);
-   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.dynamic-island']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
+   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.nav-top-card','.dynamic-island']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
    instance.on('load',()=>{if(disposed)return;draw.current();drawClosure();updateMarkers.current();updateAds.current();camera.current();setReady(true)});
    function animate(now:number){
     if(disposed||!instance)return;

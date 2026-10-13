@@ -11,11 +11,11 @@
     "callToAction": "Quiero la promo",
     "isActive": true,
     "sponsoredTrip": {
-      "durationSeconds": 4,
+      "durationSeconds": 6,
       "canSkipAfterSeconds": 1.5,
       "headline": "Tacos 2x1 en horario especial",
       "promoOffer": "Promoción especial para pasajeros de PorDóndePasa",
-      "promoDisclaimer": "Valido luenes a vienes de 9:00 am a 2:00 pm",
+      "promoDisclaimer": "Válido lunes a viernes de 9:00 am a 2:00 pm",
       "ctaType": "whatsapp",
       "ctaText": "Quiero la promo",
       "ctaUrl": "https://wa.me/523111469700?text=Hola%2C%20vi%20tu%20promoci%C3%B3n%20en%20PorD%C3%B3ndePasa.",
@@ -29,14 +29,15 @@
       "timeZone": "America/Mazatlan",
       "daysOfWeek": [
         1,
+        2,
         3,
         4,
         5
       ],
       "windows": [
         {
-          "start": "08:30",
-          "end": "22:00"
+          "start": "09:00",
+          "end": "14:00"
         }
       ]
     }

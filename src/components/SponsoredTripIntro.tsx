@@ -1,20 +1,22 @@
 import {useEffect,useRef,useState} from 'react';
 import type {AdCampaign} from '../lib/ads.ts';
-import {recordSponsoredTripEvent} from '../lib/sponsoredTrip.ts';
+import {recordSponsoredTripEvent,sponsoredIntroTiming} from '../lib/sponsoredTrip.ts';
 import '../styles/sponsored-trip.css';
 
 export default function SponsoredTripIntro({ad,routeName,onContinue}:{ad:AdCampaign;routeName:string;onContinue:()=>void}) {
   const config = ad.sponsoredTrip!;
-  const duration = Math.min(5,Math.max(2,config.durationSeconds || 3.5));
-  const skipAfter = Math.min(duration,Math.max(0,config.canSkipAfterSeconds ?? 1.5));
+  const {duration,skipAfter} = sponsoredIntroTiming(config);
   const started = useRef(Date.now());
+  const lastTick = useRef(Date.now());
   const finished = useRef(false);
   const counted = useRef(false);
   const [elapsed,setElapsed] = useState(0);
   useEffect(() => {
     if (!counted.current) {recordSponsoredTripEvent(ad.id,'sponsored_trip_views',started.current);counted.current=true;}
-    const timer = window.setInterval(() => setElapsed((Date.now()-started.current)/1000),50);
-    return () => window.clearInterval(timer);
+    const resetTick=()=>{lastTick.current=Date.now()};
+    document.addEventListener('visibilitychange',resetTick);
+    const timer = window.setInterval(() => {const now=Date.now(),delta=Math.max(0,now-lastTick.current)/1000;lastTick.current=now;if(!document.hidden)setElapsed(previous=>previous+delta)},50);
+    return () => {window.clearInterval(timer);document.removeEventListener('visibilitychange',resetTick)};
   },[ad.id]);
   function finish(skipped:boolean) {
     if (finished.current) return;

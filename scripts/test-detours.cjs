@@ -69,7 +69,13 @@ const replacement=febrero.features[0].geometry.coordinates.map(([lng,lat])=>({la
 const at=changedH2.coordinates.findIndex((p,k)=>p.lat===replacement[0].lat&&p.lng===replacement[0].lng&&changedH2.coordinates[k+1]?.lat===replacement[1].lat);
 assert.ok(at>=0);
 assert.deepEqual(changedH2.coordinates.slice(at,at+replacement.length),replacement);
-assert.ok(combined.every((s,i)=>s===updated[i]||['cantera-hospitales-1','cantera-hospitales-2'].includes(s.id)));
+const sauces=updated.find(s=>s.id==='sauces-1'),changedSauces=combined.find(s=>s.id==='sauces-1');
+assert.equal(changedSauces.id,sauces.id);assert.equal(changedSauces.color,sauces.color);
+assert.deepEqual(changedSauces.coordinates[0],sauces.coordinates[0]);
+assert.deepEqual(changedSauces.coordinates.at(-1),sauces.coordinates.at(-1));
+const saucesAt=changedSauces.coordinates.findIndex((p,k)=>p.lat===replacement[0].lat&&p.lng===replacement[0].lng&&changedSauces.coordinates[k+1]?.lat===replacement[1].lat);
+assert.ok(saucesAt>=0);assert.deepEqual(changedSauces.coordinates.slice(saucesAt,saucesAt+7),replacement.slice(0,7));
+assert.ok(combined.every((s,i)=>s===updated[i]||['cantera-hospitales-1','cantera-hospitales-2','sauces-1'].includes(s.id)));
 const febreroOff=structuredClone(febrero);febreroOff.features[0].properties.active=false;
 assert.equal(apply21Febrero(updated,febreroOff,victoria),updated);
 const victoriaOff=structuredClone(victoria);victoriaOff.features[0].properties.active=false;

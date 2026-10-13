@@ -300,10 +300,26 @@ bottom: max(36px, calc(env(safe-area-inset-bottom) + 80px));
 }
 
 .nav-btn-action-text {
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.nav-alighting-notice,.nav-journey-warning,.nav-report-panel,.nav-report-status{margin:0;padding:10px 12px;border-radius:14px;background:var(--nav-chip-bg);font-size:12px;line-height:1.4;color:var(--nav-text-primary)}
+.nav-alighting-notice{background:var(--nav-accent);color:#fff;font-weight:650}
+.nav-journey-warning strong,.nav-report-panel strong{display:block}
+.nav-journey-warning p,.nav-report-panel p{margin:4px 0 8px;color:var(--nav-text-secondary)}
+.nav-journey-warning>div,.nav-report-panel>div,.nav-report-status>div{display:flex;flex-wrap:wrap;gap:6px}
+.nav-journey-warning button,.nav-report-panel button,.nav-report-status button{min-height:44px;border:0;border-radius:10px;padding:8px 10px;background:var(--nav-card-bg);color:var(--nav-accent);font:inherit;font-weight:650}
+.nav-journey-warning button:disabled{opacity:.5}
+.nav-notice-controls{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 6px;font-size:11px;color:var(--nav-text-secondary)}
+.nav-notice-controls button{border:0;background:none;color:var(--nav-accent);font:inherit;min-height:36px;padding:4px}
+.nav-report-status span{display:block;margin-bottom:6px}
+.trip-screen.navigation-screen .nav-bottom-sheet{max-height:min(52dvh,calc(100dvh - 260px));overflow-y:auto;overscroll-behavior:contain}
+.trip-screen.navigation-screen .apple-map-controls{top:var(--nav-controls-top,140px)}
+@media(max-height:650px){.trip-screen.navigation-screen .apple-map-controls{flex-direction:row;top:var(--nav-controls-top,140px)}.trip-screen.navigation-screen .apple-map-controls button+button{border-left:1px solid var(--nav-line);border-top:0}}
+@media(max-width:375px){.nav-btn-route{max-width:30%;padding:0 10px}.nav-btn-route-label{overflow:hidden;text-overflow:ellipsis}.nav-btn-action{padding:0 8px}.nav-btn-action-arrow{display:none}}
 
 .nav-btn-action-arrow {
   font-size: 15px;

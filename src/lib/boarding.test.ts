@@ -1,0 +1,71 @@
+// Node-only regression test; the browser project intentionally has no Node typings.
+// @ts-ignore
+import assert from 'node:assert/strict';
+import {findRoutes,boardingAlternative,meters,type Point,type Shape} from './router.ts';
+import {waitingCandidate,compatibleBoarding,installBoarding,shouldAskWaiting} from './boarding.ts';
+import {readWaiting,saveWaiting,type WaitingRecord} from './waitingRecords.ts';
+import {stopTimeline} from './stopTimeline.ts';
+import {navigationCamera} from './mapCamera.ts';
+import type {RouteStop} from './navigation.ts';
+import data from '../../public/data/tepic-routes.json' with {type:'json'};
+const point=(x:number,y:number):Point=>({lat:21.5+y/111320,lng:-104.9+x/(111320*Math.cos(21.5*Math.PI/180))});
+const shape:Shape={id:'test',name:'México',color:'#e11d48',groupName:'Test',coordinates:Array.from({length:21},(_,i)=>point(0,i*100))};
+const snapshot=JSON.stringify(shape),trip=findRoutes(point(20,400),point(20,1800),[shape])[0],bus=trip.legs[1];
+assert.equal(bus.kind,'bus');
+for(const y of [250,400,550]){const edited=boardingAlternative(bus,point(8,y))!;assert.ok(edited,`Boarding at ${y} m`);assert.ok(meters(edited.to,bus.to)<.1);assert.equal(edited.route,bus.route);assert.equal(edited.geometry!.at(-1)!.lat,bus.to.lat);}
+assert.equal(boardingAlternative(bus,point(0,1000)),null,'Never shift the boarding by several blocks beyond the bound');
+assert.equal(boardingAlternative(bus,point(0,1850)),null,'Never board after alighting');
+assert.equal(boardingAlternative(bus,point(45,400)),null,'Not on another street');
+assert.equal(boardingAlternative({...bus,geometry:[bus.to,bus.from]},point(0,400)),null,'An unrecoverable/reversed geometry is not edited');
+assert.equal(JSON.stringify(shape),snapshot,'No mutation of source routes');
+const now=100000,fix=(y:number,time:number,accuracy=8)=>({point:point(8,y),time,accuracy});
+const stable=[fix(250,now-14000),fix(251,now-7000),fix(250,now)];
+const candidate=waitingCandidate(stable,bus,now)!;assert.ok(candidate);
+assert.equal(waitingCandidate(stable,bus,now+16000),undefined);
+assert.equal(waitingCandidate(stable.map(f=>({...f,accuracy:40})),bus,now),undefined);
+assert.equal(waitingCandidate([fix(180,now-14000),fix(220,now-7000),fix(250,now)],bus,now),undefined,'Moving pedestrian is not waiting');
+assert.equal(waitingCandidate([stable.at(-1)!],bus,now),undefined);
+const installed=installBoarding(trip,0,trip.legs[0],bus,candidate.bus,candidate.point)!;
+assert.equal(installed.id,trip.id);assert.equal(installed.fare,trip.fare);assert.equal(installed.transfers,trip.transfers);assert.equal(installed.legs[2],trip.legs[2]);assert.equal(installed.legs[0].minutes,0);
+assert.equal(installBoarding({...trip,legs:trip.legs.map(l=>({...l}))},0,trip.legs[0],bus,candidate.bus,candidate.point),null,'Async stale options cannot overwrite the journey');
+assert.equal(installBoarding(trip,0,trip.legs[0],bus,{...candidate.bus,to:point(0,1600)},candidate.point),null,'Alighting endpoint is fixed');
+const transfer={...trip,id:'transfer',fare:20,transfers:1,legs:[...trip.legs,{...bus},trip.legs[2]]};
+const adjustedTransfer=installBoarding(transfer,0,transfer.legs[0],transfer.legs[1],candidate.bus,candidate.point)!;
+assert.equal(adjustedTransfer.fare,20);assert.equal(adjustedTransfer.transfers,1);assert.equal(adjustedTransfer.legs[3],transfer.legs[3]);assert.equal(adjustedTransfer.legs[4],transfer.legs[4]);
+const riding=[fix(430,now-20000),fix(480,now-10000),fix(530,now)];
+assert.ok(compatibleBoarding(riding,bus,now-30000,now));
+assert.ok(!compatibleBoarding(riding,bus,now-15000,now),'Only evidence since confirmed waiting');
+assert.ok(!compatibleBoarding(riding,bus,now-30000,now+16000),'No stale inference');
+assert.ok(!compatibleBoarding([fix(430,now-20000),fix(445,now-10000),fix(460,now)],bus,now-30000,now),'Normal walking is not boarding');
+assert.ok(!compatibleBoarding([fix(530,now-20000),fix(480,now-10000),fix(430,now)],bus,now-30000,now),'Opposite direction is not boarding');
+assert.ok(!compatibleBoarding([fix(430,now-20000),fix(431,now-1000),fix(530,now)],bus,now-30000,now),'Signal gap/abrupt jump is not sustained motion');
+const loop:Shape={...shape,id:'loop',coordinates:[point(0,0),point(0,500),point(500,500),point(500,0),point(0,0)]};
+const round=findRoutes(point(500,150),point(0,350),[loop]).find(option=>option.legs.some(leg=>leg.kind==='bus'))!.legs[1];
+assert.ok(boardingAlternative(round,point(500,250)),'Native circular wrap is preserved');
+const stops=[100,200,300].map((along,index)=>({id:String(index),name:`Stop ${index}`,coordinates:point(0,along),legIndex:1,along,type:'costumbre'})) as RouteStop[];
+assert.equal(stopTimeline(stops,1,0,false).next,undefined);
+assert.equal(stopTimeline(stops,1,100,true).next!.id,'0','Keep current reference through a small GPS passage tolerance');
+assert.equal(stopTimeline(stops,1,126,true).next!.id,'1');
+assert.equal(stopTimeline(stops,1,226,true).passed.length,2);
+assert.equal(stopTimeline(stops,2,226,true).next,undefined,'Never show another leg/direction');
+assert.ok(navigationCamera('walk',300).zoom>navigationCamera('bus',300).zoom);assert.equal(navigationCamera('walk',50,true).pitch,0);
+const memory=new Map<string,string>(),storage={getItem:(key:string)=>memory.get(key)??null,setItem:(key:string,value:string)=>{memory.set(key,value)}};
+const record:WaitingRecord={id:'wait',routeId:'mexico',routeName:'México',startedAt:now,observedSeconds:240,status:'waiting',reasons:[{reason:'full',at:now}]};
+const waiting={...record,observedSeconds:0,reasons:[]};
+assert.ok(shouldAskWaiting(waiting,point(8,250),fix(250,now+300000),now+300000),'Ask after five minutes even with sparse stationary callbacks; reliable observation is recorded separately');
+assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(250,now+299000),now+299000));
+assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(250,now),now+300000),'Lost signal never prompts a waiting claim');
+assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(350,now+300000),now+300000),'Do not ask after leaving the waiting point');
+assert.ok(!shouldAskWaiting({...waiting,reasons:[{reason:'full',at:now+299000}]},point(8,250),fix(250,now+300000),now+300000),'Respect the response cooldown');
+saveWaiting({...record,...{point:point(0,0),history:stable}} as WaitingRecord,storage);
+assert.deepEqual(readWaiting(storage),[record]);assert.ok(![...memory.values()][0].includes('coordinates'));
+for(let i=0;i<110;i++)saveWaiting({...record,id:String(i)},storage);assert.equal(readWaiting(storage).length,100);
+const mexico=data.routes.find(route=>route.id==='m-xico')!;assert.ok(mexico);
+const original=JSON.stringify(mexico);let checks=0;
+for(let i=0;i<mexico.coordinates.length-25;i+=10){
+ const option=findRoutes(mexico.coordinates[i],mexico.coordinates[i+20],[mexico]).find(option=>option.legs.some(leg=>leg.kind==='bus'));
+ if(!option?.legs[1]?.route)continue;
+ const edited=boardingAlternative(option.legs[1],option.legs[1].from);if(edited){checks++;assert.ok(meters(edited.to,option.legs[1].to)<.1);}
+}
+assert.ok(checks>=5,'Exercise native Mexico geometry, including repeated corridors');assert.equal(JSON.stringify(mexico),original);
+console.log(`OK: boarding locations, direction/endpoint invariants, stationary GPS, conservative motion, next-stop timeline, local-only waiting data and ${checks} native México slices.`);

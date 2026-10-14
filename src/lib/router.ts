@@ -65,6 +65,24 @@ function bus(route:Indexed,a:Snap,b:Snap):Leg {
  const d=b.along>a.along ? b.along-a.along : (route.length-a.along)+b.along;
  return {kind:'bus',from:a.point,to:b.point,meters:d,minutes:Math.max(1,Math.ceil(d/busSpeed)),route:route.shape,geometry:geometry(route,a,b)};
 }
+/** Edit only the boarding of an already chosen, directed bus leg. Recover its
+ * exact source interval first; never reverse a route or bridge a missing edge. */
+export function boardingAlternative(leg:Leg,point:Point,radius=25,maxShift=400):Leg|null{
+ if(leg.kind!=='bus'||!leg.route||!leg.geometry||leg.geometry.length<2)return null;
+ const route=index(leg.route),starts=snaps(leg.from,route,2),ends=snaps(leg.to,route,2);
+ const same=(line:Point[])=>line.length===leg.geometry!.length&&line.every((p,i)=>meters(p,leg.geometry![i])<.5);
+ const original=starts.flatMap(a=>ends.map(b=>({a,b}))).find(({a,b})=>same(geometry(route,a,b)));
+ if(!original)return null;
+ const circular=meters(route.shape.coordinates[0],route.shape.coordinates.at(-1)!)<350;
+ const choices=snaps(point,route,radius).flatMap(a=>{
+  const b=original.b,forward=b.along>a.along||circular;
+  if(!forward)return [];
+  const edited=bus(route,a,b);
+  if(edited.meters<80||Math.abs(edited.meters-leg.meters)>maxShift||hasUnverifiedBusEdge([edited]))return [];
+  return [{edited,distance:a.distance}];
+ }).sort((a,b)=>a.distance-b.distance);
+ return choices[0]?.edited??null;
+}
 function option(id:string,legs:Leg[]):Option {
  const rides=legs.filter(l=>l.kind==='bus').length;
  const walking=legs.filter(l=>l.kind==='walk').reduce((s,l)=>s+l.minutes,0);

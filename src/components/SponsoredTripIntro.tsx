@@ -26,7 +26,7 @@ export default function SponsoredTripIntro({ad,routeName,onContinue}:{ad:AdCampa
   }
   useEffect(() => { if (elapsed >= duration) finish(false); },[elapsed,duration]);
   const remaining = Math.max(0,Math.ceil(duration-elapsed));
-  return <main className="sponsored-trip-screen" aria-label="Patrocinio de viaje">
+  return <main className="sponsored-trip-screen" data-screen="patrocinio-de-viaje" aria-label="Patrocinio de viaje">
     <div className="sponsored-trip-content">
       <div className="sponsored-trip-header"><span>🚌 Ruta {routeName}</span><span>Publicidad</span></div>
       <div className="sponsored-trip-card">

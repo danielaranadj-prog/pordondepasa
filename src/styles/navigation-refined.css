@@ -567,3 +567,13 @@ bottom: max(36px, calc(env(safe-area-inset-bottom) + 80px));
 .nav-sponsored-detail button{justify-self:start;margin-top:4px;border:0;background:transparent;color:#9a6200;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:36px}
 @media(prefers-color-scheme:dark){.nav-sponsored-detail>span,.nav-sponsored-detail button{color:#f6c968}.nav-sponsored-detail{border-color:#8a6421}}
 .nav-walk-update{margin:10px 4px 0;font-size:.8rem;line-height:1.4;color:var(--nav-accent,#2563eb);text-align:center}
+.nav-sheet-grip{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:44px;margin:-8px 0 5px;padding:5px;border:0;background:none;color:var(--nav-text-secondary);font:inherit;touch-action:none;cursor:grab}
+.nav-sheet-grip>span{width:32px;height:4px;border-radius:4px;background:var(--nav-text-muted)}
+.nav-sheet-grip small{font-size:11px}.nav-sheet-grip b{font-size:16px}
+.nav-timeline-controls{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}
+.nav-timeline-controls button,.nav-waiting-info button{min-height:44px;padding:6px 8px;border:0;background:none;color:var(--nav-accent);font:inherit;font-size:12px;cursor:pointer}
+.nav-sheet-timeline-drawer .nav-timeline-list{max-height:28dvh;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin}
+.nav-stop-state{display:block;margin-bottom:4px;color:var(--nav-accent);font-size:10px;letter-spacing:.04em;font-weight:650}
+.nav-waiting-info{display:grid;gap:8px;padding:10px 6px;font-size:12px;line-height:1.4;color:var(--nav-text-secondary)}
+.nav-waiting-info label{display:flex;align-items:center;gap:7px;min-height:44px}.nav-waiting-info small{font-size:10px}.nav-waiting-info input{width:18px;height:18px;accent-color:var(--nav-accent)}
+.nav-btn-metrics-time{overflow-wrap:anywhere}

@@ -7,7 +7,7 @@ function Icon({kind}:{kind:'search'|'pin'|'bus'|'arrow'}){
 }
 const columns=[0,55,125,180,250,310,375,440,505],rows=[0,56,125,180,250,305,375,440,505];
 export default function HomeScreen({query,ready,stops,places,message,onQuery,onChoose,onChoosePlace,onSearch,onMap}:Props){
- return <main className="pdp-home">
+ return <main className="pdp-home" data-screen="inicio">
   <div className="home-city" aria-hidden="true">{rows.slice(0,-1).flatMap((y,r)=>columns.slice(0,-1).map((x,c)=><span key={`${r}-${c}`} style={{left:x+8,top:y+8,width:columns[c+1]-x-15,height:rows[r+1]-y-15}}/>))}</div>
   <div className="home-content">
    <div className="home-main">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { routeTextColor, type Option, type Point } from '../lib/router';
 import {planRoutes,RoutePlanError} from '../lib/workerClient';
 import StreetMap from './StreetMap';
@@ -19,6 +19,8 @@ import {canShowSponsoredTrip} from '../lib/sponsoredTrip';
 import {ADS_MODE,ADS_FEED_URL} from '../lib/adConfig';
 import {loadPublicAds} from '../lib/adFeed';
 import SponsoredTripIntro from './SponsoredTripIntro';
+import {replaceWalkingLeg} from '../lib/walkingReroute';
+import type {UpdateWalkingLeg} from './useWalkingReroute';
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const isWithinTepic=(p:Point)=>p.lat>=21.40&&p.lat<=21.58&&p.lng>=-105.02&&p.lng<=-104.78;
 function optionLabel(option:Option,index:number,options:Option[]):string {
@@ -61,6 +63,13 @@ export default function TransitApp(){
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
  const [options,setOptions]=useState<Option[]>([]),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[pickOrigin,setPickOrigin]=useState(false),[message,setMessage]=useState('');
+ const updateWalkingLeg=useCallback<UpdateWalkingLeg>((index,expected,next)=>{
+  setOptions(previous=>{
+   const current=previous[selected];if(!current||current.legs[index]!==expected)return previous;
+   const updated=replaceWalkingLeg(current,index,next);if(!updated)return previous;
+   return previous.map((item,i)=>i===selected?updated:item);
+  });
+ },[selected]);
  useEffect(()=>{let active=true;Promise.all(['general','insurgentes','mexico'].map(async name=>{const r=await fetch(`${import.meta.env.BASE_URL}data/stops/${name}-stops.json`);if(!r.ok)throw new Error();const d=await r.json();return (d.stops??[]).map((s:Stop)=>({...s,source:name}))})).then(lists=>{if(active)setStops(lists.flat())}).catch(()=>{if(active)setMessage('No se pudieron cargar las sugerencias. Puedes usar el mapa.')});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch(`${import.meta.env.BASE_URL}data/places.json`).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{if(active&&Array.isArray(data.places))setPlaces(data.places)}).catch(()=>{});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;const refresh=()=>void loadPublicAds(ADS_MODE,`${import.meta.env.BASE_URL}data/ads.json`,ADS_FEED_URL).then(data=>{if(active)setAds(data)});
@@ -182,7 +191,7 @@ export default function TransitApp(){
  }
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();setPickOrigin(false);setPickDestination(false)}
  if(view==='sponsor'&&sponsorIntro)return <SponsoredTripIntro ad={sponsorIntro.ad} routeName={sponsorIntro.routeName} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
- if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?sponsorIntro?.ad:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onAdDestinationChange={planSponsorTrip}/>;
+ if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?sponsorIntro?.ad:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen"><div className="welcome-brand"><svg viewBox="0 0 80 80" aria-hidden="true"><path d="M20 60V26a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v34M20 40h40M28 53h1m22 0h1M28 62v4m24-4v4" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/><path d="M34 10h12" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg><h1>PorDóndePasa</h1><p>Muévete por Tepic.</p><AnimatedTagline/></div><div className="welcome-action"><div className="welcome-progress" aria-hidden="true"><span/></div><small>Tepic · Xalisco</small></div></main>;
  if(view==='trip')return <main className="trip-screen">
   <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} onDestinationChange={moveDestination} onAdDestinationChange={moveDestination} onPick={pickOrigin?point=>{request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;setOrigin(point);setOriginLabel('Origen seleccionado');setPickOrigin(false);setOptions([]);setBusy(false);setMessage('');if(destination)void calculate(chosenPlace?.access??destination);}:pickDestination||(!options.length&&!busy)?moveDestination:undefined}/>

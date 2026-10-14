@@ -566,3 +566,4 @@ bottom: max(36px, calc(env(safe-area-inset-bottom) + 80px));
 .nav-sponsored-detail p{margin:0;color:var(--ui-muted)}
 .nav-sponsored-detail button{justify-self:start;margin-top:4px;border:0;background:transparent;color:#9a6200;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:36px}
 @media(prefers-color-scheme:dark){.nav-sponsored-detail>span,.nav-sponsored-detail button{color:#f6c968}.nav-sponsored-detail{border-color:#8a6421}}
+.nav-walk-update{margin:10px 4px 0;font-size:.8rem;line-height:1.4;color:var(--nav-accent,#2563eb);text-align:center}

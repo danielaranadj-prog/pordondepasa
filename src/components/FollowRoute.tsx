@@ -14,13 +14,15 @@ import {alightingStage,journeyStatus,type JourneyFix} from '../lib/journeyStatus
 import {appendReportFix,saveRouteReport,routeReportGeoJSON,type RouteReport,type ReportReason} from '../lib/routeReport';
 import {canShowAlightingAd,findMatchingLandmarkAd,isDeliverableAd,type AdCampaign} from '../lib/ads';
 import {isPremiumUser,recordSponsoredTripEvent} from '../lib/sponsoredTrip';
+import {useWalkingReroute,type UpdateWalkingLeg} from './useWalkingReroute';
+import {walkingDeviation} from '../lib/walkingReroute';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
 import '../styles/navigation-refined.css';
 import '../styles/dynamic-island.css';
 import '../styles/sponsored-trip.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onReplan,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onReplan?:(point:Point)=>void;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onReplan,onWalkReroute,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onReplan?:(point:Point)=>void;onWalkReroute?:UpdateWalkingLeg;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
  const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[showStops,setShowStops]=useState(false);
  const [dismissedAdStep,setDismissedAdStep]=useState<number|null>(null);
  const [history,setHistory]=useState<JourneyFix[]>([]),[voice,setVoice]=useState(false),[alightingNotice,setAlightingNotice]=useState('');
@@ -39,33 +41,34 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const heading=northUp?0:leg.kind==='bus'?freshCourse??compass.heading:compass.heading??freshCourse;
  const progress=useMemo(()=>live?projectProgress(live,line):undefined,[live,line]);
  const confident=!!live&&!stale&&accuracy!==undefined&&accuracy<=60;
- const [accepted,setAccepted]=useState({step:initialStep,along:0});
- const [painted,setPainted]=useState({step:initialStep,along:0});
+ const [accepted,setAccepted]=useState({step:initialStep,leg,along:0});
+ const [painted,setPainted]=useState({step:initialStep,leg,along:0});
  const trackingProgress=useRef<ProgressState>({along:0});
  const sample=useMemo(()=>live&&!stale&&accuracy!==undefined?reliableProgressSample(live,line,accuracy,fixAt):null,[live,line,stale,accuracy,fixAt]);
  const health=useMemo(()=>journeyStatus(history,line,leg.kind,clock),[history,line,leg.kind,clock]);
  useEffect(()=>{
   const timer=setInterval(()=>setPainted(previous=>{
-   if(previous.step!==accepted.step)return {...accepted,along:0};
+   if(previous.step!==accepted.step||previous.leg!==accepted.leg)return {...accepted,along:0};
    const gap=accepted.along-previous.along;
-   return gap<=.2?accepted:{step:accepted.step,along:previous.along+gap*.35};
+   return gap<=.2?accepted:{...accepted,along:previous.along+gap*.35};
   }),80);
   return()=>clearInterval(timer);
  },[accepted]);
  const acceptedAt=useRef(0);
  // Never trim from a lone fix or a projection that could belong to a nearby return pass.
  useEffect(()=>{
-  if(accepted.step!==step){setAccepted({step,along:0});acceptedAt.current=0;trackingProgress.current={along:0};return;}
+  if(accepted.step!==step||accepted.leg!==leg){setAccepted({step,leg,along:0});acceptedAt.current=0;trackingProgress.current={along:0};return;}
   if(arrived)return;
   const next=updateProgress(trackingProgress.current,sample,leg.kind);
   trackingProgress.current=next;
-  if(next.accepted){acceptedAt.current=next.accepted.time;setAccepted({step,along:next.along});}
- },[sample,step,arrived,accepted.step,leg.kind]);
+  if(next.accepted){acceptedAt.current=next.accepted.time;setAccepted({step,leg,along:next.along});}
+ },[sample,step,arrived,accepted.step,accepted.leg,leg]);
  const displayedOption=useMemo(()=>({...option,legs:option.legs.map((item,index)=>({
-  ...item,geometry:arrived||index<step?[]:index===step?remainingGeometry(item.geometry??[item.from,item.to],painted.step===step?painted.along:0):item.geometry
+  ...item,geometry:arrived||index<step?[]:index===step?remainingGeometry(item.geometry??[item.from,item.to],painted.step===step&&painted.leg===leg?painted.along:0):item.geometry
  }))}),[option,step,painted,arrived]);
- const trusted=!!sample&&confident&&accepted.step===step&&acceptedAt.current>0&&clock-acceptedAt.current<=15000;
- const hasProgress=accepted.step===step&&acceptedAt.current>0;
+ const trusted=!!sample&&confident&&accepted.step===step&&accepted.leg===leg&&acceptedAt.current>0&&clock-acceptedAt.current<=15000;
+ const hasProgress=accepted.step===step&&accepted.leg===leg&&acceptedAt.current>0;
+ const walkReroute=useWalkingReroute({option,step,history,arrived,confirmedAlong:hasProgress?accepted.along:undefined,onUpdate:onWalkReroute});
  const remaining=hasProgress&&progress?Math.max(0,progress.length-accepted.along):leg.meters;
  const stage=alightingStage(leg.kind,trusted,remaining);
  const nearAlighting=stage>0;
@@ -100,8 +103,10 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const maneuver=leg.kind==='walk'&&trusted?nextManeuver(line,accepted.along):undefined;
  const totalMeters=remaining+option.legs.slice(step+1).reduce((sum,l)=>sum+l.meters,0);
  const totalMinutes=remainingTripMinutes(option,step,remaining);
- const offRoute=health.kind==='off-route'||health.kind==='wrong-direction';
- const proximity=live&&!stale&&accuracy!==undefined&&accuracy<=40?meters(live,destination):undefined;
+ const offRoute=health.kind==='off-route'||health.kind==='wrong-direction'||leg.kind==='walk'&&!!walkingDeviation(history,line,clock,hasProgress?accepted.along:undefined);
+ const proximityTarget=leg.kind==='walk'?leg.to:destination;
+ const proximityLabel=leg.kind==='walk'&&step<option.legs.length-1?'al abordaje':'al destino';
+ const proximity=live&&!stale&&accuracy!==undefined&&accuracy<=40?meters(live,proximityTarget):undefined;
  const metricsMeters=offRoute&&proximity!==undefined?proximity:totalMeters;
  const metricsTime=offRoute?'—':`${trusted?'':'~'}${totalMinutes} min`;
  const action=arrived?'Finalizar viaje':step===option.legs.length-1?'Ya llegué':leg.kind==='bus'?'Ya bajé de la unidad':option.legs[step+1]?.kind==='bus'?'Ya abordé la unidad':'Continuar';
@@ -252,12 +257,12 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
    </div>
    <div className="nav-top-content">
     <div className="nav-top-meta-line">
-     <span className="nav-top-dist">{arrived?'FINALIZADO':offRoute&&proximity!==undefined?`${distanceLabel(proximity)} al destino`:`${trusted?'':'~'}${distanceLabel(maneuver?.distance??remaining)}`}</span>
+     <span className="nav-top-dist">{arrived?'FINALIZADO':offRoute&&proximity!==undefined?`${distanceLabel(proximity)} ${proximityLabel}`:`${trusted?'':'~'}${distanceLabel(maneuver?.distance??remaining)}`}</span>
      <span className="nav-top-dot">·</span>
      <span className="nav-top-step">Paso {step+1} de {option.legs.length}</span>
     </div>
-    <h1 className="nav-top-title">{offRoute?'Recorrido diferente':title}</h1>
-    <p className="nav-top-subtitle" title={instructionText}>{offRoute?'Tu ubicación se alejó del recorrido seleccionado.':streetSubtitle}</p>
+    <h1 className="nav-top-title">{walkReroute.status?.kind==='pending'?'Ajustando caminata':offRoute?'Recorrido diferente':title}</h1>
+    <p className="nav-top-subtitle" title={instructionText}>{walkReroute.status?.kind==='pending'?'Conservamos tu punto de llegada.':offRoute?'Tu ubicación se alejó del recorrido seleccionado.':streetSubtitle}</p>
     {activeLandmarkAd && <div className="nav-landmark-chip" role="note" aria-label="Sugerencia patrocinada cerca de tu bajada">
      <span className="nav-landmark-label">Patrocinado</span>
      <span className="nav-landmark-name">{activeLandmarkAd.icon} {activeLandmarkAd.title}</span>
@@ -299,7 +304,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      className="nav-btn-metrics"
      onClick={()=>setShowStops(!showStops)}
      aria-expanded={showStops}
-     aria-label={`${arrived?'Destino alcanzado':`${metricsTime}, ${distanceLabel(metricsMeters)}${offRoute?' al destino en línea recta':''}`}. Toca para ver paradas.`}
+     aria-label={`${arrived?'Destino alcanzado':`${metricsTime}, ${distanceLabel(metricsMeters)}${offRoute?` ${proximityLabel} en línea recta`:''}`}. Toca para ver paradas.`}
     >
      <div className="nav-btn-metrics-stack">
       <strong className="nav-btn-metrics-time">{arrived?'✓':metricsTime}</strong>
@@ -308,7 +313,13 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
     </button>
    </div>
    {alightingNotice&&nearAlighting&&!arrived&&<p className="nav-alighting-notice" role="alert">{alightingNotice}</p>}
-   {offRoute&&!arrived&&<div className="nav-journey-warning" role="status">
+   {walkReroute.status&&walkReroute.status.kind!=='failed'&&<p className="nav-walk-update" role="status">{walkReroute.status.message}</p>}
+   {offRoute&&!arrived&&leg.kind==='walk'&&walkReroute.status?.kind!=='pending'&&<div className="nav-journey-warning" role="status">
+    <strong>{walkReroute.status?.kind==='failed'?'Caminata sin conexión disponible':'Buscando otro camino'}</strong>
+    <p>{walkReroute.status?.kind==='failed'?walkReroute.status.message:'Comprobando tu ubicación para ajustar solo la caminata.'}</p>
+    <div><button type="button" onClick={walkReroute.retry} disabled={!confident||accuracy===undefined||accuracy>30||!onWalkReroute}>Actualizar caminata</button><button type="button" onClick={replan} disabled={!confident||!onReplan}>Ver otras opciones</button></div>
+   </div>}
+   {offRoute&&!arrived&&leg.kind==='bus'&&<div className="nav-journey-warning" role="status">
     <strong>{health.kind==='wrong-direction'?'Estás viajando en otro sentido':'Estás siguiendo otro camino'}</strong>
     <p>{proximity!==undefined?`${distanceLabel(proximity)} al destino en línea recta. `:''}El tiempo del recorrido original ya no es fiable.</p>
     <div><button type="button" onClick={replan} disabled={!confident||!onReplan}>Actualizar viaje</button><button type="button" onClick={()=>setReportOpen(!reportOpen)} disabled={!!report&&!report.endedAt}>Reportar desvío</button></div>

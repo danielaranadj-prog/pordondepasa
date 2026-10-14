@@ -2,6 +2,7 @@ import {ESTIMATED_WAIT_MINUTES,meters,type Point,type Leg,type Option} from './r
 export type WalkNetwork={nodes:[number,number][];edges:[number,number,string|number][];names?:string[];source?:string;updated?:string};
 type Edge={a:number;b:number;name:string;distance:number};
 type Snap={edge:Edge;point:Point;t:number;distance:number};
+export type WalkingPreference={heading?:number};
 class Heap{
  values:{node:number;cost:number;priority:number}[]=[];
  push(value:{node:number;cost:number;priority:number}){const a=this.values;a.push(value);let i=a.length-1;while(i>0){const p=(i-1)>>1;if(a[p].priority<=value.priority)break;a[i]=a[p];i=p}a[i]=value}
@@ -28,25 +29,42 @@ export class WalkingRouter{
   result.sort((a,b)=>a.distance-b.distance);
   return result.filter(s=>s.distance<=(result[0]?.distance??0)+8).slice(0,3);
  }
- route(from:Point,to:Point):Leg|null{
-  const key=[from.lat,from.lng,to.lat,to.lng].map(v=>v.toFixed(6)).join(',');if(this.cache.has(key))return this.cache.get(key)!;
+ route(from:Point,to:Point,preference:WalkingPreference={}):Leg|null{
+  const heading=Number.isFinite(preference.heading)?preference.heading:undefined;
+  // A small departure cost favors continuing along the user's chosen street.
+  // It is never part of the displayed distance or time, and cannot disconnect
+  // the graph. Ordinary journey planning has no departure preference.
+  const departureCost=(start:Point,next:Point)=>{
+   if(heading===undefined||meters(start,next)<5)return 0;
+   const dx=(next.lng-start.lng)*Math.cos(start.lat*Math.PI/180),dy=next.lat-start.lat,angle=heading*Math.PI/180;
+   const dot=(dx*Math.sin(angle)+dy*Math.cos(angle))/(Math.hypot(dx,dy)||1);
+   return Math.max(0,-dot)*80;
+  };
+  const key=[from.lat,from.lng,to.lat,to.lng].map(v=>v.toFixed(6)).join(',')+`:${heading===undefined?'shortest':heading.toFixed(1)}`;if(this.cache.has(key))return this.cache.get(key)!;
   const starts=this.snaps(from),ends=this.snaps(to);if(!starts.length||!ends.length)return null;
-  let best: {cost:number;geometry:Point[];names:string[]}|undefined;
-  for(const s of starts)for(const e of ends)if(s.edge===e.edge){const cost=s.distance+e.distance+Math.abs(s.t-e.t)*s.edge.distance;if(!best||cost<best.cost)best={cost,geometry:[s.point,e.point],names:[s.edge.name]}}
+  const searchLimit=heading===undefined?1800:1880;
+  let best: {cost:number;distance:number;geometry:Point[];names:string[]}|undefined;
+  for(const s of starts)for(const e of ends)if(s.edge===e.edge){const distance=s.distance+e.distance+Math.abs(s.t-e.t)*s.edge.distance,cost=distance+departureCost(s.point,e.point);if(!best||cost<best.cost)best={cost,distance,geometry:[s.point,e.point],names:[s.edge.name]}}
   const queue=new Heap(),costs=new Map<number,number>(),previous=new Map<number,{node:number;edge:Edge}>(),roots=new Map<number,Snap>();
-  for(const s of starts)for(const [node,part] of [[s.edge.a,s.t],[s.edge.b,1-s.t]]){const cost=s.distance+part*s.edge.distance;if(cost<(costs.get(node)??Infinity)){costs.set(node,cost);roots.set(node,s);queue.push({node,cost,priority:cost+meters(this.points[node],to)})}}
+  for(const s of starts)for(const [node,part] of [[s.edge.a,s.t],[s.edge.b,1-s.t]]){const cost=s.distance+part*s.edge.distance+departureCost(s.point,this.points[node]);if(cost<(costs.get(node)??Infinity)){costs.set(node,cost);roots.set(node,s);queue.push({node,cost,priority:cost+meters(this.points[node],to)})}}
   let visits=0;
-  while(queue.values.length&&visits++<50000){const current=queue.pop();if(current.cost!==costs.get(current.node))continue;if(current.priority>(best?.cost??1800))break;
+  while(queue.values.length&&visits++<50000){const current=queue.pop();if(current.cost!==costs.get(current.node))continue;if(current.priority>(best?.cost??searchLimit))break;
+   // A GPS fix at a junction has a zero-length initial snap. Charge the
+   // preference on its first real departure instead of silently losing it.
+   const start=heading!==undefined&&!previous.has(current.node)?roots.get(current.node):undefined;
+   const junctionCost=(next:Point)=>start&&meters(start.point,this.points[current.node])<5?departureCost(start.point,next):0;
    for(const end of ends){let part:number|undefined;if(current.node===end.edge.a)part=end.t;else if(current.node===end.edge.b)part=1-end.t;
-    if(part===undefined)continue;const cost=current.cost+part*end.edge.distance+end.distance;if(cost>1800||best&&cost>=best.cost)continue;
+    if(part===undefined)continue;const cost=current.cost+part*end.edge.distance+end.distance+junctionCost(end.point);if(cost>searchLimit||best&&cost>=best.cost)continue;
     const path=[this.points[current.node]],names=[end.edge.name];let node=current.node;
     while(previous.has(node)){const p=previous.get(node)!;names.unshift(p.edge.name);node=p.node;path.unshift(this.points[node])}
-    const root=roots.get(node)!;best={cost,geometry:[root.point,...path,end.point],names:[root.edge.name,...names]};
+    const root=roots.get(node)!,junctionPenalty=meters(root.point,this.points[node])<5?departureCost(root.point,path[1]??end.point):0;
+    const distance=cost-departureCost(root.point,this.points[node])-junctionPenalty;if(distance>1800)continue;
+    best={cost,distance,geometry:[root.point,...path,end.point],names:[root.edge.name,...names]};
    }
-   for(const connection of this.adj[current.node]){const cost=current.cost+connection.edge.distance;if(cost>1800||cost>=(costs.get(connection.to)??Infinity))continue;costs.set(connection.to,cost);previous.set(connection.to,{node:current.node,edge:connection.edge});queue.push({node:connection.to,cost,priority:cost+meters(this.points[connection.to],to)})}
+   for(const connection of this.adj[current.node]){const cost=current.cost+connection.edge.distance+junctionCost(this.points[connection.to]);if(cost>searchLimit||cost>=(costs.get(connection.to)??Infinity))continue;costs.set(connection.to,cost);previous.set(connection.to,{node:current.node,edge:connection.edge});queue.push({node:connection.to,cost,priority:cost+meters(this.points[connection.to],to)})}
   }
   const names=best?[...new Set(best.names.filter(Boolean))].slice(0,4):[];
-  const result:Leg|null=best?{kind:'walk',from,to,geometry:best.geometry,meters:best.cost,minutes:best.cost<5?0:Math.max(1,Math.ceil(best.cost/78)),instruction:names.length?`Camina por ${names.join(' → ')}. Usa los cruces permitidos.`:'Sigue las calles y pasos del mapa. Usa los cruces permitidos.',streetNames:names}:null;
+  const result:Leg|null=best?{kind:'walk',from,to,geometry:best.geometry,meters:best.distance,minutes:best.distance<5?0:Math.max(1,Math.ceil(best.distance/78)),instruction:names.length?`Camina por ${names.join(' → ')}. Usa los cruces permitidos.`:'Sigue las calles y pasos del mapa. Usa los cruces permitidos.',streetNames:names}:null;
   if(this.cache.size>300)this.cache.clear();this.cache.set(key,result);return result;
  }
  refine(options:Option[]):Option[]{

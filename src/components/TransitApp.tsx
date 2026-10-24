@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { routeTextColor, type Option, type Point } from '../lib/router';
+import { type Option, type Point } from '../lib/router';
 import {planRoutes,RoutePlanError} from '../lib/workerClient';
 import StreetMap from './StreetMap';
-import JourneySteps from './JourneySteps';
-import UberAlternative from './UberAlternative';
+import RouteChoiceCard from './RouteChoiceCard';
+import UiIcon from './UiIcon';
 import '../styles/map.css';
 import '../styles/dynamic-island.css';
 import DynamicIsland from './DynamicIsland';
 import FollowRoute from './FollowRoute';
 import MapSheet from './MapSheet';
-import HomeScreen from './HomeScreen';
-import AnimatedTagline from './AnimatedTagline';
+import HomeScreen,{type HomeSavedPlace as SavedPlace} from './HomeScreen';
 import {requestCompass} from './useCompass';
 import type {TransitStop as Stop} from '../lib/navigation';
 import {searchPlaces,type Place} from '../lib/places';
@@ -25,6 +24,7 @@ import {installBoarding} from '../lib/boarding';
 import type {UpdatePickup} from './useBoardingJourney';
 import {TEPIC_MAP_CENTER,planningLocation,withinServiceArea,beginMapSelection,updateMapSelection,type Endpoint,type MapSelection} from '../lib/mapSelection';
 import '../styles/planning.css';
+import '../styles/identity.css';
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function optionLabel(option:Option,index:number,options:Option[]):string {
  if(index===0)return 'Más rápida';
@@ -32,7 +32,7 @@ function optionLabel(option:Option,index:number,options:Option[]):string {
  if(option.transfers===0&&options[0].transfers>0)return 'Sin transbordos';
  return 'Alternativa';
 }
-export default function TransitApp(){
+export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:SavedPlace[];onOpenAccount?:()=>void}={}){
  const [compassStart,setCompassStart]=useState({enabled:false,issue:''}),[starting,setStarting]=useState(false);
  const [journeyProgress,setJourneyProgress]=useState<{optionId:string;step:number;arrived:boolean}|null>(null);
  async function startTrip(index:number){
@@ -60,7 +60,7 @@ export default function TransitApp(){
  const drag=useRef<{x:number;scroll:number}|null>(null),moved=useRef(false);
  const locationRequest=useRef<Promise<Point|null>|null>(null),locationGeneration=useRef(0),originConfirmed=useRef(false),manualOrigin=useRef(false),originValue=useRef<Point>({...TEPIC_MAP_CENTER});
  const carousel=useRef<HTMLDivElement>(null),request=useRef(0);
- useEffect(()=>{const timer=setTimeout(()=>setWelcome(false),2500);return()=>clearTimeout(timer)},[]);
+ useEffect(()=>{const timer=setTimeout(()=>setWelcome(false),800);return()=>clearTimeout(timer)},[]);
  function followCards(){if(showAll)return;const list=carousel.current;if(!list)return;const middle=list.scrollLeft+list.clientWidth/2;let nearest=0,distance=Infinity;
  Array.from(list.children).forEach((node,i)=>{const card=node as HTMLElement;const d=Math.abs(card.offsetLeft+card.offsetWidth/2-middle);if(d<distance){distance=d;nearest=i}});setSelected(nearest)}
  function selectCard(i:number){setSelected(i);if(showAll)return;const list=carousel.current,card=list?.children[i] as HTMLElement|undefined;if(list&&card)list.scrollTo({left:card.offsetLeft-list.clientWidth/2+card.offsetWidth/2,behavior:'smooth'})}
@@ -190,7 +190,7 @@ export default function TransitApp(){
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
  if(view==='sponsor'&&sponsorIntro)return <SponsoredTripIntro ad={sponsorIntro.ad} routeName={sponsorIntro.routeName} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
  if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?sponsorIntro?.ad:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
- if(welcome)return <main className="welcome-screen"><div className="welcome-brand"><svg viewBox="0 0 80 80" aria-hidden="true"><path d="M20 60V26a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v34M20 40h40M28 53h1m22 0h1M28 62v4m24-4v4" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/><path d="M34 10h12" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg><h1>PorDóndePasa</h1><p>Muévete por Tepic.</p><AnimatedTagline/></div><div className="welcome-action"><div className="welcome-progress" aria-hidden="true"><span/></div><small>Tepic · Xalisco</small></div></main>;
+ if(welcome)return <main className="welcome-screen brand-welcome"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
  if(view==='trip')return <main className="trip-screen" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
   <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
   <DynamicIsland
@@ -211,24 +211,27 @@ export default function TransitApp(){
    canSwap={!!destination&&originConfirmed.current}
    onBack={back}
   />
-  {!mapSelection&&!!options.length&&<button type="button" className="map-overview" onClick={()=>setCameraRequest(value=>value+1)}>⌗ Ver viaje</button>}
+  {!mapSelection&&!!options.length&&<button type="button" className="map-overview" onClick={()=>setCameraRequest(value=>value+1)}><UiIcon name="route"/>Ver viaje</button>}
   <MapSheet resetKey={mapSelection?.id} className="trip-bottom" title={mapSelection?(mapSelection.target==='origin'?'Elegir origen':'Elegir destino'):options.length?'Tus opciones':'Prepara tu viaje'}>
    {mapSelection?<div className="map-selection-panel">
     <strong>{mapSelection.target==='origin'?'¿Desde dónde sales?':'¿Hasta dónde quieres llegar?'}</strong>
     <p>Mueve el mapa debajo del pin. Tu viaje no cambia hasta confirmar.</p>
     <output aria-live="polite">{mapSelection.moving?'Ajustando el punto…':`${mapSelection.draft.lat.toFixed(5)}, ${mapSelection.draft.lng.toFixed(5)}`}</output>
     {message&&<p role="status">{message}</p>}
-    <div className="map-selection-actions"><button type="button" className="selection-cancel" onClick={cancelPicker}>Cancelar</button><button type="button" className="selection-confirm" disabled={mapSelection.moving} onClick={confirmPicker}>Confirmar {mapSelection.target==='origin'?'origen':'destino'} →</button></div>
+    <div className="map-selection-actions"><button type="button" className="selection-cancel" onClick={cancelPicker}>Cancelar</button><button type="button" className="selection-confirm" disabled={mapSelection.moving} onClick={confirmPicker}>Confirmar {mapSelection.target==='origin'?'origen':'destino'}<UiIcon name="arrow"/></button></div>
    </div>:<>
    {originStatus!=='confirmed'&&<div className="origin-confirmation" role="status"><strong>{originStatus==='loading'?'Buscando tu ubicación…':'Confirma desde dónde sales'}</strong><p>{originIssue||'Puedes elegir el punto de partida en el mapa mientras comprobamos tu GPS.'}</p><div><button type="button" disabled={editLocating||originStatus==='loading'} onClick={()=>void useCurrentOrigin()}>Usar mi ubicación</button><button type="button" onClick={()=>beginPicker('origin')}>Elegir origen en mapa</button><button type="button" onClick={()=>selectEdited({...TEPIC_MAP_CENTER},'Centro de Tepic',undefined,'origin')}>Salir del Centro de Tepic</button></div></div>}
    {busy&&<div className="trip-status" role="status"><span className="loading-dot"/>Buscando tu ruta…</div>}
    {message&&<div className="trip-status" role="status">{message}<button className="text-button" onClick={plan}>Buscar de nuevo</button></div>}
    
    
-   {!!options.length&&<><div className="carousel-heading"><span>{options.length>1?'Desliza para ver las opciones.':'Opción disponible'}</span><strong>{selected+1} de {options.length}</strong></div><div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><button className="option-select" onClick={()=>selectCard(index)} aria-pressed={selected===index}><div className="time"><strong>{o.minutes} min</strong><small>{optionLabel(o,index,options)}</small></div><div className="legs">{o.legs.map((leg,i)=><span key={i} className={leg.kind} style={leg.kind==='bus'?{backgroundColor:leg.route?.color,color:routeTextColor(leg.route?.color??'#0a9364')}:undefined}>{leg.kind==='walk'?`A pie ${leg.minutes?`${leg.minutes} min`:'muy cerca'}`:`Ruta ${leg.route?.name}`}</span>)}</div><div className="route-metrics"><div><small>Aprox.</small><strong>${o.fare}<span> MXN</span></strong></div><div><small>A pie</small><strong>{o.walk}<span> min a pie</span></strong></div><div><small>Transbordos</small><strong>{o.transfers===0?'Sin cambios':o.transfers}</strong></div></div></button><details className="journey-details"><summary>Dónde subir y bajar <span aria-hidden="true">⌄</span></summary><JourneySteps option={o} stops={stops}/></details><button className="start-follow card-primary" disabled={starting} onClick={()=>void startTrip(index)}>{o.legs.some(l=>l.kind==='bus')?'Elegir este viaje →':'Ver pasos para caminar →'}</button>{destination&&<UberAlternative origin={origin} destination={destination} originName={originLabel} destinationName={query}/>}</article>)}</div><div className="carousel-dots">{options.map((o,i)=><button key={o.id} aria-label={`Ver opción ${i+1}`} aria-pressed={i===selected} onClick={()=>selectCard(i)}/>)}</div><small className="trip-estimate">Tiempo, espera, tarifa y caminata estimados; no son datos en tiempo real.</small></>}
+   {!!options.length&&<><div className="carousel-heading"><span>Así puedes llegar</span><strong>{selected+1} de {options.length}</strong></div>
+    {options.length>1&&<nav className="route-option-switcher" aria-label="Comparar opciones de viaje">{options.map((o,i)=><button key={o.id} type="button" aria-pressed={selected===i} onClick={()=>selectCard(i)}><strong>{o.minutes} min</strong><span>{o.legs.filter(l=>l.kind==='bus').map(l=>l.route?.name).join(' + ')||'A pie'}</span></button>)}</nav>}
+    <div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><RouteChoiceCard option={o} stops={stops} label={optionLabel(o,index,options)} selected={selected===index} starting={starting} onSelect={()=>selectCard(index)} onStart={()=>void startTrip(index)} origin={origin} destination={destination} originName={originLabel} destinationName={query}/></article>)}</div>
+    <div className="carousel-dots">{options.map((o,i)=><button key={o.id} aria-label={`Ver opción ${i+1}`} aria-pressed={i===selected} onClick={()=>selectCard(i)}/>)}</div><small className="trip-estimate">Tiempo, espera, tarifa y caminata estimados; no son datos en tiempo real.</small></>}
    {!busy&&!options.length&&!message&&<div className="trip-status">{destination?(originStatus==='confirmed'?'Destino listo. Busca tus opciones de viaje.':'Destino listo. Confirma el origen para continuar.'):'Elige a dónde quieres ir.'}<button type="button" className="search" onClick={()=>destination?plan():beginPicker('destination')}>{destination?'Buscar cómo llegar →':'Elegir destino en mapa →'}</button></div>}
    </>}
   </MapSheet>
  </main>;
- return <HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/>;
+ return <HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/>;
 }

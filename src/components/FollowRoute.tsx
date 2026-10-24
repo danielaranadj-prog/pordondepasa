@@ -4,7 +4,7 @@ import type {Place} from '../lib/places';
 import {meters,routeTextColor} from '../lib/router';
 import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
-import MapIcon from './MapIcon';
+import UiIcon from './UiIcon';
 import SheetHandle from './SheetHandle';
 import type {SheetMode} from '../lib/sheetMode';
 import {useCompass} from './useCompass';
@@ -38,6 +38,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const rejoinedAt=useRef(0),alightingAlerts=useRef(new Map<number,number>()),stoppedDismissed=useRef(new Set<number>());
  const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
+ const [cameraRequest,setCameraRequest]=useState(0);
  const previous=useRef<{point:Point;accuracy:number}|undefined>(undefined);
  const lastFix=useRef<{point:Point;accuracy:number;time:number}|undefined>(undefined);
  const [clock,setClock]=useState(Date.now()),[fixAt,setFixAt]=useState(0),[courseAt,setCourseAt]=useState(0);
@@ -48,6 +49,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const heading=northUp?0:leg.kind==='bus'?freshCourse??compass.heading:compass.heading??freshCourse;
  const progress=useMemo(()=>live?projectProgress(live,line):undefined,[live,line]);
  const confident=!!live&&!stale&&accuracy!==undefined&&accuracy<=60;
+ const reportLocationReady=confident&&accuracy!==undefined&&accuracy<=40;
  const [accepted,setAccepted]=useState({step:initialStep,leg,along:0});
  const [painted,setPainted]=useState({step:initialStep,leg,along:0});
  const trackingProgress=useRef<ProgressState>({along:0});
@@ -260,19 +262,18 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const alightingStop=currentStops.filter(stop=>meters(stop.coordinates,leg.to)<=80).sort((a,b)=>meters(a.coordinates,leg.to)-meters(b.coordinates,leg.to))[0];
  const hasNextBus=option.legs.slice(step+1).some(item=>item.kind==='bus');
  const endpointLabel=leg.kind==='bus'?(alightingStop?`Baja cerca de ${alightingStop.name}`:hasNextBus?'Baja para el trasbordo':`Baja cerca de ${destinationName||'tu destino'}`):step===option.legs.length-1?`Llegada a ${destinationName||'tu destino'}`:'Punto de abordaje';
+ const arrivalLabel=trusted&&!offRoute&&!boarding.waiting?new Date(clock+totalMinutes*60000).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):'—';
+ const maneuverIcon=arrived?'check':offRoute?'route':boarding.waiting?'bus':leg.kind==='bus'?(nearAlighting?'bell':'bus'):maneuver?(maneuver.icon==='↱'?'right':'left'):'walk';
  return <main className="trip-screen navigation-screen" data-screen={arrived?'viaje-finalizado':boarding.waiting?'espera-de-ruta':leg.kind==='bus'?'viaje-en-camion':step===0?'caminata-al-abordaje':step===option.legs.length-1?'caminata-final':'caminata-de-transbordo'}>
-  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={placeAccess?option.legs.at(-1)?.to:undefined} place={place} option={boarding.waiting?{...displayedOption,legs:displayedOption.legs.map((item,index)=>index===step?{...item,geometry:[]}:item)}:displayedOption} adOption={option} stops={routeStops} activeStop={leg.kind==='bus'?nextStop:undefined} live={live} follow={follow&&!arrived} navigation heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)} onAdDestinationChange={(point,name)=>{if(!onAdDestinationChange)return;if(!window.confirm(`¿Crear un viaje nuevo hacia ${name}? Esto terminará el seguimiento actual.`))return;onAdDestinationChange(point,name,confident&&live?live:origin)}}/>
-  <section className="nav-top-card" role="region" aria-label="Indicaciones de viaje">
-   <div className="nav-top-icon-circle" style={leg.kind==='bus'&&leg.route?{backgroundColor:leg.route.color,color:routeTextColor(leg.route.color)}:arrived?{backgroundColor:'#10b981',color:'#fff'}:undefined} aria-hidden="true">
-    {arrived?'✓':leg.kind==='bus'?'🚌':(maneuver?.icon??'🚶')}
-   </div>
+  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={placeAccess?option.legs.at(-1)?.to:undefined} place={place} option={boarding.waiting?{...displayedOption,legs:displayedOption.legs.map((item,index)=>index===step?{...item,geometry:[]}:item)}:displayedOption} adOption={option} stops={routeStops} activeStop={leg.kind==='bus'?nextStop:undefined} live={live} follow={follow&&!arrived} navigation cameraRequest={cameraRequest} heading={heading} activeLeg={step} accuracy={accuracy} stale={stale} remaining={remaining} onPan={()=>setFollow(false)} onAdDestinationChange={(point,name)=>{if(!onAdDestinationChange)return;if(!window.confirm(`¿Crear un viaje nuevo hacia ${name}? Esto terminará el seguimiento actual.`))return;onAdDestinationChange(point,name,confident&&live?live:origin)}}/>
+  <section className={`nav-top-card ${nearAlighting?'is-alighting':''}`} role="region" aria-label="Indicaciones de viaje">
+   <div className="nav-stage-label"><UiIcon name={leg.kind==='bus'?'bus':'walk'}/><span>{arrived?'Viaje completado':boarding.waiting?'Esperando transporte':leg.kind==='bus'?'En la unidad':'Caminando'} · Paso {step+1} de {option.legs.length}</span></div>
+   <div className="nav-top-icon-circle" style={leg.kind==='bus'&&leg.route?{color:leg.route.color}:undefined}><UiIcon name={maneuverIcon}/></div>
    <div className="nav-top-content">
     <div className="nav-top-meta-line">
      <span className="nav-top-dist">{arrived?'FINALIZADO':boarding.waiting?'EN ESPERA':offRoute&&proximity!==undefined?`${distanceLabel(proximity)} ${proximityLabel}`:`${trusted?'':'~'}${distanceLabel(maneuver?.distance??remaining)}`}</span>
-     <span className="nav-top-dot">·</span>
-     <span className="nav-top-step">Paso {step+1} de {option.legs.length}</span>
     </div>
-    <h1 className="nav-top-title">{walkReroute.status?.kind==='pending'?'Ajustando caminata':offRoute?'Recorrido diferente':title}</h1>
+    <h1 className="nav-top-title">{walkReroute.status?.kind==='pending'?'Ajustando caminata':offRoute?'Recorrido diferente':!arrived&&!boarding.waiting&&!boarding.candidate&&leg.kind==='walk'&&maneuver?maneuver.label:title}</h1>
     <p className="nav-top-subtitle" title={instructionText}>{walkReroute.status?.kind==='pending'?'Conservamos tu punto de llegada.':offRoute?'Tu ubicación se alejó del recorrido seleccionado.':streetSubtitle}</p>
     {activeLandmarkAd && <div className="nav-landmark-chip" role="note" aria-label="Sugerencia patrocinada cerca de tu bajada">
      <span className="nav-landmark-label">Patrocinado</span>
@@ -282,16 +283,16 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      <button type="button" onClick={()=>setDismissedAdStep(step)} aria-label={`Ocultar anuncio de ${activeLandmarkAd.title}`}>×</button>
     </div>}
    </div>
-   <button className="nav-top-back" onClick={onExit} aria-label="Salir del seguimiento" title="Salir">✕</button>
+   <button className="nav-top-back" onClick={onExit} aria-label="Volver a las opciones de viaje" title="Volver a opciones"><UiIcon name="back"/></button>
   </section>
-  {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
+  {!arrived&&<div className="navigation-tools journey-map-tools"><button type="button" className="nav-map-secondary" onClick={()=>{setVoice(!voice);if(!voice)speak('Avisos por voz activados')}} aria-label={voice?'Silenciar avisos por voz':'Activar avisos por voz'} aria-pressed={voice}><UiIcon name={voice?'volume':'mute'}/></button><button type="button" onClick={()=>{setFollow(false);setCameraRequest(value=>value+1)}} aria-label="Ver todo el viaje"><UiIcon name="route"/></button><button type="button" onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación para centrar':'Centrar en mí'} aria-pressed={follow}><UiIcon name="locate"/></button><button type="button" className="nav-map-secondary" onClick={()=>{setReportOpen(!reportOpen);setSheetMode('expanded')}} aria-label="Reportar un problema" aria-expanded={reportOpen} disabled={!!report&&!report.endedAt}><UiIcon name="report"/></button></div>}
   <footer className={`nav-bottom-sheet map-sheet sheet-${sheetMode} ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
    {!arrived&&<SheetHandle mode={sheetMode} onChange={setSheetMode} label={sheetMode==='closed'?'Ver paradas y referencias':sheetMode==='open'?'Próximas referencias':'Paradas y referencias'}/>}
    {showTripSponsor && <div className="nav-trip-sponsor" role="note" aria-label="Patrocinador del viaje">
     <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
     <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks')}>Canjear</a>
    </div>}
-   <div className="nav-single-row">
+   <div className="nav-route-summary">
     <button
      type="button"
      className="nav-btn-route"
@@ -300,8 +301,16 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      aria-label={`Ruta ${dockRouteLabel}`}
      title={dockRouteLabel}
     >
-     <span className="nav-btn-route-label">{dockRouteLabel}</span>
+     <UiIcon name={routeForDock?'bus':'walk'}/><span className="nav-btn-route-label">{dockRouteLabel}</span>
     </button>
+    <span>{arrived?'Destino alcanzado':leg.kind==='bus'?'Tu bajada está marcada':boarding.waiting?'Verifica el sentido de la unidad':nextBusRoute?'Camina hasta el abordaje':'Camina hasta tu destino'}</span>
+   </div>
+   <div className="nav-journey-metrics" aria-label="Estimación del viaje completo">
+    <div><strong>{arrived?'✓':metricsTime}</strong><small>{arrived?'Completado':'Viaje restante'}</small></div>
+    <div><strong>{arrived?'Destino':`${offRoute||!trusted?'~':''}${distanceLabel(metricsMeters)}`}</strong><small>{offRoute?'En línea recta':'Recorrido restante'}</small></div>
+    <div><strong>{arrived?'✓':arrivalLabel}</strong><small>Llegada aprox.</small></div>
+   </div>
+   <div className="nav-action-row">
     <button
      type="button"
      className="nav-btn-action"
@@ -309,22 +318,19 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      aria-label={action}
     >
      <span className="nav-btn-action-text">{arrived?'Finalizar':leg.kind==='bus'?'Ya bajé':step===option.legs.length-1?'Ya llegué':nextBusRoute?'Ya abordé':'Continuar'}</span>
-     <span className="nav-btn-action-arrow" aria-hidden="true">{arrived?'✓':'→'}</span>
+     <UiIcon name={arrived?'check':'arrow'}/>
     </button>
     <button
      type="button"
-     className="nav-btn-metrics"
+     className="nav-btn-details"
      onClick={()=>setShowStops(!showStops)}
      aria-expanded={showStops}
      aria-label={`${arrived?'Destino alcanzado':`${offRoute?'Distancia en línea recta':'Viaje restante'}: ${metricsTime}, ${distanceLabel(metricsMeters)}${offRoute?` ${proximityLabel}`:''}`}. Toca para ver paradas.`}
     >
-     <div className="nav-btn-metrics-stack">
-      {!arrived&&<small className="nav-metrics-label">{offRoute?'Línea recta':'Viaje restante'}</small>}
-      <strong className="nav-btn-metrics-time">{arrived?'✓':metricsTime}</strong>
-      <span className="nav-btn-metrics-dist">{arrived?'Destino':`${offRoute||!trusted?'~':''}${distanceLabel(metricsMeters)}`}</span>
-     </div>
+     <UiIcon name={showStops?'chevron-down':'list'}/>
     </button>
    </div>
+   {!arrived&&<div className="nav-compact-controls"><button type="button" onClick={()=>{setVoice(!voice);if(!voice)speak('Avisos por voz activados')}} aria-pressed={voice}><UiIcon name={voice?'volume':'mute'}/>{voice?'Silenciar voz':'Activar voz'}</button><button type="button" onClick={()=>{setReportOpen(!reportOpen);setSheetMode('expanded')}} aria-expanded={reportOpen} disabled={!!report&&!report.endedAt}><UiIcon name="report"/>Reportar</button></div>}
    {alightingNotice&&nearAlighting&&!arrived&&<p className="nav-alighting-notice" role="alert">{alightingNotice}</p>}
    {boarding.candidate&&onPickup&&!arrived&&<div className="nav-journey-warning" role="status"><strong>Estás junto al recorrido</strong><p>¿Ya estás esperando aquí? Confirma el sentido y busca una parada señalada o un lugar donde se permita abordar.</p><button type="button" onClick={boarding.confirmWaiting}>Esperar aquí</button></div>}
    {boarding.waiting&&<div className="nav-waiting-info"><span>Esperando {nextBusRoute?.name}. Busca cartel o parada; las referencias habituales no garantizan que se permita subir.</span><label><input type="checkbox" checked={boarding.session?.automatic??false} onChange={boarding.toggleAutomatic}/> Detección asistida de abordaje</label><small>{boarding.storageIssue?'No se pudo guardar la espera en este dispositivo.':'Tiempo observado guardado solo en este dispositivo.'}</small><button type="button" onClick={boarding.cancel}>Dejar de esperar</button></div>}
@@ -347,10 +353,11 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
     <strong>La unidad lleva un minuto sin avanzar</strong><p>¿Qué ocurrió?</p>
     <div><button type="button" onClick={()=>startReport('traffic')}>Tráfico</button><button type="button" onClick={()=>startReport('incident')}>Incidente</button><button type="button" onClick={()=>{stoppedDismissed.current.add(step);setReportMessage('')}}>No sé</button></div>
    </div>}
-   {reportOpen&&<div className="nav-report-panel">
+   {reportOpen&&<div className="nav-report-panel" role="region" aria-label="Registrar un reporte local">
     <strong>¿Por qué cambió el recorrido?</strong>
     <p>Al elegir una opción se registrará tu ubicación durante este tramo. El reporte se guarda en este teléfono y puedes exportarlo.</p>
-    <div><button type="button" onClick={()=>startReport('roadworks')}>Obras</button><button type="button" onClick={()=>startReport('traffic')}>Tráfico</button><button type="button" onClick={()=>startReport('different-route')}>Tomé otra ruta</button><button type="button" onClick={()=>startReport('unknown')}>No sé</button><button type="button" onClick={()=>setReportOpen(false)}>Cancelar</button></div>
+    {!reportLocationReady&&<p role="status">Necesitamos una ubicación reciente y precisa antes de registrar el tramo.</p>}
+    <div><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('roadworks')}>Obras</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('traffic')}>Tráfico</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('different-route')}>Tomé otra ruta</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('unknown')}>No sé</button><button type="button" onClick={()=>setReportOpen(false)}>Cancelar</button></div>
    </div>}
    {reportMessage&&<div className="nav-report-status" role="status"><span>{reportMessage}</span><div>{report&&!report.endedAt&&<button type="button" onClick={finishReport}>Terminar registro</button>}{report&&<button type="button" onClick={exportReport}>Exportar</button>}<button type="button" onClick={()=>setReportMessage('')} aria-label="Ocultar estado del reporte">×</button></div></div>}
    {(stale||locationIssue||!trusted&&!offRoute&&!boarding.waiting)&&!arrived&&(
@@ -359,9 +366,10 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      <span>{stale?'GPS sin actualizar; esperando señal.':locationIssue||(!live?'Esperando GPS…':hasProgress?'Último avance confirmado. Comprobando GPS…':'Comprobando el avance GPS…')}</span>
     </div>
    )}
-   {!arrived&&<div className="nav-notice-controls">{leg.kind==='walk'&&!boarding.waiting&&<span>Mantén la vista en el camino</span>}<button type="button" aria-pressed={voice} onClick={()=>{setVoice(!voice);if(!voice)speak('Avisos por voz activados')}}>{voice?'Voz activada':'Activar avisos por voz'}</button></div>}
+   {!arrived&&<div className="nav-notice-controls"><span>{leg.kind==='walk'&&!boarding.waiting?'Mantén la vista en el camino':'Distancias y tiempos estimados'}</span><span>{voice?'Voz activada':'Voz en silencio'}</span></div>}
    {showStops&&(
     <div className="nav-sheet-timeline-drawer">
+     <div className="nav-orientation-controls"><button type="button" onClick={()=>{setNorthUp(false);void compass.enable()}} aria-pressed={compass.enabled}><UiIcon name="compass"/>{compass.enabled?'Desactivar brújula':'Activar brújula'}</button><button type="button" onClick={()=>setNorthUp(!northUp)} aria-pressed={northUp}><UiIcon name="north"/>{northUp?'Orientar al avanzar':'Norte arriba'}</button></div>
      {activeLandmarkAd&&<div className="nav-sponsored-detail">
       <span>Patrocinado · cerca de tu bajada</span>
       <strong>{activeLandmarkAd.icon} {activeLandmarkAd.title}</strong>
@@ -392,7 +400,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
       })}
       <div className="nav-timeline-row is-destination">
        <div className="nav-timeline-indicator">
-        <span className="nav-timeline-flag">🏁</span>
+        <span className="nav-timeline-flag"><UiIcon name="flag"/></span>
        </div>
        <div className="nav-timeline-info">
         <strong className="nav-timeline-name">{endpointLabel}</strong>

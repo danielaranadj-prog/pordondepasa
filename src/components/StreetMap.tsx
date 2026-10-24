@@ -6,6 +6,7 @@ import {projectProgress} from '../lib/navigation';
 import {visibleMapPadding,navigationCamera,mapFocus,shouldFitTripCamera,sameMapPadding,tripBoundsOptions} from '../lib/mapCamera';
 import type {MapSelection} from '../lib/mapSelection';
 import {headingDelta} from '../lib/heading';
+import {mapAppearance} from '../lib/mapAppearance';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import {getPlaceCategoryIcon, type Place} from '../lib/places';
 import {getVisiblePinAds, type AdCampaign} from '../lib/ads';
@@ -30,9 +31,12 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
   const attribution=bottom&&bottom.right>rect.right-100&&bottom.top<rect.bottom?rect.bottom-bottom.top+8:12;
   wrap?.style.setProperty('--map-attribution-bottom',`${Math.min(attribution,Math.max(12,rect.height-48))}px`);
   if(latest.current.navigation){
-   const controlsHeight=rect.height<650?46:138,freeTop=(top?.bottom??rect.top+50)-rect.top+12,freeBottom=(bottom?.top??rect.bottom)-rect.top-12;
+   const freeTop=(top?.bottom??rect.top+50)-rect.top+10,freeBottom=(bottom?.top??rect.bottom)-rect.top-creditHeight-12;
+   const compact=freeBottom-freeTop<118,size=compact?40:46,controlsHeight=compact?size:size*2+8;
+   main?.style.setProperty('--nav-tool-size',`${size}px`);
+   main?.style.setProperty('--nav-map-secondary-display',compact?'none':'grid');
+   main?.style.setProperty('--nav-compact-controls-display',compact?'flex':'none');
    main?.style.setProperty('--nav-controls-top',`${Math.max(freeTop,(freeTop+freeBottom-controlsHeight)/2)}px`);
-   p.top+=Math.max(0,rect.height-p.top-p.bottom)*.22;
   }
   return p;
  }
@@ -67,12 +71,12 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
     const current=latest.current,features=current.option?.legs.flatMap((leg,index)=>{
      if(leg.kind==='walk'&&!leg.geometry)return [];
      const coordinates=(leg.geometry??[leg.from,leg.to]).map(coord);if(coordinates.length<2)return [];
-     return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':'#2563eb',walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?6:4}}];
+     return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':mapAppearance(theme.matches).walking,walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?6:4}}];
     })??[],data={type:'FeatureCollection' as const,features};
     const source=instance.getSource('trip-lines') as GeoJSONSource|undefined;
     if(source)source.setData(data);else{
      instance.addSource('trip-lines',{type:'geojson',data});
-     instance.addLayer({id:'trip-halo',type:'line',source:'trip-lines',filter:['==',['get','walk'],false],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#123459','line-opacity':.85,'line-width':['interpolate',['linear'],['zoom'],12,4,18,['+',['get','width'],2]]}});
+     instance.addLayer({id:'trip-halo',type:'line',source:'trip-lines',filter:['==',['get','walk'],false],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':mapAppearance(theme.matches).routeHalo,'line-opacity':.95,'line-width':['interpolate',['linear'],['zoom'],12,5,18,['+',['get','width'],3]]}});
      for(const walk of [false,true])instance.addLayer({id:walk?'trip-walk':'trip-bus',type:'line',source:'trip-lines',filter:['==',['get','walk'],walk],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','color'],'line-width':['interpolate',['linear'],['zoom'],12,2.5,18,walk?4:['get','width']],...(walk?{'line-dasharray':[.2,1.7]}:{})}});
     }
    };
@@ -96,17 +100,20 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
    }
    instance.on('style.load',()=>{
     if(!instance)return;
+    const palette=mapAppearance(theme.matches);
     for(const item of instance.getStyle().layers??[]){
      if(item.type==='fill'&&item.paint?.['fill-pattern'])instance.setPaintProperty(item.id,'fill-pattern',undefined);
      if(latest.current.navigation&&item.type==='symbol'&&/^highway-name/.test(item.id)){
       instance.setLayoutProperty(item.id,'text-size',['interpolate',['linear'],['zoom'],14,10,17,13,19,16]);
-      instance.setPaintProperty(item.id,'text-color',theme.matches?'#d6dee8':'#46515e');
-      instance.setPaintProperty(item.id,'text-halo-color',theme.matches?'#202328':'#f8fafb');instance.setPaintProperty(item.id,'text-halo-width',2);
+      instance.setPaintProperty(item.id,'text-color',palette.text);
+      instance.setPaintProperty(item.id,'text-halo-color',palette.halo);instance.setPaintProperty(item.id,'text-halo-width',2);
      }
-     if(!theme.matches)continue;
-     if(item.type==='background')instance.setPaintProperty(item.id,'background-color','#202328');
-     if(item.type==='line'&&/highway/.test(item.id))instance.setPaintProperty(item.id,'line-color',/casing/.test(item.id)?'#30343b':/minor|path/.test(item.id)?'#454b54':'#626b76');
-     if(item.type==='symbol'&&item.layout?.['text-field']&&!(latest.current.navigation&&/^highway-name/.test(item.id))){instance.setPaintProperty(item.id,'text-color','#bdc6d2');instance.setPaintProperty(item.id,'text-halo-color','#202328');instance.setPaintProperty(item.id,'text-halo-width',1.2)}
+     if(item.type==='background')instance.setPaintProperty(item.id,'background-color',palette.background);
+     if(item.type==='line'&&/highway/.test(item.id))instance.setPaintProperty(item.id,'line-color',/casing/.test(item.id)?palette.casing:/minor|path/.test(item.id)?palette.minor:palette.road);
+     if(item.type==='fill'&&/^water/.test(item.id))instance.setPaintProperty(item.id,'fill-color',palette.water);
+     if(item.type==='fill'&&/park|landcover_grass/.test(item.id))instance.setPaintProperty(item.id,'fill-color',palette.park);
+     if(item.type==='fill'&&/^building/.test(item.id))instance.setPaintProperty(item.id,'fill-color',palette.building);
+     if(item.type==='symbol'&&item.layout?.['text-field']&&!(latest.current.navigation&&/^highway-name/.test(item.id))){instance.setPaintProperty(item.id,'text-color',palette.text);instance.setPaintProperty(item.id,'text-halo-color',palette.halo);instance.setPaintProperty(item.id,'text-halo-width',1.2)}
     }
     draw.current();
     updateAccuracy.current();
@@ -184,7 +191,10 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
     // Only the account picker opts in: selecting a pin never resets its viewport
     // or adds an unrelated origin. Existing trip/navigation cameras are unchanged.
     if(current.locationPicker){if(!initialized){instance.jumpTo({center:coord(current.destination??current.origin),zoom:15,padding:{top:16,bottom:16,left:16,right:16}});initialized=true;}return;}
-    if(current.navigation){if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}}
+    if(current.navigation){
+     if(reason==='reset'&&!current.follow){const journey=current.adOption??current.option,bounds=new M.LngLatBounds(coord(current.origin),coord(current.destination??current.origin));journey?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(point=>bounds.extend(coord(point)))});instance.fitBounds(bounds,{...tripBoundsOptions(cameraPadding,!window.matchMedia('(prefers-reduced-motion: reduce)').matches),bearing:0,pitch:0})}
+     else if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}
+    }
     else if(shouldFitTripCamera(exploring,reason)){
      exploring=false;
      if(current.destination){const bounds=new M.LngLatBounds(coord(current.hideOrigin?current.destination:current.origin),coord(current.destination));if(current.access)bounds.extend(coord(current.access));current.option?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(p=>bounds.extend(coord(p)))});current.stops?.forEach(stop=>bounds.extend(coord(stop.coordinates)));instance.fitBounds(bounds,tripBoundsOptions(cameraPadding,reason==='reset'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches))}

@@ -9,6 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "test:unit": "node --test src/lib/*.test.ts",
     "ads:pilot": "node scripts/ads-pilot-server.mjs"
   },
   "dependencies": {

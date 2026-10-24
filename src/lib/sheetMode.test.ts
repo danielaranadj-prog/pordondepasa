@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {moveSheet,sheetSwipe} from './sheetMode.ts';
+assert.equal(moveSheet('closed','up'),'open');
+assert.equal(moveSheet('open','up'),'expanded');
+assert.equal(moveSheet('expanded','up'),'expanded');
+assert.equal(moveSheet('expanded','down'),'open');
+assert.equal(moveSheet('open','down'),'closed');
+assert.equal(moveSheet('closed','down'),'closed');
+assert.equal(sheetSwipe('open',100,50),'open','Horizontal carousel gestures must not collapse the sheet');
+assert.equal(sheetSwipe('open',0,20),'open','Small taps must not count as swipes');
+assert.equal(sheetSwipe('open',0,-60),'expanded');
+console.log('OK: shared compact, upcoming and expanded sheet transitions');

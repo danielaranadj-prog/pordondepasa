@@ -23,8 +23,9 @@ import {replaceWalkingLeg} from '../lib/walkingReroute';
 import type {UpdateWalkingLeg} from './useWalkingReroute';
 import {installBoarding} from '../lib/boarding';
 import type {UpdatePickup} from './useBoardingJourney';
+import {TEPIC_MAP_CENTER,planningLocation,withinServiceArea,beginMapSelection,updateMapSelection,type Endpoint,type MapSelection} from '../lib/mapSelection';
+import '../styles/planning.css';
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const isWithinTepic=(p:Point)=>p.lat>=21.40&&p.lat<=21.58&&p.lng>=-105.02&&p.lng<=-104.78;
 function optionLabel(option:Option,index:number,options:Option[]):string {
  if(index===0)return 'Más rápida';
  if(option.fare<options[0].fare&&option.fare===Math.min(...options.map(item=>item.fare)))return 'Menor costo';
@@ -50,17 +51,20 @@ export default function TransitApp(){
  const [sponsorIntro,setSponsorIntro]=useState<{ad:AdCampaign;routeName:string}>();
  const [sponsorViewed,setSponsorViewed]=useState(false);
  const [pickDestination,setPickDestination]=useState(false);
- const [editing,setEditing]=useState<'origin'|'destination'|null>(null),[editQuery,setEditQuery]=useState(''),[editMessage,setEditMessage]=useState(''),[editLocating,setEditLocating]=useState(false);
+ const [mapSelection,setMapSelection]=useState<MapSelection|null>(null),[cameraRequest,setCameraRequest]=useState(0);
+ const selectionSequence=useRef(0);
+ const [originStatus,setOriginStatus]=useState<'loading'|'confirmed'|'unavailable'>('loading'),[originIssue,setOriginIssue]=useState('');
+ const [editMessage,setEditMessage]=useState(''),[editLocating,setEditLocating]=useState(false);
  const editorRequest=useRef(0);
  const showAll=false;
  const drag=useRef<{x:number;scroll:number}|null>(null),moved=useRef(false);
- const locationRequest=useRef<Promise<Point|null>|null>(null),originConfirmed=useRef(false),manualOrigin=useRef(false),originValue=useRef<Point>({lat:21.5055,lng:-104.893});
+ const locationRequest=useRef<Promise<Point|null>|null>(null),locationGeneration=useRef(0),originConfirmed=useRef(false),manualOrigin=useRef(false),originValue=useRef<Point>({...TEPIC_MAP_CENTER});
  const carousel=useRef<HTMLDivElement>(null),request=useRef(0);
  useEffect(()=>{const timer=setTimeout(()=>setWelcome(false),2500);return()=>clearTimeout(timer)},[]);
  function followCards(){if(showAll)return;const list=carousel.current;if(!list)return;const middle=list.scrollLeft+list.clientWidth/2;let nearest=0,distance=Infinity;
  Array.from(list.children).forEach((node,i)=>{const card=node as HTMLElement;const d=Math.abs(card.offsetLeft+card.offsetWidth/2-middle);if(d<distance){distance=d;nearest=i}});setSelected(nearest)}
  function selectCard(i:number){setSelected(i);if(showAll)return;const list=carousel.current,card=list?.children[i] as HTMLElement|undefined;if(list&&card)list.scrollTo({left:card.offsetLeft-list.clientWidth/2+card.offsetWidth/2,behavior:'smooth'})}
- const [origin,setOrigin]=useState<Point>({lat:21.5055,lng:-104.893}),[originLabel,setOriginLabel]=useState('Buscando tu ubicación…');
+ const [origin,setOrigin]=useState<Point>({...TEPIC_MAP_CENTER}),[originLabel,setOriginLabel]=useState('Buscando tu ubicación…');
  const [destination,setDestination]=useState<Point>(),[query,setQuery]=useState(''),[stops,setStops]=useState<Stop[]>([]),[places,setPlaces]=useState<Place[]>([]),[ads,setAds]=useState<AdCampaign[]>([]),[chosenPlace,setChosenPlace]=useState<Place|undefined>();
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
@@ -82,73 +86,67 @@ export default function TransitApp(){
   return()=>{active=false;if(timer)window.clearInterval(timer)}},[]);
  const suggestions=useMemo(()=>{if(destination||query.trim().length<2)return [];const term=normalize(query.trim());const seen=new Set<string>();return stops.filter(s=>{if(!normalize(s.name).includes(term)||seen.has(s.name))return false;seen.add(s.name);return true}).slice(0,8)},[query,stops,destination]);
  const placeSuggestions=useMemo(()=>destination?[]:searchPlaces(places,query,8),[destination,places,query]);
- const editPlaces=useMemo(()=>searchPlaces(places,editQuery,6),[places,editQuery]);
- const editStops=useMemo(()=>{const term=normalize(editQuery.trim());if(term.length<2)return [];const seen=new Set<string>();return stops.filter(stop=>{if(!normalize(stop.name).includes(term)||seen.has(stop.name))return false;seen.add(stop.name);return true}).slice(0,Math.max(0,8-editPlaces.length))},[stops,editQuery,editPlaces.length]);
- function closeEditor(){editorRequest.current++;setEditing(null);setEditLocating(false)}
- function openEditor(target:'origin'|'destination'){editorRequest.current++;setEditing(target);setEditQuery('');setEditMessage('');setPickOrigin(false);setPickDestination(false)}
- function selectEdited(point:Point,name:string,place?:Place,target:'origin'|'destination'=(editing||'destination')){
+ function commitOrigin(point:Point,name:string,place?:Place){
+  locationGeneration.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=place?.access;originPlace.current=place;
+  setOrigin(point);setOriginLabel(name);setOriginStatus('confirmed');setOriginIssue('');
+ }
+ function beginPicker(target:Endpoint,point=target==='origin'?origin:destination??origin){
+  request.current++;setBusy(false);setMapSelection({...beginMapSelection(++selectionSequence.current,target,point),moving:true});setPickOrigin(target==='origin');setPickDestination(target==='destination');setView('trip');
+ }
+ function cancelPicker(){setMapSelection(null);setPickOrigin(false);setPickDestination(false);setMessage('');}
+ function confirmPicker(){
+  if(!mapSelection||mapSelection.moving)return;
+  const {draft:point,target}=mapSelection;
+  if(!withinServiceArea(point)){setMessage('Ese punto está fuera de Tepic y Xalisco. Acerca el mapa a nuestra zona de servicio.');return;}
+  cancelPicker();setCameraRequest(value=>value+1);
+  if(target==='origin')selectEdited(point,'Origen elegido en el mapa',undefined,'origin');
+  else selectEdited(point,'Destino elegido en el mapa',undefined,'destination');
+ }
+ function closeEditor(){editorRequest.current++;setEditLocating(false);setEditMessage('')}
+ function selectEdited(point:Point,name:string,place?:Place,target:'origin'|'destination'='destination'){
   editorRequest.current++;
+  setMapSelection(null);setPickOrigin(false);setPickDestination(false);setCameraRequest(value=>value+1);
   if(target==='origin'){
-   request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=place?.access;originPlace.current=place;
-   setOrigin(point);setOriginLabel(name);closeEditor();setOptions([]);setMessage('');
+   request.current++;commitOrigin(point,name,place);closeEditor();setOptions([]);setMessage('');
    if(destination)void calculate(chosenPlace?.access??destination);
   }else{
    choose(point,name,place);closeEditor();void calculate(place?.access??point);
   }
  }
- function useCurrentOrigin(){
-  if(editLocating)return;
+ async function useCurrentOrigin():Promise<boolean>{
+  if(editLocating)return false;
+  request.current++;setOptions([]);setBusy(false);
   const attempt=++editorRequest.current;
   setEditLocating(true);
   setEditMessage('');
-  locationRequest.current=null;
-  if(!navigator.geolocation){
-   setEditLocating(false);
-   selectEdited({lat:21.5055,lng:-104.893},'Centro de Tepic',undefined,'origin');
-   return;
-  }
-  navigator.geolocation.getCurrentPosition(position=>{
-   if(attempt!==editorRequest.current)return;
-   setEditLocating(false);
-   selectEdited({lat:position.coords.latitude,lng:position.coords.longitude},'Mi ubicación actual',undefined,'origin');
-  },()=>{
-   if(attempt!==editorRequest.current)return;
-   setEditLocating(false);
-   selectEdited({lat:21.5055,lng:-104.893},'Centro de Tepic',undefined,'origin');
-  },{enableHighAccuracy:true,timeout:8000,maximumAge:30000});
+  const point=await locate(true);
+  if(attempt!==editorRequest.current)return false;
+  setEditLocating(false);
+  if(!point){setEditMessage('No pudimos confirmar tu ubicación. Elige el origen en el mapa.');return false;}
+  selectEdited(point,'Mi ubicación actual',undefined,'origin');return true;
  }
  function choose(point:Point,name:string,place?:Place){request.current++;setDestination(point);setChosenPlace(place);setQuery(name);setOptions([]);setJourneyProgress(null);setMessage('');setBusy(false);}
  function locate(retry=false):Promise<Point|null>{
-  if(retry){locationRequest.current=null;manualOrigin.current=false;setOriginLabel('Buscando tu ubicación…');}
+  if(retry){locationRequest.current=null;manualOrigin.current=false;originConfirmed.current=false;setOriginStatus('loading');setOriginIssue('');setOriginLabel('Buscando tu ubicación…');}
   if(locationRequest.current)return locationRequest.current;
+  const generation=++locationGeneration.current;
   locationRequest.current=new Promise(resolve=>{
-   const fallbackPoint:Point={lat:21.5055,lng:-104.893};
+   const unavailable=(reason:string)=>{
+    if(generation===locationGeneration.current&&!manualOrigin.current){originConfirmed.current=false;setOriginStatus('unavailable');setOriginLabel('Elige tu origen');setOriginIssue(reason);}
+    resolve(manualOrigin.current&&originConfirmed.current?originValue.current:null);
+   };
    if(!navigator.geolocation){
-    if(!manualOrigin.current){
-     originValue.current=fallbackPoint;originConfirmed.current=true;
-     setOrigin(fallbackPoint);setOriginLabel('Centro de Tepic');
-    }
-    resolve(fallbackPoint);
+    unavailable('Este dispositivo no ofrece ubicación. Confirma desde dónde sales.');
     return;
    }
    navigator.geolocation.getCurrentPosition(p=>{
-    const point={lat:p.coords.latitude,lng:p.coords.longitude};
-    if(!manualOrigin.current){
-     if(isWithinTepic(point)){
-      originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;
-      originConfirmed.current=true;setOrigin(point);setOriginLabel('Mi ubicación actual');
-     }else{
-      originValue.current=fallbackPoint;originAccess.current=undefined;originPlace.current=undefined;
-      originConfirmed.current=true;setOrigin(fallbackPoint);setOriginLabel('Centro de Tepic');
-     }
-    }
-    resolve(originValue.current);
+    if(generation!==locationGeneration.current){resolve(originConfirmed.current?originValue.current:null);return;}
+    const point=planningLocation({point:{lat:p.coords.latitude,lng:p.coords.longitude},accuracy:p.coords.accuracy,timestamp:p.timestamp});
+    if(!point){unavailable('Tu ubicación está fuera de cobertura o no es suficientemente precisa. Elige tu origen.');return;}
+    if(!manualOrigin.current){originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;originConfirmed.current=true;setOrigin(point);setOriginLabel('Mi ubicación actual');setOriginStatus('confirmed');setOriginIssue('');}
+    resolve(originConfirmed.current?originValue.current:null);
    },()=>{
-    if(!manualOrigin.current){
-     originValue.current=fallbackPoint;originConfirmed.current=true;
-     setOrigin(fallbackPoint);setOriginLabel('Centro de Tepic');
-    }
-    resolve(fallbackPoint);
+    unavailable('No pudimos obtener tu GPS. El centro del mapa es solo una referencia, no tu ubicación.');
    },{enableHighAccuracy:true,timeout:4000,maximumAge:60000});
   });
   return locationRequest.current;
@@ -159,14 +157,12 @@ export default function TransitApp(){
    if(!originConfirmed.current)await locate();
    if(id!==request.current)return;
    if(!originConfirmed.current){
-    const fallbackPoint:Point={lat:21.5055,lng:-104.893};
-    originValue.current=fallbackPoint;originConfirmed.current=true;
-    setOrigin(fallbackPoint);setOriginLabel('Centro de Tepic');
+    return;
    }
    setPickOrigin(false);
    const next=await planRoutes(originAccess.current??originValue.current,target);if(id!==request.current)return;setOptions(next);setSelected(0);if(!next.length)setMessage('No encontramos un recorrido conectado por calles con los datos actuales. Prueba un punto cercano sobre una calle pública.');
   }catch(error){if(id===request.current){
-   if(error instanceof RoutePlanError){setPickOrigin(error.issue==='origin_off_street');setPickDestination(error.issue==='destination_off_street');setMessage(error.message)}
+   if(error instanceof RoutePlanError){const source=error.issue==='origin_off_street';beginPicker(source?'origin':'destination',source?originValue.current:target);setMessage(error.message)}
    else setMessage('No se pudieron cargar las rutas. Intenta de nuevo.');
   }}
   finally{if(id===request.current)setBusy(false)}
@@ -174,32 +170,29 @@ export default function TransitApp(){
  function plan(){if(destination)void calculate(chosenPlace?.access??destination)}
  function replanFromLocation(point:Point){
   if(!destination)return;
-  request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;
-  setOrigin(point);setOriginLabel('Mi ubicación actual');
+  request.current++;commitOrigin(point,'Mi ubicación actual');
   void calculate(chosenPlace?.access??destination);
  }
- function moveDestination(point:Point,name='Destino ajustado en el mapa'){choose(point,name);setPickDestination(false);setPickOrigin(false);void calculate(point);}
+ function moveDestination(point:Point,name='Destino ajustado en el mapa'){cancelPicker();setCameraRequest(value=>value+1);choose(point,name);void calculate(point);}
  function planSponsorTrip(point:Point,name:string,from:Point){
-  request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=from;originAccess.current=undefined;originPlace.current=undefined;
-  setOrigin(from);setOriginLabel('Punto de partida actual');
+  request.current++;commitOrigin(from,'Punto de partida actual');
   moveDestination(point,name);
  }
  function swapEndpoints(){
   if(!destination||!originConfirmed.current)return;
   const previousOrigin=originValue.current,previousDestination=destination,previousOriginPlace=originPlace.current;
   const previousOriginLabel=originLabel==='Mi ubicación actual'?'Ubicación inicial':originLabel;
-  request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=previousDestination;originAccess.current=chosenPlace?.access;originPlace.current=chosenPlace;setChosenPlace(previousOriginPlace);
-  setOrigin(previousDestination);setOriginLabel(query||'Origen seleccionado');
+  request.current++;commitOrigin(previousDestination,query||'Origen seleccionado',chosenPlace);setChosenPlace(previousOriginPlace);
   setDestination(previousOrigin);setQuery(previousOriginLabel);
-  setPickOrigin(false);setPickDestination(false);setOptions([]);setSelected(0);setMessage('');
+  cancelPicker();setCameraRequest(value=>value+1);setOptions([]);setSelected(0);setMessage('');
   void calculate(previousOriginPlace?.access??previousOrigin);
  }
- function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();setPickOrigin(false);setPickDestination(false)}
+ function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
  if(view==='sponsor'&&sponsorIntro)return <SponsoredTripIntro ad={sponsorIntro.ad} routeName={sponsorIntro.routeName} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
  if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?sponsorIntro?.ad:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen"><div className="welcome-brand"><svg viewBox="0 0 80 80" aria-hidden="true"><path d="M20 60V26a8 8 0 0 1 8-8h24a8 8 0 0 1 8 8v34M20 40h40M28 53h1m22 0h1M28 62v4m24-4v4" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/><path d="M34 10h12" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg><h1>PorDóndePasa</h1><p>Muévete por Tepic.</p><AnimatedTagline/></div><div className="welcome-action"><div className="welcome-progress" aria-hidden="true"><span/></div><small>Tepic · Xalisco</small></div></main>;
  if(view==='trip')return <main className="trip-screen" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
-  <StreetMap fullscreen ads={ads} origin={origin} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} onDestinationChange={moveDestination} onAdDestinationChange={moveDestination} onPick={pickOrigin?point=>{request.current++;manualOrigin.current=true;originConfirmed.current=true;originValue.current=point;originAccess.current=undefined;originPlace.current=undefined;setOrigin(point);setOriginLabel('Origen seleccionado');setPickOrigin(false);setOptions([]);setBusy(false);setMessage('');if(destination)void calculate(chosenPlace?.access??destination);}:pickDestination||(!options.length&&!busy)?moveDestination:undefined}/>
+  <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
   <DynamicIsland
    originLabel={originLabel}
    destinationLabel={query}
@@ -209,27 +202,33 @@ export default function TransitApp(){
    stops={stops}
    onSelect={(point,name,place,target)=>selectEdited(point,name,place,target)}
    onPickOnMap={target=>{
-    setPickOrigin(target==='origin');
-    setPickDestination(target==='destination');
+    beginPicker(target);
    }}
    onUseCurrentOrigin={useCurrentOrigin}
    editLocating={editLocating}
+   locationMessage={originIssue||editMessage}
    onSwap={swapEndpoints}
    canSwap={!!destination&&originConfirmed.current}
    onBack={back}
   />
-  {pickDestination&&<p className="map-hint" style={{top:'max(84px, calc(env(safe-area-inset-top) + 84px))'}}>Toca una calle para mover el destino.</p>}
-  {pickOrigin&&<p className="map-hint" style={{top:'max(84px, calc(env(safe-area-inset-top) + 84px))'}}>Toca una calle para fijar tu origen.</p>}
-  {!destination&&!pickOrigin&&!pickDestination&&<p className="map-hint" style={{top:'max(84px, calc(env(safe-area-inset-top) + 84px))'}}>Toca una calle para ubicar tu destino.</p>}
-  <MapSheet className="trip-bottom" title="">
-   
+  {!mapSelection&&!!options.length&&<button type="button" className="map-overview" onClick={()=>setCameraRequest(value=>value+1)}>⌗ Ver viaje</button>}
+  <MapSheet resetKey={mapSelection?.id} className="trip-bottom" title={mapSelection?(mapSelection.target==='origin'?'Elegir origen':'Elegir destino'):options.length?'Tus opciones':'Prepara tu viaje'}>
+   {mapSelection?<div className="map-selection-panel">
+    <strong>{mapSelection.target==='origin'?'¿Desde dónde sales?':'¿Hasta dónde quieres llegar?'}</strong>
+    <p>Mueve el mapa debajo del pin. Tu viaje no cambia hasta confirmar.</p>
+    <output aria-live="polite">{mapSelection.moving?'Ajustando el punto…':`${mapSelection.draft.lat.toFixed(5)}, ${mapSelection.draft.lng.toFixed(5)}`}</output>
+    {message&&<p role="status">{message}</p>}
+    <div className="map-selection-actions"><button type="button" className="selection-cancel" onClick={cancelPicker}>Cancelar</button><button type="button" className="selection-confirm" disabled={mapSelection.moving} onClick={confirmPicker}>Confirmar {mapSelection.target==='origin'?'origen':'destino'} →</button></div>
+   </div>:<>
+   {originStatus!=='confirmed'&&<div className="origin-confirmation" role="status"><strong>{originStatus==='loading'?'Buscando tu ubicación…':'Confirma desde dónde sales'}</strong><p>{originIssue||'Puedes elegir el punto de partida en el mapa mientras comprobamos tu GPS.'}</p><div><button type="button" disabled={editLocating||originStatus==='loading'} onClick={()=>void useCurrentOrigin()}>Usar mi ubicación</button><button type="button" onClick={()=>beginPicker('origin')}>Elegir origen en mapa</button><button type="button" onClick={()=>selectEdited({...TEPIC_MAP_CENTER},'Centro de Tepic',undefined,'origin')}>Salir del Centro de Tepic</button></div></div>}
    {busy&&<div className="trip-status" role="status"><span className="loading-dot"/>Buscando tu ruta…</div>}
    {message&&<div className="trip-status" role="status">{message}<button className="text-button" onClick={plan}>Buscar de nuevo</button></div>}
    
    
    {!!options.length&&<><div className="carousel-heading"><span>{options.length>1?'Desliza para ver las opciones.':'Opción disponible'}</span><strong>{selected+1} de {options.length}</strong></div><div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><button className="option-select" onClick={()=>selectCard(index)} aria-pressed={selected===index}><div className="time"><strong>{o.minutes} min</strong><small>{optionLabel(o,index,options)}</small></div><div className="legs">{o.legs.map((leg,i)=><span key={i} className={leg.kind} style={leg.kind==='bus'?{backgroundColor:leg.route?.color,color:routeTextColor(leg.route?.color??'#0a9364')}:undefined}>{leg.kind==='walk'?`A pie ${leg.minutes?`${leg.minutes} min`:'muy cerca'}`:`Ruta ${leg.route?.name}`}</span>)}</div><div className="route-metrics"><div><small>Aprox.</small><strong>${o.fare}<span> MXN</span></strong></div><div><small>A pie</small><strong>{o.walk}<span> min a pie</span></strong></div><div><small>Transbordos</small><strong>{o.transfers===0?'Sin cambios':o.transfers}</strong></div></div></button><details className="journey-details"><summary>Dónde subir y bajar <span aria-hidden="true">⌄</span></summary><JourneySteps option={o} stops={stops}/></details><button className="start-follow card-primary" disabled={starting} onClick={()=>void startTrip(index)}>{o.legs.some(l=>l.kind==='bus')?'Elegir este viaje →':'Ver pasos para caminar →'}</button>{destination&&<UberAlternative origin={origin} destination={destination} originName={originLabel} destinationName={query}/>}</article>)}</div><div className="carousel-dots">{options.map((o,i)=><button key={o.id} aria-label={`Ver opción ${i+1}`} aria-pressed={i===selected} onClick={()=>selectCard(i)}/>)}</div><small className="trip-estimate">Tiempo, espera, tarifa y caminata estimados; no son datos en tiempo real.</small></>}
-   {!busy&&!options.length&&!message&&<div className="trip-status">Elige un punto en el mapa.<button className="search" disabled={!destination} onClick={plan}>Buscar cómo llegar →</button></div>}
+   {!busy&&!options.length&&!message&&<div className="trip-status">{destination?(originStatus==='confirmed'?'Destino listo. Busca tus opciones de viaje.':'Destino listo. Confirma el origen para continuar.'):'Elige a dónde quieres ir.'}<button type="button" className="search" onClick={()=>destination?plan():beginPicker('destination')}>{destination?'Buscar cómo llegar →':'Elegir destino en mapa →'}</button></div>}
+   </>}
   </MapSheet>
  </main>;
- return <HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>{setView('trip');setPickOrigin(false)}}/>;
+ return <HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/>;
 }

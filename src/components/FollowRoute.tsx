@@ -5,6 +5,8 @@ import {meters,routeTextColor} from '../lib/router';
 import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
 import MapIcon from './MapIcon';
+import SheetHandle from './SheetHandle';
+import type {SheetMode} from '../lib/sheetMode';
 import {useCompass} from './useCompass';
 import {movementHeading} from '../lib/heading';
 import {nextManeuver} from '../lib/maneuver';
@@ -25,10 +27,11 @@ import '../styles/dynamic-island.css';
 import '../styles/sponsored-trip.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
 export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onReplan,onWalkReroute,onPickup,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onReplan?:(point:Point)=>void;onWalkReroute?:UpdateWalkingLeg;onPickup?:UpdatePickup;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
- const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[showStops,setShowStops]=useState(false);
+ const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[sheetMode,setSheetMode]=useState<SheetMode>('closed');
+ const showStops=sheetMode!=='closed',setShowStops=(show:boolean)=>setSheetMode(show?'open':'closed');
  const [dismissedAdStep,setDismissedAdStep]=useState<number|null>(null);
  const [showPassed,setShowPassed]=useState(false),[timelineFollow,setTimelineFollow]=useState(true);
- const timelineList=useRef<HTMLDivElement>(null),sheetGesture=useRef<{y:number;moved:boolean}|undefined>(undefined),sheetDragged=useRef(false);
+ const timelineList=useRef<HTMLDivElement>(null);
  const [history,setHistory]=useState<JourneyFix[]>([]),[voice,setVoice]=useState(false),[alightingNotice,setAlightingNotice]=useState('');
  const [reportOpen,setReportOpen]=useState(false),[report,setReport]=useState<RouteReport>(),[reportMessage,setReportMessage]=useState('');
  const reportRef=useRef<RouteReport|undefined>(undefined);reportRef.current=report;
@@ -51,12 +54,12 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const sample=useMemo(()=>live&&!stale&&accuracy!==undefined?reliableProgressSample(live,line,accuracy,fixAt):null,[live,line,stale,accuracy,fixAt]);
  const health=useMemo(()=>journeyStatus(history,line,leg.kind,clock),[history,line,leg.kind,clock]);
  useEffect(()=>{
-  const timer=setInterval(()=>setPainted(previous=>{
-   if(previous.step!==accepted.step||previous.leg!==accepted.leg)return {...accepted,along:0};
-   const gap=accepted.along-previous.along;
-   return gap<=.2?accepted:{...accepted,along:previous.along+gap*.35};
-  }),80);
-  return()=>clearInterval(timer);
+  let timer:ReturnType<typeof setTimeout>;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Stop scheduling once the painted line catches up; stationary trips do no work.
+  let value=painted.step===accepted.step&&painted.leg===accepted.leg?painted.along:0;
+  function tick(){const gap=accepted.along-value;value=reduced||Math.abs(gap)<=.2?accepted.along:value+gap*.35;setPainted({...accepted,along:value});if(value!==accepted.along)timer=setTimeout(tick,80)}
+  tick();return()=>clearTimeout(timer);
  },[accepted]);
  const acceptedAt=useRef(0);
  // Never trim from a lone fix or a projection that could belong to a nearby return pass.
@@ -282,8 +285,8 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
    <button className="nav-top-back" onClick={onExit} aria-label="Salir del seguimiento" title="Salir">✕</button>
   </section>
   {!arrived&&<div className="navigation-tools apple-map-controls"><button onClick={()=>{setNorthUp(false);void compass.enable()}} aria-label={compass.enabled?'Desactivar brújula':'Activar brújula'} title={compass.enabled?'Desactivar brújula':'Activar brújula'} aria-pressed={compass.enabled}><MapIcon kind="compass"/></button><button onClick={()=>setNorthUp(!northUp)} aria-label={northUp?'Orientar al avanzar':'Norte arriba'} title={northUp?'Orientar al avanzar':'Norte arriba'} aria-pressed={northUp}><MapIcon kind="north"/></button><button onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación':'Centrar en mí'} title={!live?'Esperando ubicación':'Centrar en mí'} aria-pressed={follow}><MapIcon kind="location"/></button></div>}
-  <footer className={`nav-bottom-sheet map-sheet ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
-   {!arrived&&<button type="button" className="nav-sheet-grip" aria-expanded={showStops} aria-label={showStops?'Ocultar paradas':'Mostrar paradas'} onClick={()=>{if(!sheetDragged.current)setShowStops(!showStops);sheetDragged.current=false}} onPointerDown={event=>{sheetGesture.current={y:event.clientY,moved:false};sheetDragged.current=false;event.currentTarget.setPointerCapture(event.pointerId)}} onPointerMove={event=>{if(sheetGesture.current&&Math.abs(event.clientY-sheetGesture.current.y)>8){sheetGesture.current.moved=true;event.preventDefault()}}} onPointerUp={event=>{const gesture=sheetGesture.current;if(gesture?.moved){sheetDragged.current=true;if(Math.abs(event.clientY-gesture.y)>28)setShowStops(event.clientY<gesture.y)}sheetGesture.current=undefined}} onPointerCancel={()=>{sheetGesture.current=undefined;sheetDragged.current=false}}><span aria-hidden="true"/><small>{showStops?'Paradas y referencias':'Ver paradas y referencias'}</small><b aria-hidden="true">{showStops?'⌄':'⌃'}</b></button>}
+  <footer className={`nav-bottom-sheet map-sheet sheet-${sheetMode} ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
+   {!arrived&&<SheetHandle mode={sheetMode} onChange={setSheetMode} label={sheetMode==='closed'?'Ver paradas y referencias':sheetMode==='open'?'Próximas referencias':'Paradas y referencias'}/>}
    {showTripSponsor && <div className="nav-trip-sponsor" role="note" aria-label="Patrocinador del viaje">
     <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
     <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks')}>Canjear</a>
@@ -313,9 +316,10 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      className="nav-btn-metrics"
      onClick={()=>setShowStops(!showStops)}
      aria-expanded={showStops}
-     aria-label={`${arrived?'Destino alcanzado':`${metricsTime}, ${distanceLabel(metricsMeters)}${offRoute?` ${proximityLabel} en línea recta`:''}`}. Toca para ver paradas.`}
+     aria-label={`${arrived?'Destino alcanzado':`${offRoute?'Distancia en línea recta':'Viaje restante'}: ${metricsTime}, ${distanceLabel(metricsMeters)}${offRoute?` ${proximityLabel}`:''}`}. Toca para ver paradas.`}
     >
      <div className="nav-btn-metrics-stack">
+      {!arrived&&<small className="nav-metrics-label">{offRoute?'Línea recta':'Viaje restante'}</small>}
       <strong className="nav-btn-metrics-time">{arrived?'✓':metricsTime}</strong>
       <span className="nav-btn-metrics-dist">{arrived?'Destino':`${offRoute||!trusted?'~':''}${distanceLabel(metricsMeters)}`}</span>
      </div>

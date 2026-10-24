@@ -21,8 +21,8 @@ self.onmessage=async(event)=>{
    self.postMessage({id,leg});return;
   }
   const {shapes,walking}=await load();
-  if(!walking.snaps(origin).length){self.postMessage({id,code:'origin_off_street',error:'El origen quedó fuera de las calles disponibles. Toca una calle en el mapa para ubicarlo.'});return;}
-  if(!walking.snaps(destination).length){self.postMessage({id,code:'destination_off_street',error:'El destino quedó fuera de las calles disponibles. Toca una calle en el mapa para ubicarlo.'});return;}
+  if(!walking.snaps(origin).length){self.postMessage({id,code:'origin_off_street',error:'El origen quedó fuera de las calles disponibles. Ajusta el pin sobre una calle y confirma el origen.'});return;}
+  if(!walking.snaps(destination).length){self.postMessage({id,code:'destination_off_street',error:'El destino quedó fuera de las calles disponibles. Ajusta el pin sobre una calle y confirma el destino.'});return;}
   self.postMessage({id,options:walking.refine(findRoutes(origin,destination,shapes,25))});
  }catch{self.postMessage({id,error:'No se pudieron calcular las rutas.'});}
 };

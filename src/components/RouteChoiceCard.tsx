@@ -13,9 +13,10 @@ export default function RouteChoiceCard({option,stops,ads=[],label,selected,star
    <div className="legs" aria-label="Etapas del viaje">{option.legs.map((leg,i)=><span key={i} className={leg.kind} style={leg.kind==='bus'?{backgroundColor:leg.route?.color,color:routeTextColor(leg.route?.color??'#0a9364')}:undefined}><UiIcon name={leg.kind==='walk'?'walk':'bus'}/>{leg.kind==='walk'?(leg.minutes?`${leg.minutes} min`:'Muy cerca'):leg.route?.name??'Transporte'}</span>)}</div>
    <div className="route-metrics"><div><small>Costo aprox.</small><strong>${option.fare}<span> MXN</span></strong></div><div><small>Caminata</small><strong>{option.walk}<span> min a pie</span></strong></div><div><small>Transbordos</small><strong>{option.transfers===0?'Sin cambios':option.transfers}</strong></div></div>
   </button>
-  <details className="journey-details"><summary>Dónde subir y bajar <UiIcon name="chevron-down"/></summary><JourneySteps option={option} stops={stops}/></details>
-  <button type="button" className="start-follow card-primary" disabled={starting} onClick={onStart}>{starting?'Preparando tu viaje…':option.legs.some(leg=>leg.kind==='bus')?'Empezar mi viaje':'Empezar caminata'}<UiIcon name="arrow"/></button>
+  <div className="route-choice-actions">
+   <details className="journey-details"><summary>Dónde subir y bajar <UiIcon name="chevron-down"/></summary><JourneySteps option={option} stops={stops}/>{destination&&<UberAlternative origin={origin} destination={destination} originName={originName} destinationName={destinationName}/>}</details>
+   <button type="button" className="start-follow card-primary" disabled={starting} onClick={onStart}>{starting?'Preparando…':option.legs.some(leg=>leg.kind==='bus')?'Iniciar viaje':'Iniciar caminata'}<UiIcon name="arrow"/></button>
+  </div>
   {destination&&<DestinationBanner destination={destination} option={option} ads={ads} selected={selected}/>}
-  {destination&&<UberAlternative origin={origin} destination={destination} originName={originName} destinationName={destinationName}/>}
  </>;
 }

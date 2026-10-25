@@ -25,6 +25,7 @@ import type {UpdatePickup} from './useBoardingJourney';
 import {TEPIC_MAP_CENTER,planningLocation,withinServiceArea,beginMapSelection,updateMapSelection,type Endpoint,type MapSelection} from '../lib/mapSelection';
 import '../styles/planning.css';
 import '../styles/identity.css';
+import '../styles/blue-glass.css';
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function optionLabel(option:Option,index:number,options:Option[]):string {
  if(index===0)return 'Más rápida';
@@ -194,14 +195,15 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
  if(view==='sponsor'&&sponsorIntro&&activeSponsor)return <SponsoredTripIntro ad={activeSponsor} routeName={sponsorIntro.routeName} routeId={sponsorIntro.routeId} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
  if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
- if(welcome)return <main className="welcome-screen brand-welcome"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
- if(view==='trip')return <main className="trip-screen" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
+ if(welcome)return <main className="welcome-screen brand-welcome pdp-blue-glass"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
+ if(view==='trip')return <main className="trip-screen pdp-blue-glass" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
   <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
   <DynamicIsland
    originLabel={originLabel}
    destinationLabel={query}
    pickOrigin={pickOrigin}
    pickDestination={pickDestination}
+   compact={!!options.length&&!mapSelection}
    places={places}
    stops={stops}
    onSelect={(point,name,place,target)=>selectEdited(point,name,place,target)}
@@ -216,7 +218,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    onBack={back}
   />
   {!mapSelection&&!!options.length&&<button type="button" className="map-overview" onClick={()=>setCameraRequest(value=>value+1)}><UiIcon name="route"/>Ver viaje</button>}
-  <MapSheet resetKey={mapSelection?.id} className="trip-bottom" title={mapSelection?(mapSelection.target==='origin'?'Elegir origen':'Elegir destino'):options.length?'Tus opciones':'Prepara tu viaje'}>
+  <MapSheet resetKey={mapSelection?.id} className={`trip-bottom${options.length&&!mapSelection?' has-route-options':''}`} title={mapSelection?(mapSelection.target==='origin'?'Elegir origen':'Elegir destino'):options.length?'Tus opciones':'Prepara tu viaje'}>
    {mapSelection?<div className="map-selection-panel">
     <strong>{mapSelection.target==='origin'?'¿Desde dónde sales?':'¿Hasta dónde quieres llegar?'}</strong>
     <p>Mueve el mapa debajo del pin. Tu viaje no cambia hasta confirmar.</p>

@@ -5,10 +5,10 @@ import UiIcon from './UiIcon';
 import type {TransitStop as Stop} from '../lib/navigation';
 import type {Endpoint} from '../lib/mapSelection';
 
-type Props={originLabel:string;destinationLabel:string;pickOrigin?:boolean;pickDestination?:boolean;places:Place[];stops:Stop[];onSelect:(point:Point,name:string,place?:Place,target?:Endpoint)=>void;onPickOnMap:(target:Endpoint)=>void;onUseCurrentOrigin?:()=>Promise<boolean>;editLocating?:boolean;locationMessage?:string;onSwap?:()=>void;canSwap?:boolean;onBack:()=>void};
+type Props={originLabel:string;destinationLabel:string;pickOrigin?:boolean;pickDestination?:boolean;compact?:boolean;places:Place[];stops:Stop[];onSelect:(point:Point,name:string,place?:Place,target?:Endpoint)=>void;onPickOnMap:(target:Endpoint)=>void;onUseCurrentOrigin?:()=>Promise<boolean>;editLocating?:boolean;locationMessage?:string;onSwap?:()=>void;canSwap?:boolean;onBack:()=>void};
 const normalize=(text:string)=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
-export default function DynamicIsland({originLabel,destinationLabel,pickOrigin,pickDestination,places,stops,onSelect,onPickOnMap,onUseCurrentOrigin,editLocating,locationMessage,onSwap,canSwap,onBack}:Props){
+export default function DynamicIsland({originLabel,destinationLabel,pickOrigin,pickDestination,compact,places,stops,onSelect,onPickOnMap,onUseCurrentOrigin,editLocating,locationMessage,onSwap,canSwap,onBack}:Props){
  const [collapsed,setCollapsed]=useState(false),[target,setTarget]=useState<Endpoint|null>(null),[query,setQuery]=useState('');
  const dialog=useRef<HTMLDialogElement>(null),input=useRef<HTMLInputElement>(null),returnFocus=useRef<HTMLElement|null>(null);
  const filteredPlaces=useMemo(()=>target?searchPlaces(places,query,5):[],[target,places,query]);
@@ -18,6 +18,7 @@ export default function DynamicIsland({originLabel,destinationLabel,pickOrigin,p
   else{dialog.current?.close();returnFocus.current?.focus();}
  },[target]);
  useEffect(()=>{if(pickOrigin||pickDestination)setCollapsed(false)},[pickOrigin,pickDestination]);
+ useEffect(()=>{if(compact&&!pickOrigin&&!pickDestination)setCollapsed(true)},[compact,pickOrigin,pickDestination]);
  function open(next:Endpoint){returnFocus.current=document.activeElement as HTMLElement;setQuery('');setTarget(next);setCollapsed(false)}
  function close(){setTarget(null)}
  function select(point:Point,name:string,place?:Place){if(!target)return;onSelect(point,name,place,target);close()}

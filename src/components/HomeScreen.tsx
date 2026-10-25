@@ -3,7 +3,10 @@ import type {TransitStop} from '../lib/navigation';
 import type {Point} from '../lib/router';
 import {type Place,getPlaceCategoryLabel} from '../lib/places';
 import UiIcon from './UiIcon';
+import StreetMap from './StreetMap';
+import {TEPIC_MAP_CENTER} from '../lib/mapSelection';
 import '../styles/home.css';
+import '../styles/blue-glass.css';
 // Presentation contract: optional saved destinations do not depend on an auth provider.
 export type HomeSavedPlace={kind:string;label:string;point:Point};
 type SavedPlace=HomeSavedPlace;
@@ -12,7 +15,18 @@ type CatalogRoute={id:string;name:string;color:string;groupName?:string};
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 export default function HomeScreen({query,ready,stops,places,message,onQuery,onChoose,onChoosePlace,onSearch,onMap,savedPlaces=[],onChooseSaved,onOpenAccount}:Props){
  const [catalogOpen,setCatalogOpen]=useState(false),[catalogQuery,setCatalogQuery]=useState(''),[catalog,setCatalog]=useState<CatalogRoute[]|null>(null),[catalogIssue,setCatalogIssue]=useState(''),[retry,setRetry]=useState(0);
- const dialog=useRef<HTMLDialogElement>(null),filter=useRef<HTMLInputElement>(null),search=useRef<HTMLInputElement>(null),lastFocus=useRef<HTMLElement|null>(null);
+ const root=useRef<HTMLElement>(null),dialog=useRef<HTMLDialogElement>(null),filter=useRef<HTMLInputElement>(null),search=useRef<HTMLInputElement>(null),lastFocus=useRef<HTMLElement|null>(null);
+ useEffect(()=>{
+  const viewport=window.visualViewport;if(!viewport)return;
+  const resize=()=>{root.current?.style.setProperty('--home-viewport-height',`${Math.round(viewport.height)}px`);root.current?.setAttribute('data-keyboard-open',String(window.innerHeight-viewport.height>140));};
+  resize();viewport.addEventListener('resize',resize);return()=>viewport.removeEventListener('resize',resize);
+ },[]);
+ const [mapMounted,setMapMounted]=useState(false);
+ useEffect(()=>{
+  // Keep the search usable immediately; hydrate the real map when the browser is idle.
+  if('requestIdleCallback' in window){const id=window.requestIdleCallback(()=>setMapMounted(true),{timeout:1200});return()=>window.cancelIdleCallback(id)}
+  const timer=setTimeout(()=>setMapMounted(true),120);return()=>clearTimeout(timer);
+ },[]);
  const hasSuggestions=places.length+stops.length>0;
  function openCatalog(value=''){lastFocus.current=document.activeElement as HTMLElement;setCatalogQuery(value);setCatalogOpen(true)}
  useEffect(()=>{if(catalogOpen){dialog.current?.showModal();filter.current?.focus()}else{dialog.current?.close();lastFocus.current?.focus()}},[catalogOpen]);
@@ -24,10 +38,15 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
   return()=>controller.abort();
  },[catalogOpen,catalog,retry]);
  const filtered=(catalog??[]).filter(route=>normalize(route.name).includes(normalize(catalogQuery)));
- return <main className="pdp-home" data-screen="inicio">
+ return <main ref={root} className="pdp-home pdp-blue-glass" data-screen="inicio">
+  <div className="home-map-background">
+   <img className="home-map-fallback" src={`${import.meta.env.BASE_URL}media/tepic-preview.svg`} alt="" width="360" height="160" decoding="async"/>
+   {mapMounted&&<StreetMap origin={TEPIC_MAP_CENTER} hideOrigin fullscreen/>}
+  </div>
+  <header className="home-brand-row"><div><div className="home-wordmark"><span className="home-logo"><UiIcon name="route"/></span><strong>PorDóndePasa</strong></div><p className="home-city-label">TEPIC · XALISCO</p></div>{onOpenAccount&&<button type="button" className="home-profile" onClick={onOpenAccount} aria-label="Abrir mi cuenta"><UiIcon name="user"/></button>}</header>
+  <button type="button" className="home-map-launch" onClick={onMap}><UiIcon name="pin"/>Elegir en mapa</button>
   <div className="home-content">
-   <header className="home-brand-row"><div><div className="home-wordmark"><span className="home-logo"><UiIcon name="route"/></span><strong>PorDóndePasa</strong></div><p className="home-city-label">TEPIC · XALISCO</p></div>{onOpenAccount&&<button type="button" className="home-profile" onClick={onOpenAccount} aria-label="Abrir mi cuenta"><UiIcon name="user"/></button>}</header>
-   <section className="home-intro"><h1>Tu ciudad.<br/><span>Tu camino.</span></h1><p>Encuentra cómo llegar.<br/>Nosotros te acompañamos.</p></section>
+   <section className="home-intro"><h1>Tu próxima ruta, a un toque.</h1><p>Tu ciudad. Tu camino.</p></section>
    <form className="home-search" aria-label="Buscar destino" onSubmit={event=>{event.preventDefault();if(ready)onSearch()}}>
     <div className="home-search-row"><label className="home-field"><UiIcon name="search"/><input ref={search} type="search" aria-label="¿A dónde vamos?" placeholder="¿A dónde vamos?" value={query} autoComplete="off" onChange={event=>onQuery(event.target.value)}/></label>{ready&&<button className="home-submit" type="submit" aria-label="Buscar cómo llegar"><UiIcon name="arrow"/></button>}</div>
     {hasSuggestions&&<div className="home-suggestions" aria-label="Sugerencias de destino">{places.map(place=><button type="button" key={`place:${place.id}`} onClick={()=>onChoosePlace(place)}><span className="home-suggestion-icon"><UiIcon name="pin"/></span><span className="home-suggestion-text"><strong>{place.name}</strong><small>{place.neighborhood||place.municipality||getPlaceCategoryLabel(place.category)}{place.status!=='verificado'?' · Por verificar':''}</small></span><UiIcon name="up-right"/></button>)}{stops.map(stop=><button type="button" key={`stop:${stop.id}`} onClick={()=>onChoose(stop)}><span className="home-suggestion-icon"><UiIcon name="bus"/></span><span className="home-suggestion-text"><strong>{stop.name}</strong><small>Referencia · Tepic y Xalisco</small></span><UiIcon name="up-right"/></button>)}</div>}
@@ -35,10 +54,8 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
     {message&&<p className="home-message" role="status">{message}</p>}
    </form>
    {onOpenAccount&&<div className="home-private-shortcuts" aria-label="Mis destinos privados">{(['home','work'] as const).map(kind=>{const place=savedPlaces.find(item=>item.kind===kind);return <button type="button" key={kind} onClick={()=>place&&onChooseSaved?onChooseSaved(place):onOpenAccount()}><UiIcon name={kind==='home'?'home':'work'}/><span>{kind==='home'?'Casa':'Trabajo'}<small>{place?'Ir ahora':'Agregar'}</small></span></button>})}</div>}
-   <section className="home-explore" aria-label="Explorar transporte"><div className="home-section-heading"><h2>Conoce tus opciones</h2><button type="button" onClick={()=>openCatalog()}>Ver rutas</button></div>
-    <div className="home-map-wrap"><button type="button" className="home-map-preview" onClick={onMap}><img src={`${import.meta.env.BASE_URL}media/tepic-preview.svg`} alt="Vista de las calles y trazos de transporte del centro de Tepic" width="360" height="160" decoding="async"/><span>Elegir en mapa <UiIcon name="up-right"/></span></button><a className="home-map-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Calles © OpenStreetMap · ODbL</a></div>
+   <section className="home-explore" aria-label="Explorar transporte">
     <div className="home-route-chips"><button type="button" onClick={()=>openCatalog('México')}><UiIcon name="bus" className="route-mexico"/>México</button><button type="button" onClick={()=>openCatalog('Río Suchiate')}><UiIcon name="bus" className="route-rio"/>Río Suchiate</button></div>
-    <p className="home-caption">Elige tu destino. Confirma tu origen.</p>
    </section>
    <nav className="home-navigation" aria-label="Navegación principal"><button type="button" aria-current="page" onClick={()=>search.current?.focus()}><UiIcon name="home"/>Inicio</button><button type="button" onClick={()=>openCatalog()}><UiIcon name="bus"/>Rutas</button>{onOpenAccount&&<><button type="button" onClick={onOpenAccount}><UiIcon name="bookmark"/>Guardados</button><button type="button" onClick={onOpenAccount}><UiIcon name="user"/>Cuenta</button></>}</nav>
   </div>

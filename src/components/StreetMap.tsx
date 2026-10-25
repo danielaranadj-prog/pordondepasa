@@ -23,7 +23,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
  const activeStopMarker=useRef<Marker|null>(null);
  function padding(){
   const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');
-  const top=main?.querySelector('.dynamic-island, .navigation-top, .nav-top-card, .map-top-minimal')?.getBoundingClientRect(),bottom=main?.querySelector('.map-sheet')?.getBoundingClientRect();
+  const top=main?.querySelector('.dynamic-island, .navigation-top, .nav-top-card, .map-top-minimal, .home-brand-row')?.getBoundingClientRect(),bottom=main?.querySelector('.map-sheet, .home-content')?.getBoundingClientRect();
   // The control container includes its margins; reserve those too, not just text.
   const creditHeight=container.current!.querySelector('.maplibregl-ctrl-bottom-right')?.getBoundingClientRect().height??44;
   const p=visibleMapPadding(rect,top,bottom,creditHeight);
@@ -34,10 +34,11 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
   wrap?.style.setProperty('--map-attribution-bottom',`${Math.min(attribution,Math.max(12,rect.height-48))}px`);
   if(latest.current.navigation){
    const freeTop=(top?.bottom??rect.top+50)-rect.top+10,freeBottom=(bottom?.top??rect.bottom)-rect.top-creditHeight-12;
-   const compact=freeBottom-freeTop<118,size=compact?40:46,controlsHeight=compact?size:size*2+8;
+   const compact=freeBottom-freeTop<118,size=44;
    main?.style.setProperty('--nav-tool-size',`${size}px`);
    main?.style.setProperty('--nav-map-secondary-display',compact?'none':'grid');
    main?.style.setProperty('--nav-compact-controls-display',compact?'flex':'none');
+   const controlsHeight=main?.querySelector('.journey-map-tools')?.getBoundingClientRect().height??size*2+8;
    main?.style.setProperty('--nav-controls-top',`${Math.max(freeTop,(freeTop+freeBottom-controlsHeight)/2)}px`);
   }
   return p;
@@ -215,7 +216,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
     }else if(reason==='resize')instance.setPadding(cameraPadding);
    };
    observer=new ResizeObserver(()=>{instance?.resize();camera.current('resize');wakeAnimation.current()});observer.observe(container.current);
-   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.nav-top-card','.dynamic-island','.maplibregl-ctrl-attrib']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
+   const main=container.current.closest('main');for(const selector of ['.map-sheet','.navigation-top','.nav-top-card','.dynamic-island','.home-content','.home-brand-row','.maplibregl-ctrl-attrib']){const item=main?.querySelector(selector);if(item)observer.observe(item)}
    instance.on('load',()=>{if(disposed)return;draw.current();updateAccuracy.current();drawClosure();updateMarkers.current();updateAds.current();camera.current();setReady(true)});
    function animate(now:number){
     frame=0;

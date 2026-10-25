@@ -44,7 +44,11 @@
 .trip-screen .sheet-endpoints .location-retry{position:static;grid-column:3;grid-row:2;background:var(--glass-soft);box-shadow:none;border:0}
 .trip-screen .map-hint{top:74px;max-width:calc(100vw - 32px);white-space:normal}
 .trip-screen:not(.navigation-screen) .leaflet-top{top:120px}
-.trip-screen .map-sheet .route-carousel:not(.route-list-view){touch-action:pan-x;overflow-y:hidden}
+.trip-screen .map-sheet .route-carousel:not(.route-list-view){touch-action:auto;overflow-y:hidden;overscroll-behavior:contain auto}
+/* Let vertical gestures reach sheet-content instead of trapping them in the
+   horizontal carousel. Reading directions must not change the selected route. */
+.trip-screen .map-sheet .journey-details{touch-action:pan-y pinch-zoom}
+.trip-screen .map-sheet .journey-details[open] .journey-steps{max-height:none;overflow:visible;overscroll-behavior:auto}
 .trip-screen .navigation-panel.map-sheet{max-height:none}
 .navigation-panel .sheet-content{padding:0 16px 14px;max-height:42dvh}
 .trip-screen .apple-map-controls{right:max(18px,calc(env(safe-area-inset-right) + 16px));top:max(116px,calc(env(safe-area-inset-top) + 98px));gap:0;border-radius:28px;overflow:hidden;background:var(--glass);border:1px solid var(--glass-edge);box-shadow:var(--glass-shadow);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}

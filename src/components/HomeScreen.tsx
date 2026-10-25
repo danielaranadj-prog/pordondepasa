@@ -5,6 +5,7 @@ import {type Place,getPlaceCategoryLabel} from '../lib/places';
 import UiIcon from './UiIcon';
 import StreetMap from './StreetMap';
 import {TEPIC_MAP_CENTER} from '../lib/mapSelection';
+import {homeKeyboardViewport} from '../lib/homeKeyboardViewport';
 import '../styles/home.css';
 import '../styles/blue-glass.css';
 // Presentation contract: optional saved destinations do not depend on an auth provider.
@@ -17,9 +18,21 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
  const [catalogOpen,setCatalogOpen]=useState(false),[catalogQuery,setCatalogQuery]=useState(''),[catalog,setCatalog]=useState<CatalogRoute[]|null>(null),[catalogIssue,setCatalogIssue]=useState(''),[retry,setRetry]=useState(0);
  const root=useRef<HTMLElement>(null),dialog=useRef<HTMLDialogElement>(null),filter=useRef<HTMLInputElement>(null),search=useRef<HTMLInputElement>(null),lastFocus=useRef<HTMLElement|null>(null);
  useEffect(()=>{
-  const viewport=window.visualViewport;if(!viewport)return;
-  const resize=()=>{root.current?.style.setProperty('--home-viewport-height',`${Math.round(viewport.height)}px`);root.current?.setAttribute('data-keyboard-open',String(window.innerHeight-viewport.height>140));};
-  resize();viewport.addEventListener('resize',resize);return()=>viewport.removeEventListener('resize',resize);
+  const viewport=window.visualViewport;
+  let frame=0,baseline=window.innerHeight;
+  const update=()=>{
+   frame=0;const element=root.current;if(!element)return;
+   const focused=!!search.current?.closest('form')?.contains(document.activeElement);
+   if(!focused)baseline=window.innerHeight;
+   const state=homeKeyboardViewport({layoutHeight:window.innerHeight,baselineHeight:baseline,visualHeight:viewport?.height??window.innerHeight,offsetTop:viewport?.offsetTop??0,scale:viewport?.scale??1,focused});
+   element.style.setProperty('--home-visible-bottom',`${state.bottom}px`);
+   element.style.setProperty('--home-visible-height',`${state.height}px`);
+   element.setAttribute('data-keyboard-open',String(state.keyboard));
+   element.setAttribute('data-searching',String(focused));
+  };
+  const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)};
+  update();viewport?.addEventListener('resize',schedule);viewport?.addEventListener('scroll',schedule);window.addEventListener('resize',schedule);document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);
+  return()=>{cancelAnimationFrame(frame);viewport?.removeEventListener('resize',schedule);viewport?.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);document.removeEventListener('focusin',schedule);document.removeEventListener('focusout',schedule)};
  },[]);
  const [mapMounted,setMapMounted]=useState(false);
  useEffect(()=>{

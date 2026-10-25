@@ -26,7 +26,9 @@
 }
 
 /* Home: an actual street map, with an immediately usable compact search dock. */
-.pdp-home.pdp-blue-glass{height:var(--home-viewport-height,100svh);min-height:0;overflow:hidden;background:var(--ui-bg)}
+.pdp-home.pdp-blue-glass{position:fixed;inset:0;height:100vh;height:100lvh;min-height:0;overflow:hidden;background:var(--ui-bg)}
+html:has(.pdp-home.pdp-blue-glass),body:has(.pdp-home.pdp-blue-glass){overflow:hidden;overscroll-behavior:none;background:#e6edf5}
+@media(prefers-color-scheme:dark){html:has(.pdp-home.pdp-blue-glass),body:has(.pdp-home.pdp-blue-glass){background:#112339}}
 .pdp-home.pdp-blue-glass .home-map-background{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--ui-bg)}
 .pdp-home.pdp-blue-glass .home-map-fallback{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;opacity:.8}
 .pdp-home.pdp-blue-glass .street-map-wrap,.pdp-home.pdp-blue-glass .street-map{position:absolute;inset:0;width:100%;height:100%}
@@ -48,8 +50,12 @@
 .pdp-home.pdp-blue-glass .home-navigation{margin:6px 0 0;padding:3px 0 0;border-top:1px solid var(--ui-line);background:transparent;justify-content:space-evenly;gap:4px}
 .pdp-home.pdp-blue-glass .home-navigation button{flex-direction:row;gap:6px;min-height:44px;min-width:44px;padding:6px 8px;font-size:11px}.pdp-home.pdp-blue-glass .home-navigation .ui-icon{width:17px;height:17px}
 .pdp-home.pdp-blue-glass .home-catalog{padding:16px;border-radius:25px}.pdp-home.pdp-blue-glass .home-catalog h2{font-size:21px}.pdp-home.pdp-blue-glass .home-catalog-plan{min-height:44px;background:var(--brand-action);color:#fff}
-.pdp-home.pdp-blue-glass[data-keyboard-open=true] :is(.home-explore,.home-navigation,.home-private-shortcuts,.home-intro p){display:none}
-.pdp-home.pdp-blue-glass[data-keyboard-open=true] .home-suggestions{max-height:max(90px,calc(var(--home-viewport-height) - 210px))}
+.pdp-home.pdp-blue-glass[data-searching=true] :is(.home-explore,.home-navigation,.home-private-shortcuts,.home-intro){display:none}
+.pdp-home.pdp-blue-glass:not([data-searching=true]) .home-suggestions{display:none}
+.pdp-home.pdp-blue-glass[data-searching=true] .home-content{padding:12px;border-radius:21px;bottom:max(8px,calc(100% - var(--home-visible-bottom,100%) + 8px));max-height:calc(var(--home-visible-height,100svh) - 24px)}
+.pdp-home.pdp-blue-glass[data-searching=true] .home-content::before{display:none}
+.pdp-home.pdp-blue-glass[data-searching=true] .home-suggestions{max-height:max(52px,calc(var(--home-visible-height,100svh) - 140px));bottom:calc(100% + 12px);background:var(--ui-panel);box-shadow:var(--ui-shadow)}
+.pdp-home.pdp-blue-glass[data-searching=true] :is(.home-brand-row,.home-map-launch){visibility:hidden;pointer-events:none}
 
 /* Welcome uses the same blue identity, without changing the entry flow. */
 .welcome-screen.pdp-blue-glass.brand-welcome{background:radial-gradient(ellipse at 70% 5%,#087cff1a,transparent 55%),var(--ui-bg)}

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {homeKeyboardViewport} from './homeKeyboardViewport.ts';
+const base={layoutHeight:844,baselineHeight:844,visualHeight:844,offsetTop:0,scale:1,focused:false};
+assert.deepEqual(homeKeyboardViewport(base),{height:844,bottom:844,keyboard:false});
+assert.deepEqual(homeKeyboardViewport({...base,visualHeight:430,offsetTop:90,focused:true}),{height:430,bottom:520,keyboard:true});
+assert.equal(homeKeyboardViewport({...base,layoutHeight:430,visualHeight:430,focused:true}).keyboard,true);
+assert.equal(homeKeyboardViewport({...base,visualHeight:760,focused:true}).keyboard,false);
+assert.equal(homeKeyboardViewport({...base,visualHeight:422,scale:2,focused:true}).keyboard,false);
+assert.equal(homeKeyboardViewport({...base,visualHeight:430}).keyboard,false);
+assert.equal(homeKeyboardViewport({...base,focused:true}).bottom,844);
+console.log('OK: keyboard geometry, Safari pan, Android resize, browser chrome, zoom and dismissal.');

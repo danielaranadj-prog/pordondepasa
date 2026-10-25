@@ -16,6 +16,9 @@ import {alightingStage,journeyStatus,type JourneyFix} from '../lib/journeyStatus
 import {appendReportFix,saveRouteReport,routeReportGeoJSON,type RouteReport,type ReportReason} from '../lib/routeReport';
 import {canShowAlightingAd,findMatchingLandmarkAd,isDeliverableAd,type AdCampaign} from '../lib/ads';
 import {isPremiumUser,recordSponsoredTripEvent} from '../lib/sponsoredTrip';
+import {AdImage,useAdImpression} from './AdCreative';
+import {trackAd} from '../lib/adEvents';
+import {safeAdUrl} from '../lib/adMedia';
 import {useWalkingReroute,type UpdateWalkingLeg} from './useWalkingReroute';
 import {walkingDeviation} from '../lib/walkingReroute';
 import {stopTimeline} from '../lib/stopTimeline';
@@ -85,6 +88,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const nearAlightingAd=!!progress&&canShowAlightingAd(leg.kind,trusted,accepted.along,progress.length,remaining);
  const adMinute=Math.floor(clock/60000);
  const activeLandmarkAd=useMemo(()=>nearAlightingAd&&leg.kind==='bus'&&dismissedAdStep!==step?findMatchingLandmarkAd(leg.to,ads,leg.route?.id,new Date(adMinute*60000)):undefined,[nearAlightingAd,leg,ads,dismissedAdStep,step,adMinute]);
+ const landmarkImpression=useAdImpression(activeLandmarkAd?.id,leg.route?.id);
  const currentStops=routeStops.filter(s=>s.legIndex===step);
  const timeline=useMemo(()=>stopTimeline(routeStops,step,accepted.along,hasProgress),[routeStops,step,accepted.along,hasProgress]);
  const nextStop=trusted?timeline.next:undefined;
@@ -275,7 +279,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
     </div>
     <h1 className="nav-top-title">{walkReroute.status?.kind==='pending'?'Ajustando caminata':offRoute?'Recorrido diferente':!arrived&&!boarding.waiting&&!boarding.candidate&&leg.kind==='walk'&&maneuver?maneuver.label:title}</h1>
     <p className="nav-top-subtitle" title={instructionText}>{walkReroute.status?.kind==='pending'?'Conservamos tu punto de llegada.':offRoute?'Tu ubicación se alejó del recorrido seleccionado.':streetSubtitle}</p>
-    {activeLandmarkAd && <div className="nav-landmark-chip" role="note" aria-label="Sugerencia patrocinada cerca de tu bajada">
+    {activeLandmarkAd && <div ref={landmarkImpression} className="nav-landmark-chip" role="note" aria-label="Sugerencia patrocinada cerca de tu bajada">
      <span className="nav-landmark-label">Patrocinado</span>
      <span className="nav-landmark-name">{activeLandmarkAd.icon} {activeLandmarkAd.title}</span>
      <span className="nav-landmark-distance">{distanceLabel(meters(leg.to,activeLandmarkAd.coordinates!))} de bajada</span>
@@ -289,8 +293,9 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   <footer className={`nav-bottom-sheet map-sheet sheet-${sheetMode} ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
    {!arrived&&<SheetHandle mode={sheetMode} onChange={setSheetMode} label={sheetMode==='closed'?'Ver paradas y referencias':sheetMode==='open'?'Próximas referencias':'Paradas y referencias'}/>}
    {showTripSponsor && <div className="nav-trip-sponsor" role="note" aria-label="Patrocinador del viaje">
+    <AdImage ad={sponsoredTrip!}/>
     <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
-    <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks')}>Canjear</a>
+    <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>{recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks');trackAd(sponsoredTrip!.id,'click',leg.route?.id)}}>Canjear</a>
    </div>}
    <div className="nav-route-summary">
     <button
@@ -372,9 +377,11 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
      <div className="nav-orientation-controls"><button type="button" onClick={()=>{setNorthUp(false);void compass.enable()}} aria-pressed={compass.enabled}><UiIcon name="compass"/>{compass.enabled?'Desactivar brújula':'Activar brújula'}</button><button type="button" onClick={()=>setNorthUp(!northUp)} aria-pressed={northUp}><UiIcon name="north"/>{northUp?'Orientar al avanzar':'Norte arriba'}</button></div>
      {activeLandmarkAd&&<div className="nav-sponsored-detail">
       <span>Patrocinado · cerca de tu bajada</span>
+      <AdImage ad={activeLandmarkAd}/>
       <strong>{activeLandmarkAd.icon} {activeLandmarkAd.title}</strong>
       {activeLandmarkAd.promoText&&<p>{activeLandmarkAd.promoText}</p>}
-      {onAdDestinationChange&&<button type="button" onClick={()=>{if(!window.confirm(`¿Crear un viaje nuevo hacia ${activeLandmarkAd.title}? Esto terminará el seguimiento actual.`))return;onAdDestinationChange(activeLandmarkAd.coordinates!,activeLandmarkAd.title,confident&&live?live:origin)}}>Crear ruta a este negocio →</button>}
+      {safeAdUrl(activeLandmarkAd.ctaUrl)&&<a className="ad-commercial-link" href={activeLandmarkAd.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>trackAd(activeLandmarkAd.id,'click',leg.route?.id)}>{activeLandmarkAd.callToAction||'Conocer la promoción'} ↗</a>}
+      {onAdDestinationChange&&<button type="button" onClick={()=>{if(!window.confirm(`¿Crear un viaje nuevo hacia ${activeLandmarkAd.title}? Esto terminará el seguimiento actual.`))return;trackAd(activeLandmarkAd.id,'route',leg.route?.id);onAdDestinationChange(activeLandmarkAd.coordinates!,activeLandmarkAd.title,confident&&live?live:origin)}}>Crear ruta a este negocio →</button>}
      </div>}
      <div className="nav-timeline-controls"><button type="button" aria-pressed={showPassed} onClick={()=>{setShowPassed(!showPassed);setTimelineFollow(false)}}>{showPassed?'Ocultar anteriores':`Ver anteriores (${timeline.passed.length})`}</button>{(!timelineFollow||showPassed)&&<button type="button" onClick={()=>{setTimelineFollow(true);setShowPassed(false)}}>Seguir próxima</button>}</div>
      <div className="nav-timeline-list" ref={timelineList} onPointerDown={()=>setTimelineFollow(false)}>

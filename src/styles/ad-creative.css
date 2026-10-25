@@ -1,0 +1,13 @@
+.ad-creative-image{display:block;max-width:100%;width:100%;height:auto;max-height:180px;object-fit:cover;border-radius:12px;margin:8px 0}
+.sponsored-trip-card .ad-creative-image{max-height:220px;object-fit:contain}
+.sponsored-trip-card:has(.ad-creative-image) .sponsored-trip-icon{display:none}
+.ad-commercial-link{display:block;padding:10px 0;font-size:13px;font-weight:700;color:inherit;text-decoration:underline}
+@media(max-height:700px){.sponsored-trip-card:has(.ad-creative-image){padding:18px;gap:12px}.sponsored-trip-card .ad-creative-image{max-height:20svh;margin:0}.sponsored-trip-content{gap:12px}}
+.nav-trip-sponsor .ad-creative-image{width:52px;height:52px;margin:0;flex-shrink:0}
+.nav-landmark-chip .ad-creative-image{max-height:100px}
+.destination-banner{padding:14px;border:1px solid var(--ui-line,#dce5df);border-radius:15px;background:var(--ui-soft,#edf2ee);color:var(--ui-text,#142d34);margin:12px 0;text-align:left}
+.destination-banner>small{font-size:9px;letter-spacing:.7px;color:var(--ui-muted,#536b70)}
+.destination-banner>strong{display:block;font-size:14px;margin:8px 0}
+.destination-banner>p{font-size:12px;line-height:1.5;margin:6px 0}
+.destination-banner>a{display:block;font-size:12px;line-height:1.5;margin-top:10px;color:var(--brand-text,#195b4b);font-weight:650}
+.golden-pin-popup .ad-creative-image{width:100%;max-height:120px;object-fit:cover}

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {adImage,safeAdUrl} from './adMedia.ts';
+const creative={url:'https://example.com/promo.webp',alt:'Promoción',width:900,height:600};
+assert.deepEqual(adImage(creative),creative);
+for(const url of ['javascript:alert(1)','data:image/png;base64,xxx','http://example.com/a.png','https://user:pass@example.com/a.webp','https://example.com/a.svg'])assert.equal(adImage({...creative,url}),undefined);
+assert.equal(adImage({...creative,width:NaN}),undefined);
+assert.equal(adImage({...creative,height:0}),undefined);
+assert.equal(adImage({...creative,alt:'a'.repeat(500)})?.alt.length,200);
+assert.equal(safeAdUrl('https://wa.me/521234567890'),true);
+for(const url of [undefined,'javascript:alert(1)','https://user:pass@example.com/','http://example.com/'])assert.equal(safeAdUrl(url),false);
+console.log('OK: remote commercial images reject unsafe URLs and dimensions');

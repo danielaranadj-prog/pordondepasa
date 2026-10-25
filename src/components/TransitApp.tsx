@@ -13,9 +13,9 @@ import HomeScreen,{type HomeSavedPlace as SavedPlace} from './HomeScreen';
 import {requestCompass} from './useCompass';
 import type {TransitStop as Stop} from '../lib/navigation';
 import {searchPlaces,type Place} from '../lib/places';
-import type {AdCampaign} from '../lib/ads';
+import {currentTripSponsor,type AdCampaign} from '../lib/ads';
 import {canShowSponsoredTrip} from '../lib/sponsoredTrip';
-import {ADS_MODE,ADS_FEED_URL} from '../lib/adConfig';
+import {ADS_MODE,ADS_FEED_URL,ADS_API_KEY} from '../lib/adConfig';
 import {loadPublicAds} from '../lib/adFeed';
 import SponsoredTripIntro from './SponsoredTripIntro';
 import {replaceWalkingLeg} from '../lib/walkingReroute';
@@ -43,12 +43,12 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
   if(journeyProgress?.optionId!==options[index]?.id)setJourneyProgress(null);
   const option=options[index];
   const match=option?.legs.filter(leg=>leg.kind==='bus'&&leg.route).flatMap(leg=>
-   ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name})))[0];
+   ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name,routeId:leg.route!.id})))[0];
   setSponsorIntro(match);setSponsorViewed(false);
   setCompassStart(result);setSelected(index);setView(match?'sponsor':'follow');setStarting(false);
  }
  const [welcome,setWelcome]=useState(true),[view,setView]=useState<'search'|'trip'|'follow'|'sponsor'>('search');
- const [sponsorIntro,setSponsorIntro]=useState<{ad:AdCampaign;routeName:string}>();
+ const [sponsorIntro,setSponsorIntro]=useState<{ad:AdCampaign;routeName:string;routeId:string}>();
  const [sponsorViewed,setSponsorViewed]=useState(false);
  const [pickDestination,setPickDestination]=useState(false);
  const [mapSelection,setMapSelection]=useState<MapSelection|null>(null),[cameraRequest,setCameraRequest]=useState(0);
@@ -66,6 +66,8 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  function selectCard(i:number){setSelected(i);if(showAll)return;const list=carousel.current,card=list?.children[i] as HTMLElement|undefined;if(list&&card)list.scrollTo({left:card.offsetLeft-list.clientWidth/2+card.offsetWidth/2,behavior:'smooth'})}
  const [origin,setOrigin]=useState<Point>({...TEPIC_MAP_CENTER}),[originLabel,setOriginLabel]=useState('Buscando tu ubicación…');
  const [destination,setDestination]=useState<Point>(),[query,setQuery]=useState(''),[stops,setStops]=useState<Stop[]>([]),[places,setPlaces]=useState<Place[]>([]),[ads,setAds]=useState<AdCampaign[]>([]),[chosenPlace,setChosenPlace]=useState<Place|undefined>();
+ const activeSponsor=currentTripSponsor(sponsorIntro?.ad.id,ads,sponsorIntro?[sponsorIntro.routeId]:[]);
+ useEffect(()=>{if(view==='sponsor'&&sponsorIntro&&!activeSponsor){setSponsorViewed(false);setView('follow')}},[view,sponsorIntro,activeSponsor]);
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
  const [options,setOptions]=useState<Option[]>([]),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[pickOrigin,setPickOrigin]=useState(false),[message,setMessage]=useState('');
@@ -81,9 +83,11 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  },[selected]);
  useEffect(()=>{let active=true;Promise.all(['general','insurgentes','mexico'].map(async name=>{const r=await fetch(`${import.meta.env.BASE_URL}data/stops/${name}-stops.json`);if(!r.ok)throw new Error();const d=await r.json();return (d.stops??[]).map((s:Stop)=>({...s,source:name}))})).then(lists=>{if(active)setStops(lists.flat())}).catch(()=>{if(active)setMessage('No se pudieron cargar las sugerencias. Puedes usar el mapa.')});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch(`${import.meta.env.BASE_URL}data/places.json`).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{if(active&&Array.isArray(data.places))setPlaces(data.places)}).catch(()=>{});return()=>{active=false}},[]);
- useEffect(()=>{let active=true;const refresh=()=>void loadPublicAds(ADS_MODE,`${import.meta.env.BASE_URL}data/ads.json`,ADS_FEED_URL).then(data=>{if(active)setAds(data)});
+ useEffect(()=>{let active=true,version=0;const refresh=()=>{const current=++version;void loadPublicAds(ADS_MODE,`${import.meta.env.BASE_URL}data/ads.json`,ADS_FEED_URL,fetch,ADS_API_KEY).then(data=>{if(active&&current===version)setAds(data)})};
   refresh();const timer=ADS_MODE==='remote'?window.setInterval(refresh,60000):undefined;
-  return()=>{active=false;if(timer)window.clearInterval(timer)}},[]);
+  const foreground=()=>{if(!document.hidden&&ADS_MODE==='remote')refresh()};
+  document.addEventListener('visibilitychange',foreground);
+  return()=>{active=false;if(timer)window.clearInterval(timer);document.removeEventListener('visibilitychange',foreground)}},[]);
  const suggestions=useMemo(()=>{if(destination||query.trim().length<2)return [];const term=normalize(query.trim());const seen=new Set<string>();return stops.filter(s=>{if(!normalize(s.name).includes(term)||seen.has(s.name))return false;seen.add(s.name);return true}).slice(0,8)},[query,stops,destination]);
  const placeSuggestions=useMemo(()=>destination?[]:searchPlaces(places,query,8),[destination,places,query]);
  function commitOrigin(point:Point,name:string,place?:Place){
@@ -188,8 +192,8 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
   void calculate(previousOriginPlace?.access??previousOrigin);
  }
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
- if(view==='sponsor'&&sponsorIntro)return <SponsoredTripIntro ad={sponsorIntro.ad} routeName={sponsorIntro.routeName} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
- if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?sponsorIntro?.ad:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
+ if(view==='sponsor'&&sponsorIntro&&activeSponsor)return <SponsoredTripIntro ad={activeSponsor} routeName={sponsorIntro.routeName} routeId={sponsorIntro.routeId} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
+ if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen brand-welcome"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
  if(view==='trip')return <main className="trip-screen" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
   <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
@@ -227,7 +231,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    
    {!!options.length&&<><div className="carousel-heading"><span>Así puedes llegar</span><strong>{selected+1} de {options.length}</strong></div>
     {options.length>1&&<nav className="route-option-switcher" aria-label="Comparar opciones de viaje">{options.map((o,i)=><button key={o.id} type="button" aria-pressed={selected===i} onClick={()=>selectCard(i)}><strong>{o.minutes} min</strong><span>{o.legs.filter(l=>l.kind==='bus').map(l=>l.route?.name).join(' + ')||'A pie'}</span></button>)}</nav>}
-    <div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><RouteChoiceCard option={o} stops={stops} label={optionLabel(o,index,options)} selected={selected===index} starting={starting} onSelect={()=>selectCard(index)} onStart={()=>void startTrip(index)} origin={origin} destination={destination} originName={originLabel} destinationName={query}/></article>)}</div>
+    <div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><RouteChoiceCard option={o} stops={stops} ads={ads} label={optionLabel(o,index,options)} selected={selected===index} starting={starting} onSelect={()=>selectCard(index)} onStart={()=>void startTrip(index)} origin={origin} destination={destination} originName={originLabel} destinationName={query}/></article>)}</div>
     <div className="carousel-dots">{options.map((o,i)=><button key={o.id} aria-label={`Ver opción ${i+1}`} aria-pressed={i===selected} onClick={()=>selectCard(i)}/>)}</div><small className="trip-estimate">Tiempo, espera, tarifa y caminata estimados; no son datos en tiempo real.</small></>}
    {!busy&&!options.length&&!message&&<div className="trip-status">{destination?(originStatus==='confirmed'?'Destino listo. Busca tus opciones de viaje.':'Destino listo. Confirma el origen para continuar.'):'Elige a dónde quieres ir.'}<button type="button" className="search" onClick={()=>destination?plan():beginPicker('destination')}>{destination?'Buscar cómo llegar →':'Elegir destino en mapa →'}</button></div>}
    </>}

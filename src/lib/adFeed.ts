@@ -23,7 +23,7 @@ export function parsePublicAdFeed(value: unknown): PublicAdFeed | undefined {
       !Array.isArray(feed.campaigns) || feed.campaigns.length > 100) return;
   if (!feed.campaigns.every(item => item && typeof item === 'object' &&
     typeof item.id === 'string' && item.id.length > 0 &&
-    ['pin','landmark','sponsored_trip'].includes(item.type) &&
+    ['pin','landmark','sponsored_trip','banner'].includes(item.type) &&
     typeof item.title === 'string' && typeof item.isActive === 'boolean' &&
     Array.isArray(item.routeIds) && item.routeIds.every((id:unknown) => typeof id === 'string'))) return;
   return feed as unknown as PublicAdFeed;
@@ -31,7 +31,7 @@ export function parsePublicAdFeed(value: unknown): PublicAdFeed | undefined {
 
 /** An unavailable or malformed online feed never falls back to old paid placements. */
 export async function loadPublicAds(mode: AdMode, localUrl: string, remoteUrl: string,
-  fetcher: typeof fetch = fetch): Promise<AdCampaign[]> {
+  fetcher: typeof fetch = fetch,publicApiKey=''): Promise<AdCampaign[]> {
   if (mode === 'off') return [];
   const url = mode === 'local' ? localUrl : remoteUrl;
   if (!url) return [];
@@ -42,7 +42,7 @@ export async function loadPublicAds(mode: AdMode, localUrl: string, remoteUrl: s
     } catch { return []; }
   }
   try {
-    const response = await fetcher(url, {cache:'no-store', signal:AbortSignal.timeout(5000)});
+    const response = await fetcher(url, {cache:'no-store', signal:AbortSignal.timeout(5000),...(mode==='remote'&&publicApiKey?{headers:{apikey:publicApiKey,authorization:`Bearer ${publicApiKey}`}}:{})});
     if (!response.ok) return [];
     const data:unknown = await response.json();
     if (mode === 'local') return Array.isArray(data) ? normalizeAdRouteIds(data as AdCampaign[]) : [];

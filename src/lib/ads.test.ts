@@ -1,4 +1,4 @@
-import {canShowAlightingAd,findMatchingLandmarkAd,getVisiblePinAds,isDeliverableAd,type AdCampaign} from './ads.ts';
+import {canShowAlightingAd,findMatchingLandmarkAd,findDestinationBanner,getVisiblePinAds,isDeliverableAd,currentTripSponsor,type AdCampaign} from './ads.ts';
 import type {Option,Point} from './router.ts';
 import type {RouteStop} from './navigation.ts';
 
@@ -47,3 +47,15 @@ expect(!(getVisiblePinAds(nearbyPins,option,[],today).some(ad=>ad.id==='close-co
 const walkingOnly:Option={...option,legs:[{kind:'walk',from:at,to:{lat:21.51,lng:-104.9},geometry:[at,{lat:21.51,lng:-104.9}],minutes:5,meters:1100}]};
 expect(getVisiblePinAds([pin],walkingOnly,[],today).length===0,'A walking-only trip is not a bus route sponsorship');
 console.log('OK: ad dates, activation, route targeting, proximity and stop collision');
+const banner:AdCampaign={...base,type:'banner',radiusMeters:500,routeIds:['mexico']};
+expect(findDestinationBanner(at,option,[banner],today)?.id===banner.id,'Banner uses the selected destination near its business');
+expect(!findDestinationBanner(far,option,[banner],today),'Banner does not target a distant destination even when origin is nearby');
+expect(!findDestinationBanner(at,walkingOnly,[banner],today),'Route-targeted banner does not leak to an unrelated walking trip');
+expect(!findDestinationBanner(at,option,[{...banner,isActive:false}],today),'Paused banner stays hidden');
+const sponsor:AdCampaign={...base,type:'sponsored_trip',routeIds:['mexico'],sponsoredTrip:{durationSeconds:6,canSkipAfterSeconds:3,headline:'Prueba',promoOffer:'Prueba',ctaType:'web',ctaText:'Ver',ctaUrl:'https://example.com'}};
+expect(currentTripSponsor(sponsor.id,[sponsor],['mexico'],today)===sponsor,'Current feed sponsor may render');
+expect(!currentTripSponsor(sponsor.id,[],['mexico'],today),'Removing a campaign kills a previously selected sponsor');
+expect(!currentTripSponsor(sponsor.id,[{...sponsor,isActive:false}],['mexico'],today),'Pausing kills a previously selected sponsor');
+expect(!currentTripSponsor(sponsor.id,[sponsor],['otra'],today),'Current sponsor still requires its selected route');
+const updatedSponsor={...sponsor,title:'Nueva creatividad'};
+expect(currentTripSponsor(sponsor.id,[updatedSponsor],['mexico'],today)===updatedSponsor,'Selected sponsor resolves the current creative, not a cached object');

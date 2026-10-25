@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import type {Map,Marker,GeoJSONSource} from 'maplibre-gl';
+import type {Map,Marker,Popup,GeoJSONSource} from 'maplibre-gl';
 import type {Option,Point} from '../lib/router';
 import type {RouteStop} from '../lib/navigation';
 import {projectProgress} from '../lib/navigation';
@@ -10,6 +10,8 @@ import {mapAppearance} from '../lib/mapAppearance';
 import {closedColosioLines,closedColosioLabel} from '../lib/closedColosio';
 import {getPlaceCategoryIcon, type Place} from '../lib/places';
 import {getVisiblePinAds, type AdCampaign} from '../lib/ads';
+import {adImage,safeAdUrl} from '../lib/adMedia';
+import {trackAd} from '../lib/adEvents';
 import '../styles/vector-map.css';
 type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;adOption?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;onAdDestinationChange?:(point:Point,name:string)=>void;fullscreen?:boolean;stops?:RouteStop[];activeStop?:RouteStop;live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number;ads?:AdCampaign[]};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
@@ -41,6 +43,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
   return p;
  }
  useEffect(()=>{let disposed=false;let instance:Map|undefined;let observer:ResizeObserver|undefined;let frame=0,lastFrame=0,initialized=false,exploring=false;
+  let sponsorPopup:{id:string;popup:Popup}|undefined;
   let pickerId:number|undefined,beforePicker:{center:[number,number];zoom:number;bearing:number;pitch:number;exploring:boolean}|undefined;
   const adTimer=window.setInterval(()=>updateAds.current(),60000);
   let visual:Point|undefined,visualHeading=0;
@@ -144,6 +147,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
     if(!instance?.getStyle()?.layers)return;
     const current=latest.current;
     const visible=getVisiblePinAds(current.ads,current.adOption??current.option,current.stops);
+    if(sponsorPopup&&!visible.some(ad=>ad.id===sponsorPopup?.id)){sponsorPopup.popup.remove();sponsorPopup=undefined;}
     const data={type:'FeatureCollection' as const,features:visible.map(ad=>({type:'Feature' as const,geometry:{type:'Point' as const,coordinates:coord(ad.coordinates!)},properties:{id:ad.id,title:ad.title}}))};
     const source=instance.getSource('sponsor-pins') as GeoJSONSource|undefined;
     if(source){source.setData(data);return}
@@ -154,19 +158,28 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
    };
    function openSponsor(ad:AdCampaign){
     if(!ad.coordinates||!instance)return;
+    sponsorPopup?.popup.remove();
     const popupEl=document.createElement('div');popupEl.className='golden-pin-popup';
     const tag=document.createElement('span');tag.className='golden-pin-tag';tag.textContent='Patrocinado';popupEl.appendChild(tag);
     const titleRow=document.createElement('div');titleRow.className='golden-pin-title-row';
     const emoji=document.createElement('span');emoji.textContent=ad.icon||'📍';
     const titleText=document.createElement('strong');titleText.textContent=ad.title;titleRow.append(emoji,titleText);popupEl.appendChild(titleRow);
     const trip=latest.current.adOption??latest.current.option;
+    const routeId=trip?.legs.find(leg=>leg.route&&(!ad.routeIds?.length||ad.routeIds.includes(leg.route.id)))?.route?.id;
+    trackAd(ad.id,'click',routeId);
+    const creative=adImage(ad.image);
+    if(creative){const img=document.createElement('img');img.className='ad-creative-image';img.src=creative.url;img.alt=creative.alt;img.width=creative.width;img.height=creative.height;img.referrerPolicy='no-referrer';img.addEventListener('error',()=>img.remove(),{once:true});popupEl.appendChild(img)}
     const distances=trip?.legs.filter(leg=>leg.kind==='bus'&&leg.route&&(!ad.routeIds?.length||ad.routeIds.includes(leg.route.id))).map(leg=>projectProgress(ad.coordinates!,leg.geometry??[leg.from,leg.to]).distance)??[];
     if(distances.length){const distance=Math.min(...distances);const detail=document.createElement('small');detail.className='golden-pin-distance';detail.textContent=distance<30?'Sobre el recorrido':`A ~${Math.round(distance/10)*10} m del recorrido`;popupEl.appendChild(detail)}
     if(ad.description){const desc=document.createElement('p');desc.className='golden-pin-desc';desc.textContent=ad.description;popupEl.appendChild(desc)}
     if(ad.promoText){const promo=document.createElement('p');promo.className='golden-pin-discount';promo.textContent=ad.promoText;popupEl.appendChild(promo)}
+    if(safeAdUrl(ad.ctaUrl)){const link=document.createElement('a');link.className='ad-commercial-link';link.href=ad.ctaUrl;link.target='_blank';link.rel='noopener noreferrer sponsored';link.textContent=`${ad.callToAction?.trim()||'Ver promoción'} ↗`;link.addEventListener('click',event=>{event.stopPropagation();trackAd(ad.id,'click',routeId)});popupEl.appendChild(link)}
     const action=latest.current.onAdDestinationChange??(latest.current.onDestinationChange?((point:Point)=>latest.current.onDestinationChange?.(point)):undefined);
-    if(action){const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent=`${ad.callToAction?.trim()||'Crear ruta a este negocio'} →`;cta.title='Cambiar destino a este negocio';cta.addEventListener('click',event=>{event.stopPropagation();popup.remove();action(ad.coordinates!,ad.title)});popupEl.appendChild(cta)}
+    if(action){const cta=document.createElement('button');cta.type='button';cta.className='golden-pin-cta-btn';cta.textContent='Crear ruta a este negocio →';cta.title='Cambiar destino a este negocio';cta.addEventListener('click',event=>{event.stopPropagation();trackAd(ad.id,'route',routeId);popup.remove();action(ad.coordinates!,ad.title)});popupEl.appendChild(cta)}
     const popup=new M.Popup({offset:18,closeButton:true,className:'golden-pin-popup-wrapper'}).setLngLat(coord(ad.coordinates)).setDOMContent(popupEl).addTo(instance);
+    sponsorPopup={id:ad.id,popup};
+    const timer=window.setTimeout(()=>{if(!document.hidden&&popupEl.isConnected)trackAd(ad.id,'view',routeId)},1000);
+    popup.on('close',()=>{window.clearTimeout(timer);if(sponsorPopup?.popup===popup)sponsorPopup=undefined;});
    }
    instance.on('click',event=>{
     if(!instance)return;

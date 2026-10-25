@@ -31,6 +31,8 @@ export interface AdCampaign {
   title: string;
   description: string;
   icon: string;
+  image?: {url:string;alt:string;width:number;height:number};
+  ctaUrl?: string;
   referenceText?: string;
   promoText?: string;
   routeIds?: string[];
@@ -70,6 +72,11 @@ export function isDeliverableAd(ad: AdCampaign, now = new Date(), routeIds: stri
   return true;
 }
 
+/** Re-resolve a selected sponsor against the current feed, never a cached journey object. */
+export function currentTripSponsor(id: string | undefined, ads: AdCampaign[], routeIds: string[], now = new Date()): AdCampaign | undefined {
+  return id ? ads.find(ad => ad.id === id && ad.type === 'sponsored_trip' && !!ad.sponsoredTrip && isDeliverableAd(ad, now, routeIds)) : undefined;
+}
+
 /** Match the verified alighting point, not passenger GPS or a guessed stop. */
 export function findMatchingLandmarkAd(alightingPoint: Point, ads?: AdCampaign[], routeId?: string, now = new Date()): AdCampaign | undefined {
   if (!validPoint(alightingPoint) || !ads?.length) return undefined;
@@ -107,5 +114,14 @@ export function getVisiblePinAds(ads?: AdCampaign[], option?: Option, stops: Rou
     if (selected.length === 2) break;
   }
   return selected;
+}
+
+/** Zone ads use the chosen destination, never change route ranking or alighting. */
+export function findDestinationBanner(destination:Point,option:Option,ads:AdCampaign[]=[],now=new Date()):AdCampaign|undefined{
+ const routes=option.legs.flatMap(leg=>leg.route?[leg.route.id]:[]);
+ return ads.filter(ad=>ad.type==='banner'&&isDeliverableAd(ad,now,routes))
+  .map(ad=>({ad,distance:meters(destination,ad.coordinates!)}))
+  .filter(x=>x.distance<=Math.min(x.ad.radiusMeters??500,1500))
+  .sort((a,b)=>a.distance-b.distance||a.ad.id.localeCompare(b.ad.id))[0]?.ad;
 }
 

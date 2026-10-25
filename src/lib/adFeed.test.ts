@@ -25,3 +25,10 @@ expect((await loadPublicAds('remote','','https://example.com/api/ads',paused)).l
 const failure=((async()=>{throw Error('offline')}) as unknown) as typeof fetch;
 expect((await loadPublicAds('remote','/data/ads.json','https://example.com/api/ads',failure)).length===0,'Network failure never falls back to stale local ads');
 console.log('OK: ad feed mode, schema, kill switch and offline failure');
+expect(parsePublicAdFeed({...feed,campaigns:[{...campaign,type:'banner'}]})?.campaigns.length===1,'Zone banner from independent admin accepted');
+let requested:RequestInit|undefined;
+const gateway=((async(_url:unknown,init?:RequestInit)=>{requested=init;return {ok:true,json:async()=>feed}}) as unknown) as typeof fetch;
+await loadPublicAds('remote','','https://example.com/feed',gateway,'public-anon-jwt');
+expect((requested?.headers as Record<string,string>)?.authorization==='Bearer public-anon-jwt','Remote gateway receives public authorization');
+await loadPublicAds('local','/data/ads.json','',gateway,'public-anon-jwt');
+expect(!requested?.headers,'Local JSON receives no gateway credentials');

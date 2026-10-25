@@ -4,7 +4,9 @@ import type {TransitStop} from '../lib/navigation';
 import JourneySteps from './JourneySteps';
 import UberAlternative from './UberAlternative';
 import UiIcon from './UiIcon';
-export default function RouteChoiceCard({option,stops,label,selected,starting,onSelect,onStart,origin,destination,originName,destinationName}:{option:Option;stops:TransitStop[];label:string;selected:boolean;starting:boolean;onSelect:()=>void;onStart:()=>void;origin:Point;destination?:Point;originName:string;destinationName:string}){
+import type {AdCampaign} from '../lib/ads';
+import {DestinationBanner} from './AdCreative';
+export default function RouteChoiceCard({option,stops,ads=[],label,selected,starting,onSelect,onStart,origin,destination,originName,destinationName}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];label:string;selected:boolean;starting:boolean;onSelect:()=>void;onStart:()=>void;origin:Point;destination?:Point;originName:string;destinationName:string}){
  return <>
   <button type="button" className="option-select" onClick={onSelect} aria-pressed={selected}>
    <div className="time"><strong>{option.minutes}<span> min</span></strong><small>{label}</small></div>
@@ -13,6 +15,7 @@ export default function RouteChoiceCard({option,stops,label,selected,starting,on
   </button>
   <details className="journey-details"><summary>Dónde subir y bajar <UiIcon name="chevron-down"/></summary><JourneySteps option={option} stops={stops}/></details>
   <button type="button" className="start-follow card-primary" disabled={starting} onClick={onStart}>{starting?'Preparando tu viaje…':option.legs.some(leg=>leg.kind==='bus')?'Empezar mi viaje':'Empezar caminata'}<UiIcon name="arrow"/></button>
+  {destination&&<DestinationBanner destination={destination} option={option} ads={ads} selected={selected}/>}
   {destination&&<UberAlternative origin={origin} destination={destination} originName={originName} destinationName={destinationName}/>}
  </>;
 }

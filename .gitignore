@@ -1,5 +1,8 @@
 node_modules/
 dist/
+dist-pilot/
+.pilot-deploy/
+.vercel/
 .astro/
 .env
 .env.*
@@ -11,3 +14,4 @@ dist/
 *.key
 .ads-pilot.json
 .ads-pilot.json.*.tmp
+supabase/*.local.sql

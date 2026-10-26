@@ -1,4 +1,4 @@
-import {meters, type Point, type Shape} from './router';
+import {meters, type Point, type Shape} from './router.ts';
 
 // Audited segment indices in the immutable baseline, not nearest endpoints
 // across the entire route (which could accidentally erase a return trip).

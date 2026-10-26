@@ -1,6 +1,7 @@
 import { meters, type Option, type Point } from './router.ts';
 import { projectProgress, type RouteStop } from './navigation.ts';
-import { adRunsAt, tepicDay } from './adSchedule.ts';
+import { adDeliveryDays } from './adSchedule.ts';
+import {adsSuppressed} from './adEntitlement.ts';
 
 export type AdType = 'banner' | 'pin' | 'landmark' | 'adsense' | 'sponsored_trip';
 
@@ -48,26 +49,25 @@ export interface AdCampaign {
 }
 
 const validPoint = (point?: Point): point is Point => !!point && Number.isFinite(point.lat) && Number.isFinite(point.lng) && Math.abs(point.lat) <= 90 && Math.abs(point.lng) <= 180;
-const localDay = tepicDay;
 function dateKey(value?: string): string | undefined {
   if (!value) return undefined;
   if (typeof value !== 'string') return undefined;
   const day = value.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
-  const parsed = new Date(`${day}T12:00:00`);
-  return Number.isNaN(parsed.getTime()) || localDay(parsed) !== day ? undefined : day;
+  const parsed = new Date(`${day}T12:00:00Z`);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0,10) !== day ? undefined : day;
 }
 
 /** Shared delivery gate for every locally exported campaign. Invalid schedules fail closed. */
 export function isDeliverableAd(ad: AdCampaign, now = new Date(), routeIds: string[] = []): boolean {
+  if(adsSuppressed())return false;
   if (!ad.isActive || typeof ad.id !== 'string' || !ad.id || !ad.type || typeof ad.title !== 'string' || !ad.title.trim()) return false;
   if (ad.type !== 'sponsored_trip' && !validPoint(ad.coordinates)) return false;
   if (ad.routeIds !== undefined && (!Array.isArray(ad.routeIds) || ad.routeIds.some(id => typeof id !== 'string'))) return false;
   if (ad.radiusMeters !== undefined && (!Number.isFinite(ad.radiusMeters) || ad.radiusMeters <= 0)) return false;
-  const start = dateKey(ad.startDate), end = dateKey(ad.endDate), today = localDay(now);
+  const start = dateKey(ad.startDate), end = dateKey(ad.endDate);
   if ((ad.startDate && !start) || (ad.endDate && !end) || (start && end && start > end)) return false;
-  if ((start && today < start) || (end && today > end)) return false;
-  if (!adRunsAt(ad.schedule, now)) return false;
+  if(!adDeliveryDays(ad.schedule,now).some(day=>(!start||day>=start)&&(!end||day<=end)))return false;
   if (ad.routeIds?.length && !ad.routeIds.some(id => routeIds.includes(id))) return false;
   return true;
 }

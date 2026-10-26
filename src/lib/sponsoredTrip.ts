@@ -1,4 +1,7 @@
 import {isDeliverableAd, type AdCampaign} from './ads.ts';
+import {validSponsor} from './adValidation.ts';
+import {tepicDay} from './adSchedule.ts';
+import {adsSuppressed} from './adEntitlement.ts';
 
 const STORAGE_KEY = 'pordondepasa:sponsored-trip:v1';
 export type SponsoredEventType = 'sponsored_trip_views' | 'sponsored_trip_completions' | 'sponsored_trip_cta_clicks' | 'sponsored_trip_skips';
@@ -23,7 +26,7 @@ function readEvents(storage?: Pick<Storage,'getItem'>): SponsoredEvent[] {
 }
 
 export function isPremiumUser(storage?: Pick<Storage,'getItem'>): boolean {
-  try { return (storage ?? localStorage).getItem('isPremiumUser') === 'true'; } catch { return false; }
+  return adsSuppressed(storage);
 }
 
 export function canShowSponsoredTrip(ad: AdCampaign, routeId: string, now = new Date(), storage?: Pick<Storage,'getItem'|'setItem'>): boolean {
@@ -34,14 +37,13 @@ export function canShowSponsoredTrip(ad: AdCampaign, routeId: string, now = new 
   try { const target=storage??localStorage;target.setItem(STORAGE_KEY,target.getItem(STORAGE_KEY)??'[]'); }
   catch { return false; }
   const config = ad.sponsoredTrip;
-  if (!config || !config.headline?.trim() || !config.promoOffer?.trim() || !config.ctaText?.trim() ||
-      !isSafeSponsoredUrl(config.ctaUrl,config.ctaType)) return false;
+  if (!validSponsor(config)) return false;
   const views = readEvents(storage).filter(event => event.type === 'sponsored_trip_views');
   const cap = Math.min(2,Math.max(1,config.dailyCapPerUser ?? 2));
-  const day = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  const day = tepicDay(now);
   const todaysViews = views.filter(event => {
     const date = new Date(event.at);
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` === day;
+    return tepicDay(date) === day;
   });
   if (todaysViews.length >= cap) return false;
   const lastView = views.at(-1);

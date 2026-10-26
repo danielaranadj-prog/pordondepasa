@@ -6,7 +6,8 @@ const campaign:AdCampaign={id:'test',clientId:'client',type:'pin',title:'Café',
 const feed={schemaVersion:1,enabled:true,version:'one',campaigns:[campaign]};
 expect(parsePublicAdFeed(feed)?.campaigns.length===1,'Valid feed accepted');
 expect(!parsePublicAdFeed({...feed,schemaVersion:2}),'Unknown schema fails closed');
-expect(!parsePublicAdFeed({...feed,campaigns:[{...campaign,routeIds:'mexico'}]}),'Malformed campaign fails closed');
+expect(parsePublicAdFeed({...feed,campaigns:[{...campaign,routeIds:'mexico'}]})?.campaigns.length===0,'Malformed campaign is discarded without breaking valid neighbors');
+expect(parsePublicAdFeed({...feed,campaigns:[campaign,{...campaign,id:'bad',type:'sponsored_trip',sponsoredTrip:{headline:123}}]})?.campaigns.length===1,'Malformed sponsored content never reaches navigation');
 const legacy={...campaign,routeIds:['r-o-suchiate']};
 expect(normalizeAdRouteIds([legacy])[0].routeIds?.[0]==='r-rio-suchiate','GPS Rio Suchiate ID matches the app route');
 expect(legacy.routeIds[0]==='r-o-suchiate','Feed normalization does not mutate exported campaigns');

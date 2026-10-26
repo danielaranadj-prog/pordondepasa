@@ -30,6 +30,7 @@ export class WalkingRouter{
   return result.filter(s=>s.distance<=(result[0]?.distance??0)+8).slice(0,3);
  }
  route(from:Point,to:Point,preference:WalkingPreference={}):Leg|null{
+  if(meters(from,to)<1)return {kind:'walk',from,to,geometry:[from,to],meters:meters(from,to),minutes:0,instruction:'Estás en el punto indicado.'};
   const heading=Number.isFinite(preference.heading)?preference.heading:undefined;
   // A small departure cost favors continuing along the user's chosen street.
   // It is never part of the displayed distance or time, and cannot disconnect
@@ -67,14 +68,18 @@ export class WalkingRouter{
   const result:Leg|null=best?{kind:'walk',from,to,geometry:best.geometry,meters:best.distance,minutes:best.distance<5?0:Math.max(1,Math.ceil(best.distance/78)),instruction:names.length?`Camina por ${names.join(' → ')}. Usa los cruces permitidos.`:'Sigue las calles y pasos del mapa. Usa los cruces permitidos.',streetNames:names}:null;
   if(this.cache.size>300)this.cache.clear();this.cache.set(key,result);return result;
  }
- refine(options:Option[]):Option[]{
-  const result:Option[]=[];
-  for(const option of options){const legs:Leg[]=[];let valid=true;
-   for(const leg of option.legs){const next=leg.kind==='walk'?this.route(leg.from,leg.to):leg;if(!next){valid=false;break}legs.push(next)}
-   if(!valid)continue;const walks=legs.filter(l=>l.kind==='walk');if(walks.reduce((n,l)=>n+l.meters,0)>1250)continue;
+ refineCandidate(option:Option):Option|null{
+   const legs:Leg[]=[];
+   for(const leg of option.legs){const next=leg.kind==='walk'?this.route(leg.from,leg.to):leg;if(!next)return null;legs.push(next)}
+   const walks=legs.filter(l=>l.kind==='walk');if(walks.reduce((n,l)=>n+l.meters,0)>1250)return null;
    const walk=walks.reduce((n,l)=>n+l.minutes,0),rides=legs.filter(l=>l.kind==='bus').length,minutes=legs.reduce((n,l)=>n+l.minutes,0)+rides*ESTIMATED_WAIT_MINUTES;
-   result.push({...option,legs,walk,minutes,score:minutes+walk*.15+option.transfers*2});
-  }
+   return {...option,legs,walk,minutes,score:minutes+walk*.15+option.transfers*2};
+ }
+ refine(options:Option[]):Option[]{
+  return this.select(options.flatMap(option=>{const result=this.refineCandidate(option);return result?[result]:[]}));
+ }
+ select(options:Option[]):Option[]{
+  const result=[...options];
   result.sort((a,b)=>a.minutes-b.minutes||a.walk-b.walk||a.transfers-b.transfers);
   const selected=result.slice(0,5);
   // Keep a reasonably competitive no-transfer/cheaper option visible even

@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {findRoutes,meters,type Shape} from './router.ts';
+import {WalkingRouter,type WalkNetwork} from './walking.ts';
+import {apply21Febrero,applyMetates} from './detours.ts';
+import {splitKnownRouteBreaks} from './routeFragments.ts';
+import routes from '../../public/data/tepic-routes.json' with {type:'json'};
+import network from '../../public/data/tepic-walk-network.json' with {type:'json'};
+const geo=(file:string)=>JSON.parse(readFileSync(new URL('../../public/data/detours/'+file,import.meta.url),'utf8'));
+const metates=geo('colosio-metates.geojson'),febrero=geo('colosio-21-de-febrero.geojson'),victoria=geo('hospitales-1-hacia-victoria.geojson');
+const point=(x:number,y=0)=>({lat:21.5+y/111320,lng:-104.9+x/(111320*Math.cos(21.5*Math.PI/180))});
+const shape=(id:string,xy:number[][]):Shape=>({id,name:id,groupName:id,color:'#00aaff',coordinates:xy.map(([x,y=0])=>point(x,y))});
+const sparse=shape('A',[[0,0],[900,0],[1800,0],[2700,0]]),dense=shape('A',Array.from({length:28},(_,i)=>[i*100,0])),cross=shape('B',[[1350,0],[1350,600],[1350,1200],[1350,1800]]);
+for(const a of [sparse,dense])assert.ok(findRoutes(point(0),point(1350,1800),[a,cross]).some(o=>o.transfers===1),'Collinear vertices cannot hide the interchange');
+const zeroRouter=new WalkingRouter({nodes:[[21.5,-104.9],[21.5,-104.899]],edges:[[0,1,'calle']]});
+assert.equal(zeroRouter.route(point(50,25),point(50,25))?.meters,0);
+assert.equal(findRoutes(point(0),point(0),[sparse,cross]).length,1);
+const open=shape('open',[[0,0],[500,0],[1000,0],[1000,500],[500,500],[0,300]]);
+assert.ok(findRoutes(point(0,290),point(500,0),[open]).every(o=>o.legs.every(l=>l.kind!=='bus'||!l.geometry?.some((p,i)=>i>0&&meters(l.geometry![i-1],point(0,300))<1&&meters(p,point(0,0))<1))),'Do not invent an unsurveyed loop closure');
+const shapes=splitKnownRouteBreaks(apply21Febrero(applyMetates(routes.routes,metates),febrero,victoria));
+const walking=new WalkingRouter(network as unknown as WalkNetwork);
+const plan=(from:{lat:number;lng:number},to:{lat:number;lng:number})=>findRoutes(from,to,shapes,5,c=>walking.refineCandidate(c));
+const theatre=plan({lng:-104.89850457483529,lat:21.514503466760768},{lng:-104.89804930859512,lat:21.452050389078124});
+assert.ok(theatre.some(o=>o.transfers===0&&o.fare===10&&o.minutes<=48),'Keep valid Landareñas direct before discarding candidates');
+assert.ok(plan({lng:-104.8924333523831,lat:21.51015381992491},{lng:-104.8842373,lat:21.4982048}).length,'Cinco Pueblos to Cinemex must not be empty');
+for(const [id,start,end]of [['cuauht-moc',10,70],['pedregal',12,86]] as const){
+ const route=shapes.find(s=>s.id===id||s.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')===(id==='cuauht-moc'?'cuauhtemoc':id));assert.ok(route);
+ assert.ok(findRoutes(route.coordinates[start],route.coordinates[end],[route],5,c=>walking.refineCandidate(c)).some(o=>o.legs.some(l=>l.kind==='bus')),'Try a later valid alighting on '+id);
+}
+for(const option of theatre)for(const leg of option.legs)if(leg.kind==='bus')assert.ok(Math.abs(leg.meters-leg.geometry!.slice(1).reduce((sum,p,i)=>sum+meters(leg.geometry![i],p),0))<.1);
+console.log('OK: release regressions: street-valid alternatives, real trips, sparse interchanges, zero walk and no invented closures.');

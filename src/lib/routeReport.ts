@@ -1,4 +1,5 @@
 import {meters} from './router.ts';
+import {accountStorageKey} from './accountStorage.ts';
 import {reliableJourneyFix,type JourneyFix} from './journeyStatus.ts';
 
 export type ReportReason='roadworks'|'traffic'|'incident'|'different-route'|'unknown';
@@ -12,9 +13,10 @@ export function appendReportFix(report:RouteReport,fix:JourneyFix,now:number):Ro
 }
 export function saveRouteReport(report:RouteReport,storage?:Pick<Storage,'getItem'|'setItem'>):boolean{
  try{
-  const target=storage??localStorage,old=JSON.parse(target.getItem(KEY)??'[]');
+  const key=storage?KEY:accountStorageKey('route-reports');if(!key)return false;
+  const target=storage??localStorage,old=JSON.parse(target.getItem(key)??'[]');
   const existing:RouteReport[]=Array.isArray(old)?old.filter(item=>item&&typeof item.id==='string'&&item.id!==report.id):[];
-  target.setItem(KEY,JSON.stringify([...existing,report].slice(-20)));
+  target.setItem(key,JSON.stringify([...existing,report].slice(-20)));
   return true;
  }catch{return false;}
 }

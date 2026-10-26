@@ -22,6 +22,8 @@ import {safeAdUrl} from '../lib/adMedia';
 import {useWalkingReroute,type UpdateWalkingLeg} from './useWalkingReroute';
 import {walkingDeviation} from '../lib/walkingReroute';
 import {stopTimeline} from '../lib/stopTimeline';
+import {readPreferences,savePreferences} from '../lib/passengerPreferences';
+import {watchJourneyPosition} from '../lib/nativeJourney';
 import {useBoardingJourney,type UpdatePickup} from './useBoardingJourney';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
@@ -36,10 +38,12 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const [dismissedAdStep,setDismissedAdStep]=useState<number|null>(null);
  const [showPassed,setShowPassed]=useState(false),[timelineFollow,setTimelineFollow]=useState(true);
  const timelineList=useRef<HTMLDivElement>(null);
- const [history,setHistory]=useState<JourneyFix[]>([]),[voice,setVoice]=useState(false),[alightingNotice,setAlightingNotice]=useState('');
+ const [history,setHistory]=useState<JourneyFix[]>([]),[voice,setVoice]=useState(()=>readPreferences().voice),[alightingNotice,setAlightingNotice]=useState('');
+ useEffect(()=>{savePreferences({...readPreferences(),voice})},[voice]);
  const [reportOpen,setReportOpen]=useState(false),[report,setReport]=useState<RouteReport>(),[reportMessage,setReportMessage]=useState('');
  const reportRef=useRef<RouteReport|undefined>(undefined);reportRef.current=report;
  const rejoinedAt=useRef(0),alightingAlerts=useRef(new Map<number,number>()),stoppedDismissed=useRef(new Set<number>());
+ const spokenReferences=useRef(new Set<string>());
  const compass=useCompass(!arrived,compassStart);
  const [course,setCourse]=useState<number>(),[northUp,setNorthUp]=useState(false);
  const [cameraRequest,setCameraRequest]=useState(0);
@@ -97,8 +101,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer)},[]);
  useEffect(()=>{
   if(arrived)return;
-  if(!navigator.geolocation){setLocationIssue('Tu ubicación no está disponible. Sigue los pasos en el mapa.');return;}
-  const id=navigator.geolocation.watchPosition(p=>{const point={lat:p.coords.latitude,lng:p.coords.longitude};
+  return watchJourneyPosition(leg,p=>{const point={lat:p.coords.latitude,lng:p.coords.longitude};
    if(Date.now()-p.timestamp>15000){setLocationIssue('Esperando una ubicación reciente…');return;}
    if(p.coords.accuracy>60){setLocationIssue('Ubicación aproximada. Esperando una lectura más precisa.');return;}
    const last=lastFix.current;
@@ -112,9 +115,8 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
    }
    setLive(point);setFixAt(p.timestamp);setAccuracy(p.coords.accuracy);setLocationIssue(p.coords.accuracy>40?'Ubicación aproximada; comprobando el avance.':'');
    setHistory(previous=>[...previous.filter(fix=>p.timestamp-fix.time<90000),{point,accuracy:p.coords.accuracy,time:p.timestamp}].slice(-120));
-  },error=>setLocationIssue(error.code===1?'Permite tu ubicación para seguir tu avance. Puedes continuar con los pasos.':'No pudimos actualizar tu ubicación. Sigue los pasos en el mapa.'),{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
-  return()=>navigator.geolocation.clearWatch(id);
- },[arrived]);
+  },setLocationIssue,onExit);
+ },[arrived,leg]);
  function advance(source:'manual'|'motion'='manual'){boarding.finish(source);if(step<option.legs.length-1){setStep(step+1);onProgress?.(step+1,false)}else{setArrived(true);onProgress?.(step,true)}}
  const title=arrived?'Viaje finalizado':boarding.waiting?`Espera ${option.legs[step+1]?.route?.name??'tu ruta'}`:boarding.candidate?'Estás junto a tu ruta':leg.kind==='bus'?(nearAlighting?(stage===2?'Solicita tu bajada':'Anticipa tu bajada'):`Viaja en ${leg.route?.name}`):step===option.legs.length-1?(placeAccess?'Camina al acceso del destino':'Camina a tu destino'):step===0?'Camina al punto de abordaje':'Camina al siguiente abordaje';
  const maneuver=leg.kind==='walk'&&trusted?nextManeuver(line,accepted.along):undefined;
@@ -135,6 +137,14 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   if(!('speechSynthesis' in window))return;
   window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='es-MX';window.speechSynthesis.speak(utterance);
  }
+ useEffect(()=>{
+  // Alighting instructions always take priority over commercial/reference audio.
+  if(!voice||!trusted||arrived||offRoute||stage>0||boarding.waiting)return;
+  let key='',text='';
+  if(leg.kind==='walk'&&maneuver&&maneuver.distance<=100){key=`${step}:turn:${Math.round((accepted.along+maneuver.distance)/10)}`;text=`En ${Math.max(10,Math.round(maneuver.distance/10)*10)} metros, ${maneuver.label.toLowerCase()}. Usa los cruces permitidos.`;}
+  else if(leg.kind==='bus'&&nextStop&&nextStop.along-accepted.along<=100){key=`${step}:reference:${nextStop.id}`;text=`Próxima referencia: ${nextStop.name}.`;}
+  if(key&&!spokenReferences.current.has(key)){spokenReferences.current.add(key);speak(text);}
+ },[voice,trusted,arrived,offRoute,stage,boarding.waiting,step,maneuver?.label,maneuver?.distance,nextStop?.id,accepted.along]);
  useEffect(()=>{
   if(arrived||stage===0||stage<=(alightingAlerts.current.get(step)??0))return;
   alightingAlerts.current.set(step,stage);

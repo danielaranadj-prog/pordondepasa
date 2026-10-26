@@ -1,0 +1,10 @@
+{
+  "version": "tepic-d2037f3e1523ef0f",
+  "files": {
+    "tepic-routes.json": "d9bab4febb8dab2912a9cad68241b10fbff6806a5d72f2907bbe5c8af7297d4c",
+    "tepic-walk-network.json": "23770164cfe693e470fbe7dc8ed09ae717dfe20c22dc54fe0e8ea1a1dc5d22f7",
+    "detours/colosio-metates.geojson": "182fd2f4359f4caa82fb5a515a4bb9f6a0a9d20113e1b3b73b09ad1f5d5ad7ae",
+    "detours/colosio-21-de-febrero.geojson": "bc5da5e48d5503202337f1c35cdf833d62e4ec5008c5e76c3e9be2ffaf91dd72",
+    "detours/hospitales-1-hacia-victoria.geojson": "e59ab452d2bcd45b82de4f1c2dfd707a4cb60812871d82b8b5f3c3293ad88482"
+  }
+}

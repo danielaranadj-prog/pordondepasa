@@ -18,6 +18,9 @@ import {canShowSponsoredTrip} from '../lib/sponsoredTrip';
 import {ADS_MODE,ADS_FEED_URL,ADS_API_KEY} from '../lib/adConfig';
 import {loadPublicAds} from '../lib/adFeed';
 import SponsoredTripIntro from './SponsoredTripIntro';
+import JourneyRecovery from './JourneyRecovery';
+import {readJourney,saveJourney,clearJourney,DATASET_VERSION,type JourneySession} from '../lib/journeySession';
+import '../styles/passenger-settings.css';
 import {replaceWalkingLeg} from '../lib/walkingReroute';
 import type {UpdateWalkingLeg} from './useWalkingReroute';
 import {installBoarding} from '../lib/boarding';
@@ -36,17 +39,23 @@ function optionLabel(option:Option,index:number,options:Option[]):string {
 export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:SavedPlace[];onOpenAccount?:()=>void}={}){
  const [compassStart,setCompassStart]=useState({enabled:false,issue:''}),[starting,setStarting]=useState(false);
  const [journeyProgress,setJourneyProgress]=useState<{optionId:string;step:number;arrived:boolean}|null>(null);
+ const [recoverable,setRecoverable]=useState<JourneySession>();
+ useEffect(()=>{if(!onOpenAccount)setRecoverable(readJourney());const clear=()=>setRecoverable(undefined);window.addEventListener('pdp:journey-cleared',clear);return()=>window.removeEventListener('pdp:journey-cleared',clear)},[]);
+ const [restoredAccess,setRestoredAccess]=useState<{meters:number;entrance:string}>();
  async function startTrip(index:number){
   if(starting)return;
   setStarting(true);
+  try{
   // Request within the user's button gesture, before mounting navigation.
-  const result=await requestCompass();
+  const result=await requestCompass().catch(()=>({enabled:false,issue:'La orientación no está disponible. Puedes usar el mapa.'}));
   if(journeyProgress?.optionId!==options[index]?.id)setJourneyProgress(null);
   const option=options[index];
-  const match=option?.legs.filter(leg=>leg.kind==='bus'&&leg.route).flatMap(leg=>
-   ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name,routeId:leg.route!.id})))[0];
-  setSponsorIntro(match);setSponsorViewed(false);
-  setCompassStart(result);setSelected(index);setView(match?'sponsor':'follow');setStarting(false);
+  let match:typeof sponsorIntro;
+  try{match=option?.legs.filter(leg=>leg.kind==='bus'&&leg.route).flatMap(leg=>
+   ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name,routeId:leg.route!.id})))[0]}catch{/* Commercial content must never block a journey. */}
+  setSponsorIntro(match);setSponsorViewed(true);setRecoverable(undefined);
+  setCompassStart(result);setSelected(index);setView('follow');
+  }finally{setStarting(false)}
  }
  const [welcome,setWelcome]=useState(true),[view,setView]=useState<'search'|'trip'|'follow'|'sponsor'>('search');
  const [sponsorIntro,setSponsorIntro]=useState<{ad:AdCampaign;routeName:string;routeId:string}>();
@@ -54,7 +63,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const [pickDestination,setPickDestination]=useState(false);
  const [mapSelection,setMapSelection]=useState<MapSelection|null>(null),[cameraRequest,setCameraRequest]=useState(0);
  const selectionSequence=useRef(0);
- const [originStatus,setOriginStatus]=useState<'loading'|'confirmed'|'unavailable'>('loading'),[originIssue,setOriginIssue]=useState('');
+ const [originStatus,setOriginStatus]=useState<'loading'|'confirmed'|'unavailable'>('unavailable'),[originIssue,setOriginIssue]=useState('');
  const [editMessage,setEditMessage]=useState(''),[editLocating,setEditLocating]=useState(false);
  const editorRequest=useRef(0);
  const showAll=false;
@@ -65,13 +74,23 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  function followCards(){if(showAll)return;const list=carousel.current;if(!list)return;const middle=list.scrollLeft+list.clientWidth/2;let nearest=0,distance=Infinity;
  Array.from(list.children).forEach((node,i)=>{const card=node as HTMLElement;const d=Math.abs(card.offsetLeft+card.offsetWidth/2-middle);if(d<distance){distance=d;nearest=i}});setSelected(nearest)}
  function selectCard(i:number){setSelected(i);if(showAll)return;const list=carousel.current,card=list?.children[i] as HTMLElement|undefined;if(list&&card)list.scrollTo({left:card.offsetLeft-list.clientWidth/2+card.offsetWidth/2,behavior:'smooth'})}
- const [origin,setOrigin]=useState<Point>({...TEPIC_MAP_CENTER}),[originLabel,setOriginLabel]=useState('Buscando tu ubicación…');
+ const [origin,setOrigin]=useState<Point>({...TEPIC_MAP_CENTER}),[originLabel,setOriginLabel]=useState('Elige tu origen');
  const [destination,setDestination]=useState<Point>(),[query,setQuery]=useState(''),[stops,setStops]=useState<Stop[]>([]),[places,setPlaces]=useState<Place[]>([]),[ads,setAds]=useState<AdCampaign[]>([]),[chosenPlace,setChosenPlace]=useState<Place|undefined>();
  const activeSponsor=currentTripSponsor(sponsorIntro?.ad.id,ads,sponsorIntro?[sponsorIntro.routeId]:[]);
  useEffect(()=>{if(view==='sponsor'&&sponsorIntro&&!activeSponsor){setSponsorViewed(false);setView('follow')}},[view,sponsorIntro,activeSponsor]);
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
  const [options,setOptions]=useState<Option[]>([]),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[pickOrigin,setPickOrigin]=useState(false),[message,setMessage]=useState('');
+ useEffect(()=>{
+  if(onOpenAccount||view!=='follow'||!options[selected]||!destination)return;
+  if(journeyProgress?.arrived){clearJourney();return;}
+  saveJourney({version:1,dataset:DATASET_VERSION,at:Date.now(),option:options[selected],step:journeyProgress?.optionId===options[selected].id?journeyProgress.step:0,origin,destination,originName:originLabel,destinationName:query,placeAccess:chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:restoredAccess});
+ },[view,options,selected,destination,origin,originLabel,query,journeyProgress,chosenPlace,restoredAccess,onOpenAccount]);
+ function resumeJourney(){
+  const session=readJourney();if(!session){setRecoverable(undefined);return;}
+  commitOrigin(session.origin,session.originName);setDestination(session.destination);setQuery(session.destinationName);setOptions([session.option]);setSelected(0);
+  setJourneyProgress({optionId:session.option.id,step:session.step,arrived:false});setChosenPlace(undefined);setRestoredAccess(session.placeAccess);setSponsorIntro(undefined);setRecoverable(undefined);setWelcome(false);setView('follow');
+ }
  const updateWalkingLeg=useCallback<UpdateWalkingLeg>((index,expected,next)=>{
   setOptions(previous=>{
    const current=previous[selected];if(!current||current.legs[index]!==expected)return previous;
@@ -130,7 +149,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
   if(!point){setEditMessage('No pudimos confirmar tu ubicación. Elige el origen en el mapa.');return false;}
   selectEdited(point,'Mi ubicación actual',undefined,'origin');return true;
  }
- function choose(point:Point,name:string,place?:Place){request.current++;setDestination(point);setChosenPlace(place);setQuery(name);setOptions([]);setJourneyProgress(null);setMessage('');setBusy(false);}
+ function choose(point:Point,name:string,place?:Place){request.current++;setDestination(point);setChosenPlace(place);setRestoredAccess(undefined);setQuery(name);setOptions([]);setJourneyProgress(null);setMessage('');setBusy(false);}
  function locate(retry=false):Promise<Point|null>{
   if(retry){locationRequest.current=null;manualOrigin.current=false;originConfirmed.current=false;setOriginStatus('loading');setOriginIssue('');setOriginLabel('Buscando tu ubicación…');}
   if(locationRequest.current)return locationRequest.current;
@@ -156,7 +175,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
   });
   return locationRequest.current;
  }
- useEffect(()=>{if(!welcome)void locate();},[welcome]);
+ // Location is requested by explicit planning/location actions, not on launch.
  async function calculate(target:Point){const id=++request.current;setView('trip');setBusy(true);setMessage('');setOptions([]);setJourneyProgress(null);
   try{
    if(!originConfirmed.current)await locate();
@@ -167,7 +186,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    setPickOrigin(false);
    const next=await planRoutes(originAccess.current??originValue.current,target);if(id!==request.current)return;setOptions(next);setSelected(0);if(!next.length)setMessage('No encontramos un recorrido conectado por calles con los datos actuales. Prueba un punto cercano sobre una calle pública.');
   }catch(error){if(id===request.current){
-   if(error instanceof RoutePlanError){const source=error.issue==='origin_off_street';beginPicker(source?'origin':'destination',source?originValue.current:target);setMessage(error.message)}
+   if(error instanceof RoutePlanError){if(error.issue==='dataset_changed')setMessage(error.message);else{const source=error.issue==='origin_off_street';beginPicker(source?'origin':'destination',source?originValue.current:target);setMessage(error.message)}}
    else setMessage('No se pudieron cargar las rutas. Intenta de nuevo.');
   }}
   finally{if(id===request.current)setBusy(false)}
@@ -194,7 +213,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  }
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
  if(view==='sponsor'&&sponsorIntro&&activeSponsor)return <SponsoredTripIntro ad={activeSponsor} routeName={sponsorIntro.routeName} routeId={sponsorIntro.routeId} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
- if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:undefined} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
+ if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:restoredAccess} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen brand-welcome pdp-blue-glass"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
  if(view==='trip')return <main className="trip-screen pdp-blue-glass" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
   <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
@@ -239,5 +258,5 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    </>}
   </MapSheet>
  </main>;
- return <HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/>;
+ return <>{recoverable&&<JourneyRecovery session={recoverable} onResume={resumeJourney} onDiscard={()=>{clearJourney();setRecoverable(undefined)}}/>}<HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/></>;
 }

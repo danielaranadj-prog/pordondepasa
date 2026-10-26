@@ -1,0 +1,11 @@
+---
+const support=import.meta.env.PUBLIC_SUPPORT_EMAIL as string|undefined;
+---
+<html lang="es-MX"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Ayuda · PorDóndePasa</title></head><body><main><a href={import.meta.env.BASE_URL}>← Volver</a><h1>Viajar con PorDóndePasa</h1>
+<p>Planificación estimada de transporte en Tepic y Xalisco. La cobertura depende de los trazos y calles registrados; un resultado vacío no demuestra que no exista transporte.</p>
+<h2>Subir y bajar</h2><p>Confirma tu origen, compara opciones y revisa el sentido. Camina al punto sugerido y confirma «Ya abordé» al subir. Con GPS confiable hay avisos de bajada a 500 y 150 metros. Avísale al chofer con anticipación: muchos puntos son referencias, no paradas oficiales. Confirma cuando bajes y sigue la caminata final.</p>
+<h2>Otro camino o señal perdida</h2><p>Si te desvías caminando, intentamos conectar una nueva caminata al mismo punto sin cambiar el camión. Con señal imprecisa conservamos el avance confirmado. Usa los pasos manuales si no hay mapa; verifica en la calle los cruces permitidos.</p>
+<h2>Estimaciones y cobertura</h2><p>Hasta un transbordo. Espera y tarifa usan valores aproximados; no son un horario del operador. Verifica costo, operación y sentido con la unidad. No certificamos calles seguras, iluminadas o accesibles sin datos verificados. En la web, mantén la app visible para recibir avisos.</p>
+<h2>Reportar un error</h2><p>Puedes registrar voluntariamente un desvío durante el viaje y exportarlo. No cambia las rutas públicas automáticamente. El archivo contiene ubicaciones: revísalo antes de compartirlo.</p>
+{support&&<p>Soporte: <a href={`mailto:${support}`}>{support}</a></p>}<p><a href={`${import.meta.env.BASE_URL}privacidad/`}>Privacidad y datos</a></p></main></body></html>
+<style>body{margin:0;background:#f2f7fd;color:#143753;font:16px/1.65 system-ui}main{max-width:720px;margin:auto;padding:28px 20px 70px}h2{font-size:21px}a{color:#005fc4}</style>

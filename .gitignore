@@ -12,6 +12,8 @@ dist-pilot/
 *.zip
 *.pem
 *.key
+*.jks
+*.keystore
 .ads-pilot.json
 .ads-pilot.json.*.tmp
 supabase/*.local.sql

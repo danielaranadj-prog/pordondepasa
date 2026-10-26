@@ -1,0 +1,6 @@
+{
+  "projectRef": "suvpiadsjljkmvzrbgqv",
+  "feedUrl": "https://suvpiadsjljkmvzrbgqv.supabase.co/functions/v1/pdp-ads-feed",
+  "eventsUrl": "https://suvpiadsjljkmvzrbgqv.supabase.co/functions/v1/pdp-ad-events",
+  "publicAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1dnBpYWRzamxqa212enJiZ3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5Mzk2NTgsImV4cCI6MjEwNzUxNTY1OH0.bpe7stdWokSjzUg2Hgru7TKoiXVYeg4hR5KKSwupPOE"
+}

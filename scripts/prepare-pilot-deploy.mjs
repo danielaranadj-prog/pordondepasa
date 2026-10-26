@@ -1,0 +1,10 @@
+import {readFile,mkdir,mkdtemp,cp,copyFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const root=process.cwd(),source=join(root,'dist-pilot');
+const index=await readFile(join(source,'index.html'),'utf8');
+if(!index.includes('AccountApp'))throw Error('El piloto debe conservar su acceso privado.');
+await mkdir(join(root,'.pilot-deploy'),{recursive:true});
+const target=await mkdtemp(join(root,'.pilot-deploy/release-'));
+for(const name of ['index.html','manifest.webmanifest','_astro','media','data'])await cp(join(source,name),join(target,name),{recursive:true,filter:p=>!p.endsWith('.md')&&!p.endsWith('/ads.json')});
+await copyFile(join(root,'deployment/pilot-vercel.json'),join(target,'vercel.json'));
+console.log(target);

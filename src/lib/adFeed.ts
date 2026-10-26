@@ -1,4 +1,5 @@
 import type {AdCampaign} from './ads.ts';
+import {validCampaign} from './adValidation.ts';
 
 export interface PublicAdFeed { schemaVersion: 1; enabled: boolean; version: string; campaigns: AdCampaign[] }
 export type AdMode = 'off'|'local'|'remote';
@@ -21,12 +22,10 @@ export function parsePublicAdFeed(value: unknown): PublicAdFeed | undefined {
   const feed = value as Record<string, unknown>;
   if (feed.schemaVersion !== 1 || typeof feed.enabled !== 'boolean' || typeof feed.version !== 'string' ||
       !Array.isArray(feed.campaigns) || feed.campaigns.length > 100) return;
-  if (!feed.campaigns.every(item => item && typeof item === 'object' &&
-    typeof item.id === 'string' && item.id.length > 0 &&
-    ['pin','landmark','sponsored_trip','banner'].includes(item.type) &&
-    typeof item.title === 'string' && typeof item.isActive === 'boolean' &&
-    Array.isArray(item.routeIds) && item.routeIds.every((id:unknown) => typeof id === 'string'))) return;
-  return feed as unknown as PublicAdFeed;
+  if(feed.version.length>120)return;
+  const seen=new Set<string>();
+  const campaigns=feed.campaigns.filter(validCampaign).filter(ad=>{if(seen.has(ad.id))return false;seen.add(ad.id);return true});
+  return {schemaVersion:1,enabled:feed.enabled,version:feed.version,campaigns};
 }
 
 /** An unavailable or malformed online feed never falls back to old paid placements. */
@@ -45,7 +44,7 @@ export async function loadPublicAds(mode: AdMode, localUrl: string, remoteUrl: s
     const response = await fetcher(url, {cache:'no-store', signal:AbortSignal.timeout(5000),...(mode==='remote'&&publicApiKey?{headers:{apikey:publicApiKey,authorization:`Bearer ${publicApiKey}`}}:{})});
     if (!response.ok) return [];
     const data:unknown = await response.json();
-    if (mode === 'local') return Array.isArray(data) ? normalizeAdRouteIds(data as AdCampaign[]) : [];
+    if (mode === 'local') return Array.isArray(data)&&data.length<=100 ? normalizeAdRouteIds(data.filter(validCampaign)) : [];
     const feed = parsePublicAdFeed(data);
     return feed?.enabled ? normalizeAdRouteIds(feed.campaigns) : [];
   } catch { return []; }

@@ -1,6 +1,5 @@
 import type {Map as LeafletMap} from 'leaflet';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import {workerUrl} from './mapRuntime';
 export {workerUrl};
 
 /** Keep Leaflet overlays/navigation intact while replacing only the basemap. */

@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "headers": [
+    {"source":"/(.*)","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"no-referrer"},{"key":"X-Frame-Options","value":"DENY"},{"key":"X-Robots-Tag","value":"noindex, nofollow"}]},
+    {"source":"/","headers":[{"key":"Cache-Control","value":"no-store"}]},
+    {"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-store"}]},
+    {"source":"/data/ads.json","headers":[{"key":"Cache-Control","value":"no-store"}]}
+  ]
+}

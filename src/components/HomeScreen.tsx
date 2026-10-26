@@ -3,6 +3,8 @@ import type {TransitStop} from '../lib/navigation';
 import type {Point} from '../lib/router';
 import {type Place,getPlaceCategoryLabel} from '../lib/places';
 import UiIcon from './UiIcon';
+import PassengerSettings from './PassengerSettings';
+import '../styles/passenger-settings.css';
 import StreetMap from './StreetMap';
 import {TEPIC_MAP_CENTER} from '../lib/mapSelection';
 import {homeKeyboardViewport} from '../lib/homeKeyboardViewport';
@@ -44,7 +46,7 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
  function openCatalog(value=''){lastFocus.current=document.activeElement as HTMLElement;setCatalogQuery(value);setCatalogOpen(true)}
  useEffect(()=>{if(catalogOpen){dialog.current?.showModal();filter.current?.focus()}else{dialog.current?.close();lastFocus.current?.focus()}},[catalogOpen]);
  useEffect(()=>{if(!catalogOpen||catalog)return;const controller=new AbortController();setCatalogIssue('');
-  fetch(`${import.meta.env.BASE_URL}data/tepic-routes.json`,{signal:controller.signal}).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{
+  fetch(`${import.meta.env.BASE_URL}data/route-catalog.json`,{signal:controller.signal}).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{
    if(!Array.isArray(data.routes))throw new Error();
    setCatalog(data.routes.filter((r:CatalogRoute)=>r&&typeof r.id==='string'&&typeof r.name==='string').map(({id,name,color,groupName}:CatalogRoute)=>({id,name,color,groupName})));
   }).catch(()=>{if(!controller.signal.aborted)setCatalogIssue('No pudimos cargar las rutas. Revisa tu conexión e intenta de nuevo.')});
@@ -57,6 +59,7 @@ export default function HomeScreen({query,ready,stops,places,message,onQuery,onC
    {mapMounted&&<StreetMap origin={TEPIC_MAP_CENTER} hideOrigin fullscreen/>}
   </div>
   <header className="home-brand-row"><div><div className="home-wordmark"><span className="home-logo"><UiIcon name="route"/></span><strong>PorDóndePasa</strong></div><p className="home-city-label">TEPIC · XALISCO</p></div>{onOpenAccount&&<button type="button" className="home-profile" onClick={onOpenAccount} aria-label="Abrir mi cuenta"><UiIcon name="user"/></button>}</header>
+  <div className="home-settings-entry"><PassengerSettings/></div>
   <button type="button" className="home-map-launch" onClick={onMap}><UiIcon name="pin"/>Elegir en mapa</button>
   <div className="home-content">
    <section className="home-intro"><h1>Tu próxima ruta, a un toque.</h1><p>Tu ciudad. Tu camino.</p></section>

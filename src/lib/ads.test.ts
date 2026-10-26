@@ -25,6 +25,9 @@ expect(!isDeliverableAd({...base,schedule:{...breakfast,daysOfWeek:[]}},new Date
 const overnight={timeZone:'America/Mazatlan' as const,daysOfWeek:[5],windows:[{start:'20:00',end:'02:00'}]};
 expect(isDeliverableAd({...base,schedule:overnight},new Date('2026-10-17T08:00:00Z')),'Friday night ad continues into Saturday morning');
 expect(!isDeliverableAd({...base,schedule:overnight},new Date('2026-10-18T08:00:00Z')),'Friday night ad stops before Sunday morning');
+expect(isDeliverableAd({...base,startDate:'2026-10-16',endDate:'2026-10-16',schedule:overnight},new Date('2026-10-17T08:00:00Z')),'Last night is delivered through 02:00 on next day');
+expect(!isDeliverableAd({...base,startDate:'2026-10-23',endDate:'2026-10-23',schedule:overnight},new Date('2026-10-17T08:00:00Z')),'Do not deliver the night before campaign validity');
+expect(!isDeliverableAd({...base,startDate:'2026-02-30'},today),'Impossible calendar date fails closed');
 expect(findMatchingLandmarkAd(at,[{...base,id:'far',coordinates:far},base],'mexico',today)?.id==='base','Only nearby landmark can be selected');
 expect(!findMatchingLandmarkAd(at,[{...base,routeIds:['otra']}],'mexico',today),'Landmark route filter applies');
 expect(!findMatchingLandmarkAd(at,[{...base,referenceText:''}],'mexico',today),'Landmark requires reference text');

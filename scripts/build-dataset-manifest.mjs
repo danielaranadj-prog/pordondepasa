@@ -1,0 +1,10 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const root=new URL('../',import.meta.url),routes=JSON.parse(await readFile(new URL('public/data/tepic-routes.json',root),'utf8'));
+const catalog=routes.routes.filter(r=>!/ruta[\s_-]*24(?:\b|[_-])/i.test(r.id+' '+r.name)).map(({id,name,color,groupName})=>({id,name,color,groupName}));
+await writeFile(new URL('public/data/route-catalog.json',root),JSON.stringify({routes:catalog}));
+const files={};
+for(const name of ['tepic-routes.json','tepic-walk-network.json','detours/colosio-metates.geojson','detours/colosio-21-de-febrero.geojson','detours/hospitales-1-hacia-victoria.geojson'])files[name]=createHash('sha256').update(await readFile(new URL('public/data/'+name,root))).digest('hex');
+const version='tepic-'+createHash('sha256').update(JSON.stringify(files)).digest('hex').slice(0,16);
+await writeFile(new URL('src/lib/dataset-manifest.json',root),JSON.stringify({version,files},null,2)+'\n');
+console.log('Dataset '+version+'; catálogo '+catalog.length+' rutas.');

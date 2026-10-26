@@ -51,7 +51,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
   let cameraPadding=padding();
   const theme=window.matchMedia('(prefers-color-scheme: dark)'),style=()=>`https://tiles.openfreemap.org/styles/${theme.matches?'dark':'positron'}`;
   const change=()=>instance?.setStyle(style());
-  Promise.all([import('maplibre-gl'),import('../lib/vectorBasemap')]).then(([M,base])=>{
+  Promise.all([import('maplibre-gl'),import('../lib/mapRuntime')]).then(([M,base])=>{
    if(disposed||!container.current)return;
    M.setWorkerUrl(base.workerUrl);
    instance=new M.Map({container:container.current,style:style(),center:coord(latest.current.origin),zoom:props.navigation?18:13,maxZoom:19,attributionControl:false,dragRotate:false,pitchWithRotate:false});map.current=instance;

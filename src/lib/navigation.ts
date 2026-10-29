@@ -15,6 +15,11 @@ export function remainingGeometry(line:Point[],along:number):Point[]{
 }
 export type TransitStop={id:string;name:string;coordinates:Point;type?:'oficial'|'costumbre'|'base';routeIds?:string[];direction?:string;source?:string};
 export type RouteStop=TransitStop&{legIndex:number;along:number;distance:number;inferred:boolean;side:'right'|'on-trace'};
+/** Input must already have passed route, direction/pass and sidewalk filtering. */
+export function boardingReference(stops:RouteStop[],legIndex:number,point:Point,radius=80):RouteStop|undefined{
+ return stops.filter(stop=>stop.legIndex===legIndex&&meters(stop.coordinates,point)<=radius)
+  .reduce<RouteStop|undefined>((nearest,stop)=>!nearest||meters(stop.coordinates,point)<meters(nearest.coordinates,point)?stop:nearest,undefined);
+}
 export function projectProgress(point:Point,line:Point[]){
  let best={distance:Infinity,along:0,point:line[0]??point,rightOffset:0},length=0;
  for(let i=0;i<line.length-1;i++){

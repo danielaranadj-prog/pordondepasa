@@ -4,21 +4,26 @@ import type {JourneyFix} from '../lib/journeyStatus';
 import {preciseWalkFix} from '../lib/walkingReroute';
 import {compatibleBoarding,waitingCandidate,shouldAskWaiting} from '../lib/boarding';
 import {readWaiting,saveWaiting,type WaitingRecord,type WaitReason} from '../lib/waitingRecords';
+import {localRecordKey,requestLocalRecordPreference} from '../lib/localRecords';
 export type UpdatePickup=(index:number,walk:Leg,previous:Leg,bus:Leg,point:Point)=>void;
 type Session={record:WaitingRecord;step:number;point:Point;automatic:boolean;lastFix?:JourneyFix};
 export function useBoardingJourney({option,step,history,clock,arrived,onPickup,onAutoAdvance,onUndo}:{option:Option;step:number;history:JourneyFix[];clock:number;arrived:boolean;onPickup?:UpdatePickup;onAutoAdvance:()=>void;onUndo:(index:number)=>void}){
  const [session,setSession]=useState<Session>(),[detectAt,setDetectAt]=useState(0),[message,setMessage]=useState(''),[storageIssue,setStorageIssue]=useState(false);
+ const storageKey=useRef(localRecordKey('waiting'));
  const ref=useRef<Session|undefined>(undefined);ref.current=session;
  const persistedAt=useRef(0),latest=useRef({option,step,history,clock,arrived,onPickup,onAutoAdvance,onUndo});latest.current={option,step,history,clock,arrived,onPickup,onAutoAdvance,onUndo};
  const waiting=!!session&&!session.record.endedAt&&session.step===step&&!arrived;
  const bus=option.legs[step+1],candidate=useMemo(()=>!arrived&&!waiting&&option.legs[step].kind==='walk'&&bus?.kind==='bus'?waitingCandidate(history,bus,clock):undefined,[history,bus,clock,arrived,waiting,step,option]);
  function change(next:Session){ref.current=next;setSession(next);}
- function persist(record:WaitingRecord){setStorageIssue(!saveWaiting(record));}
+ function persist(record:WaitingRecord){setStorageIssue(!saveWaiting(record,undefined,storageKey.current));}
  function confirmWaiting(){
   const current=latest.current,walk=current.option.legs[current.step],previous=current.option.legs[current.step+1];
   if(!previous||!current.onPickup)return;
-  const proposal=waitingCandidate(current.history,previous,Date.now());
+  let proposal=waitingCandidate(current.history,previous,Date.now());
   if(!proposal){setMessage('Espera una ubicación reciente y precisa antes de ajustar el abordaje.');return;}
+  requestLocalRecordPreference();
+  proposal=waitingCandidate(latest.current.history,previous,Date.now());
+  if(!proposal){setMessage('Esperando una ubicación reciente para confirmar el abordaje.');return;}
   const record:WaitingRecord={id:`wait-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,routeId:previous.route?.id??'',routeName:previous.route?.name??'Ruta',startedAt:Date.now(),observedSeconds:0,status:'waiting',reasons:[]};
   change({record,step:current.step,point:proposal.point,automatic:true,lastFix:current.history.at(-1)});
   persist(record);setMessage('');current.onPickup(current.step,walk,previous,proposal.bus,proposal.point);
@@ -46,8 +51,8 @@ export function useBoardingJourney({option,step,history,clock,arrived,onPickup,o
   if(!detectAt){setDetectAt(clock);return;}
   if(clock-detectAt>=10000){finish('motion');latest.current.onAutoAdvance();}
  },[clock,history,waiting,option,step,detectAt]);
- useEffect(()=>()=>{const active=ref.current;if(active&&!active.record.endedAt)saveWaiting({...active.record,endedAt:Date.now(),status:'cancelled'});},[]);
- function exportWaiting(){const url=URL.createObjectURL(new Blob([JSON.stringify({dataset:'waiting-observations',realTime:false,records:readWaiting()},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='pordondepasa-esperas.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ useEffect(()=>()=>{const active=ref.current;if(active&&!active.record.endedAt)saveWaiting({...active.record,endedAt:Date.now(),status:'cancelled'},undefined,storageKey.current);},[]);
+ function exportWaiting(){const current=ref.current?.record,stored=readWaiting(undefined,storageKey.current),records=current?[...stored.filter(record=>record.id!==current.id),current]:stored;const url=URL.createObjectURL(new Blob([JSON.stringify({dataset:'waiting-observations',realTime:false,records},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='pordondepasa-esperas.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  return {candidate,waiting,session,message,storageIssue,confirmWaiting,finish,cancel,reason,toggleAutomatic,undoMotion,confirmMotion,exportWaiting,
   elapsed:session?Math.max(0,Math.floor((clock-session.record.startedAt)/60000)):0,
   ask:waiting&&!!session&&shouldAskWaiting(session.record,session.point,history.at(-1),clock),

@@ -1,4 +1,4 @@
-import {stopsForOption,projectProgress} from './navigation.ts';
+import {boardingReference,stopsForOption,projectProgress} from './navigation.ts';
 import type {Option} from './router.ts';
 const a={lat:21.5,lng:-104.9},b={lat:21.51,lng:-104.9};
 const option:Option={id:'test',minutes:10,walk:0,transfers:0,fare:10,score:10,legs:[{kind:'bus',from:a,to:b,minutes:5,meters:1113,geometry:[a,b],route:{id:'mexico',name:'México',color:'#E11D48',groupName:'México',coordinates:[a,b]}}]};
@@ -34,4 +34,10 @@ const inbound={...option,legs:[{...option.legs[0],route:knownRoute,from:returnA,
 expect(stopsForOption(inbound,imported)[0]?.id==='back','Reverse itinerary uses only the return stop');
 expect(p.remaining>210&&p.remaining<230,'Remaining distance should follow the travelled geometry');
 expect(stopsForOption({...option,legs:[{kind:'walk',from:a,to:b,meters:1113,minutes:15}]},stops).length===0,'Walking does not show bus stops');
+const boardingPoint={lat:21.505,lng:-104.9};
+const rejected=stopsForOption(option,[{id:'other-side',name:'Otra ruta',coordinates:{lat:21.505,lng:-104.9001},routeIds:['south']}]);
+expect(boardingReference(rejected,0,boardingPoint)===undefined,'Never resurrect a rejected other-route/side reference by proximity');
+expect(boardingReference(stops,0,boardingPoint)?.id==='middle','Only a filtered reference on this leg may name boarding');
+expect(boardingReference(stops,1,boardingPoint)===undefined,'Do not borrow a reference from another leg');
+expect(boardingReference(stops,0,a)===undefined,'No reference beyond the radius');
 console.log('OK: stops limited to travelled geometry, deduplicated, explicit route membership respected and distance remaining correct.');

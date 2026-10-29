@@ -1,8 +1,8 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import type {Option,Point} from '../lib/router';
 import type {Place} from '../lib/places';
 import {meters,routeTextColor} from '../lib/router';
-import {projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
+import {boardingReference,projectProgress,remainingGeometry,stopsForOption,type TransitStop} from '../lib/navigation';
 import StreetMap from './StreetMap';
 import UiIcon from './UiIcon';
 import SheetHandle from './SheetHandle';
@@ -24,6 +24,7 @@ import {walkingDeviation} from '../lib/walkingReroute';
 import {stopTimeline} from '../lib/stopTimeline';
 import {readPreferences,savePreferences} from '../lib/passengerPreferences';
 import {watchJourneyPosition} from '../lib/nativeJourney';
+import {localRecordKey,localRecordPreference,requestLocalRecordPreference} from '../lib/localRecords';
 import {useBoardingJourney,type UpdatePickup} from './useBoardingJourney';
 import '../styles/navigation.css';
 import '../styles/route-tags.css';
@@ -32,7 +33,7 @@ import '../styles/dynamic-island.css';
 import '../styles/sponsored-trip.css';
 import '../styles/blue-glass.css';
 const distanceLabel=(n:number)=>n>=1000?`${(n/1000).toFixed(1)} km`:`${Math.round(n)} m`;
-export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onReplan,onWalkReroute,onPickup,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onReplan?:(point:Point)=>void;onWalkReroute?:UpdateWalkingLeg;onPickup?:UpdatePickup;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
+export default function FollowRoute({option,stops,ads,sponsoredTrip,dataNotice,origin,destination,originName,destinationName,placeAccess,place,compassStart,onExit,onReplan,onWalkReroute,onPickup,onAdDestinationChange,initialStep=0,initialArrived=false,onProgress}:{option:Option;stops:TransitStop[];ads?:AdCampaign[];sponsoredTrip?:AdCampaign;dataNotice?:ReactNode;origin:Point;destination:Point;originName?:string;destinationName:string;placeAccess?:{meters:number;entrance:string};place?:Place;compassStart:{enabled:boolean;issue:string};onExit:()=>void;onReplan?:(point:Point)=>void;onWalkReroute?:UpdateWalkingLeg;onPickup?:UpdatePickup;onAdDestinationChange?:(point:Point,name:string,from:Point)=>void;initialStep?:number;initialArrived?:boolean;onProgress?:(step:number,arrived:boolean)=>void}){
  const [step,setStep]=useState(initialStep),[live,setLive]=useState<Point>(),[accuracy,setAccuracy]=useState<number>(),[locationIssue,setLocationIssue]=useState(''),[follow,setFollow]=useState(true),[arrived,setArrived]=useState(initialArrived),[sheetMode,setSheetMode]=useState<SheetMode>('closed');
  const showStops=sheetMode!=='closed',setShowStops=(show:boolean)=>setSheetMode(show?'open':'closed');
  const [dismissedAdStep,setDismissedAdStep]=useState<number|null>(null);
@@ -41,6 +42,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const [history,setHistory]=useState<JourneyFix[]>([]),[voice,setVoice]=useState(()=>readPreferences().voice),[alightingNotice,setAlightingNotice]=useState('');
  useEffect(()=>{savePreferences({...readPreferences(),voice})},[voice]);
  const [reportOpen,setReportOpen]=useState(false),[report,setReport]=useState<RouteReport>(),[reportMessage,setReportMessage]=useState('');
+ const reportStorageKey=useRef(localRecordKey('route-reports'));
  const reportRef=useRef<RouteReport|undefined>(undefined);reportRef.current=report;
  const rejoinedAt=useRef(0),alightingAlerts=useRef(new Map<number,number>()),stoppedDismissed=useRef(new Set<number>());
  const spokenReferences=useRef(new Set<string>());
@@ -133,6 +135,8 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
  const nextBusRoute=option.legs[step+1]?.kind==='bus'?option.legs[step+1]?.route:undefined;
  const showTripSponsor=!arrived && !isPremiumUser() && leg.kind==='bus' && !!sponsoredTrip?.sponsoredTrip &&
   isDeliverableAd(sponsoredTrip,new Date(clock),[leg.route?.id??'']);
+ const sponsorImpression=useAdImpression(showTripSponsor?sponsoredTrip?.id:undefined,leg.route?.id,
+  id=>recordSponsoredTripEvent(id,'sponsored_trip_views'),'journey-sponsor');
  function speak(text:string){
   if(!('speechSynthesis' in window))return;
   window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='es-MX';window.speechSynthesis.speak(utterance);
@@ -154,16 +158,16 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   if(voice)speak(text);
  },[stage,step,arrived,voice]);
  useEffect(()=>{setHistory([]);setAlightingNotice('');setReportOpen(false);setShowPassed(false);setTimelineFollow(true);rejoinedAt.current=0;},[step]);
- useEffect(()=>()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();const active=reportRef.current;if(active&&!active.endedAt)saveRouteReport({...active,endedAt:Date.now()});},[]);
+ useEffect(()=>()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();const active=reportRef.current;if(active&&!active.endedAt)saveRouteReport({...active,endedAt:Date.now()},undefined,reportStorageKey.current);},[]);
  function finishReport(){
   const active=reportRef.current;if(!active||active.endedAt)return;
   const finished={...active,endedAt:Date.now()};reportRef.current=finished;setReport(finished);
-  setReportMessage(saveRouteReport(finished)?'Reporte guardado en este teléfono. Puedes exportarlo para revisión.':'No se pudo guardar. Exporta el reporte para conservarlo.');
+  setReportMessage(saveRouteReport(finished,undefined,reportStorageKey.current)?'Reporte guardado en este teléfono durante un máximo de 7 días. Puedes exportarlo para revisión.':'No se guardó en este teléfono. Exporta el reporte para conservarlo.');
  }
  useEffect(()=>{
   const active=reportRef.current,fix=lastFix.current;if(!active||active.endedAt||!fix)return;
   const next=appendReportFix(active,fix,clock);
-  if(next!==active){reportRef.current=next;setReport(next);saveRouteReport(next);}
+  if(next!==active){reportRef.current=next;setReport(next);saveRouteReport(next,undefined,reportStorageKey.current);}
  },[fixAt]);
  useEffect(()=>{
   const active=reportRef.current;if(!active||active.endedAt||clock-active.startedAt<30000)return;
@@ -171,14 +175,17 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   else rejoinedAt.current=0;
  },[clock,health.kind]);
  function startReport(reason:ReportReason){
-  const fix=lastFix.current;if(!fix||clock-fix.time>15000||fix.accuracy>40)return;
+  if(!lastFix.current||Date.now()-lastFix.current.time>15000||lastFix.current.accuracy>40)return;
+  requestLocalRecordPreference();
+  const fix=lastFix.current;if(!fix||Date.now()-fix.time>15000||fix.accuracy>40){setReportMessage('Esperando una ubicación reciente antes de registrar el tramo.');return;}
   const kind=health.kind==='stopped'?'stop':'deviation';
   let next:RouteReport={id:`report-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,routeId:leg.route?.id??'',routeName:leg.route?.name??'A pie',kind,reason,startedAt:Date.now(),fixes:[]};
   next=appendReportFix(next,fix,clock);
   if(kind==='stop'){next.endedAt=Date.now();stoppedDismissed.current.add(step);}
   reportRef.current=next;setReport(next);setReportOpen(false);rejoinedAt.current=0;
-  const saved=saveRouteReport(next);
-  setReportMessage(kind==='stop'?(saved?'Reporte guardado en este teléfono.':'Exporta el reporte para conservarlo.'):'Registrando este tramo. Se guardará al volver al recorrido o al tocar Terminar.');
+  const saved=saveRouteReport(next,undefined,reportStorageKey.current);
+  setReportMessage(kind==='stop'?(saved?'Reporte guardado en este teléfono durante un máximo de 7 días.':'No se guardó en este teléfono. Puedes exportar esta sesión.'):
+   saved?'Registrando este tramo. Se guarda solo en este dispositivo durante un máximo de 7 días.':localRecordPreference()===false?'Registrando solo en memoria. Exporta antes de salir; el guardado local está desactivado.':'Registrando solo en memoria. No se pudo guardar; exporta antes de salir.');
  }
  function exportReport(){
   const active=reportRef.current;if(!active)return;
@@ -207,7 +214,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   let walkPhrase='';
   if(walkStreet){
    walkPhrase=`Camina por ${walkStreet}`;
-  }else if(originName&&!originName.toLowerCase().includes('mi ubicación')){
+  }else if(step===0&&originName&&!originName.toLowerCase().includes('mi ubicación')){
    walkPhrase=`Camina desde ${originName}`;
   }else{
    walkPhrase='Camina por la calle';
@@ -217,20 +224,9 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   if(nextLeg&&nextLeg.kind==='bus'){
    const rawRouteName=nextLeg.route?.name??'la ruta';
    const routeLabel=/^(ruta\b|camión\b)/i.test(rawRouteName)?rawRouteName:`la Ruta ${rawRouteName}`;
-   const legStops=routeStops.filter(s=>s.legIndex===step+1);
-   let targetStop=legStops.sort((a,b)=>meters(a.coordinates,leg.to)-meters(b.coordinates,leg.to))[0];
-   if(!targetStop||meters(targetStop.coordinates,leg.to)>80){
-    const anyStop=stops.filter(s=>meters(s.coordinates,leg.to)<=80).sort((a,b)=>meters(a.coordinates,leg.to)-meters(b.coordinates,leg.to))[0];
-    if(anyStop)targetStop=anyStop as typeof routeStops[0];
-   }
-   if(targetStop&&meters(targetStop.coordinates,leg.to)<=80){
-    targetPlace=`${targetStop.name} donde pasa ${routeLabel}`;
-   }else if(streetNames&&streetNames.length>1){
-    const arrivalStreet=streetNames[streetNames.length-1];
-    targetPlace=`${arrivalStreet} donde pasa ${routeLabel}`;
-   }else{
-    targetPlace=`donde pasa ${routeLabel}`;
-   }
+   const targetStop=boardingReference(routeStops,step+1,leg.to);
+   targetPlace=targetStop?`${targetStop.name}, referencia cercana al punto marcado para ${routeLabel}. Confirma el sentido antes de subir`:
+    `el punto marcado para ${routeLabel}. Confirma el sentido y el lugar de abordaje con el chofer`;
   }else if(step===option.legs.length-1||!nextLeg){
    targetPlace=destinationName||'tu destino';
   }else{
@@ -254,11 +250,11 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
    street=leg.streetNames.length===1?leg.streetNames[0]:`${leg.streetNames[0]} y ${leg.streetNames[1]}`;
   }else if(leg.instruction&&leg.instruction.startsWith('Camina por ')){
    street=leg.instruction.replace(/^Camina por /,'').split('.')[0];
-  }else if(originName&&!originName.toLowerCase().includes('mi ubicación')){
+  }else if(step===0&&originName&&!originName.toLowerCase().includes('mi ubicación')){
    street=originName;
   }
   return street||'Sigue la ruta en el mapa';
- },[arrived,leg,nearAlighting,nextStop,destinationName,originName,remaining,boarding.waiting]);
+ },[arrived,step,leg,nearAlighting,nextStop,destinationName,originName,remaining,boarding.waiting]);
  const routeForDock=currentBusRoute??nextBusRoute;
  const dockRouteLabel=routeForDock?(routeForDock.name.replace(/^(ruta|camión)\s*[:.-]?\s*/i,'').trim()||routeForDock.name):'A pie';
  const displayStops=useMemo(()=>{
@@ -302,7 +298,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
   </section>
   {!arrived&&<div className="navigation-tools journey-map-tools"><button type="button" onClick={()=>{setFollow(false);setCameraRequest(value=>value+1)}} aria-label="Ver todo el viaje"><UiIcon name="route"/></button><button type="button" onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación para centrar':'Centrar en mí'} aria-pressed={follow}><UiIcon name="locate"/></button><button type="button" onClick={()=>{setReportOpen(!reportOpen);setSheetMode('expanded')}} aria-label="Reportar un problema" aria-expanded={reportOpen} disabled={!!report&&!report.endedAt}><UiIcon name="report"/></button></div>}
   <footer className={`nav-bottom-sheet map-sheet sheet-${sheetMode} ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
-   {showTripSponsor && <div className="nav-trip-sponsor" role="note" aria-label="Patrocinador del viaje">
+   {showTripSponsor && <div className="nav-trip-sponsor" ref={sponsorImpression} role="note" aria-label="Patrocinador del viaje">
     <AdImage ad={sponsoredTrip!}/>
     <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
     <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>{recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks');trackAd(sponsoredTrip!.id,'click',leg.route?.id)}}>Canjear</a>
@@ -353,7 +349,8 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
     <button type="button" className="nav-voice-toggle" onClick={()=>{setVoice(!voice);if(!voice)speak('Avisos por voz activados')}} aria-label={voice?'Silenciar avisos por voz':'Activar avisos por voz'} aria-pressed={voice}><UiIcon name={voice?'volume':'mute'}/></button>
    </div>}
    {boarding.candidate&&onPickup&&!arrived&&<div className="nav-journey-warning" role="status"><strong>Estás junto al recorrido</strong><p>¿Ya estás esperando aquí? Confirma el sentido y busca una parada señalada o un lugar donde se permita abordar.</p><button type="button" onClick={boarding.confirmWaiting}>Esperar aquí</button></div>}
-   {boarding.waiting&&<div className="nav-waiting-info"><span>Esperando {nextBusRoute?.name}. Busca cartel o parada; las referencias habituales no garantizan que se permita subir.</span><label><input type="checkbox" checked={boarding.session?.automatic??false} onChange={boarding.toggleAutomatic}/> Detección asistida de abordaje</label><small>{boarding.storageIssue?'No se pudo guardar la espera en este dispositivo.':'Tiempo observado guardado solo en este dispositivo.'}</small><button type="button" onClick={boarding.cancel}>Dejar de esperar</button></div>}
+   {dataNotice}
+   {boarding.waiting&&<div className="nav-waiting-info"><span>Esperando {nextBusRoute?.name}. Busca cartel o parada; las referencias habituales no garantizan que se permita subir.</span><label><input type="checkbox" checked={boarding.session?.automatic??false} onChange={boarding.toggleAutomatic}/> Detección asistida de abordaje</label><small>{boarding.storageIssue?localRecordPreference()===false?'Guardado local desactivado. Puedes exportar esta sesión antes de salir.':'No se pudo guardar la espera en este dispositivo.':'Tiempo observado guardado solo en este dispositivo, hasta 7 días.'}</small><button type="button" onClick={boarding.exportWaiting}>Exportar mis esperas</button><button type="button" onClick={boarding.cancel}>Dejar de esperar</button></div>}
    {boarding.countdown!==undefined&&<div className="nav-journey-warning" role="status"><strong>Parece que ya abordaste</strong><p>El movimiento coincide con el recorrido. Cambiaremos a viaje en {boarding.countdown} s; confirma que es {nextBusRoute?.name}.</p><button type="button" onClick={boarding.toggleAutomatic}>No, sigo esperando</button></div>}
    {boarding.inferred&&<div className="nav-journey-warning" role="status"><strong>Abordaje detectado por movimiento</strong><p>El GPS no identifica la unidad. ¿Vas en {leg.route?.name}?</p><div><button type="button" onClick={boarding.confirmMotion}>Sí, voy en esta ruta</button><button type="button" onClick={boarding.undoMotion}>Sigo esperando</button></div></div>}
    {boarding.ask&&<div className="nav-journey-warning" role="status"><strong>¿Sigues esperando tu ruta?</strong><p>Han pasado {boarding.elapsed} min desde tu confirmación. No son frecuencias en tiempo real.</p><div>{([['still-waiting','Sigo esperando'],['not-arrived','No ha pasado'],['full','Iba llena'],['missed','Se me pasó'],['declined','No la tomé']] as const).map(([reason,label])=><button type="button" key={reason} onClick={()=>boarding.reason(reason)}>{label}</button>)}</div><button type="button" onClick={boarding.exportWaiting}>Exportar mis esperas</button></div>}
@@ -375,7 +372,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,origin,desti
    </div>}
    {reportOpen&&<div className="nav-report-panel" role="region" aria-label="Registrar un reporte local">
     <strong>¿Por qué cambió el recorrido?</strong>
-    <p>Al elegir una opción se registrará tu ubicación durante este tramo. El reporte se guarda en este teléfono y puedes exportarlo.</p>
+    <p>Al elegir una opción se registrará tu ubicación durante este tramo. Puedes exportarla sin enviarla al administrador. Si autorizas el guardado local, se conserva hasta 7 días; si no, solo durante esta sesión.</p>
     {!reportLocationReady&&<p role="status">Necesitamos una ubicación reciente y precisa antes de registrar el tramo.</p>}
     <div><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('roadworks')}>Obras</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('traffic')}>Tráfico</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('different-route')}>Tomé otra ruta</button><button type="button" disabled={!reportLocationReady} onClick={()=>startReport('unknown')}>No sé</button><button type="button" onClick={()=>setReportOpen(false)}>Cancelar</button></div>
    </div>}

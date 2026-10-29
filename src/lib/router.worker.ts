@@ -1,18 +1,14 @@
 import {findRoutes, type Shape} from './router';
 import {WalkingRouter,type WalkNetwork} from './walking';
-import {apply21Febrero,applyMetates} from './detours';
-import {splitKnownRouteBreaks} from './routeFragments';
+import {loadTransitShapes} from './transitShapes';
 import {fetchDataset,DatasetChangedError} from './datasetFetch';
 let loading:Promise<{shapes:Shape[];walking:WalkingRouter}>|undefined;
 let walkingLoading:Promise<WalkingRouter>|undefined;
 function loadWalking(){return walkingLoading??=fetchDataset<WalkNetwork>('tepic-walk-network.json').then(data=>new WalkingRouter(data)).catch(error=>{walkingLoading=undefined;throw error})}
 function load(){return loading??=Promise.all([
- fetchDataset<{routes:Shape[]}>('tepic-routes.json').then(data=>data.routes),
+ loadTransitShapes(),
  loadWalking(),
- fetchDataset<any>('detours/colosio-metates.geojson'),
- fetchDataset<any>('detours/colosio-21-de-febrero.geojson'),
- fetchDataset<any>('detours/hospitales-1-hacia-victoria.geojson')
-]).then(([shapes,walking,metates,febrero,victoria])=>({shapes:splitKnownRouteBreaks(apply21Febrero(applyMetates(shapes,metates),febrero,victoria)),walking})).catch(error=>{loading=undefined;throw error})}
+]).then(([shapes,walking])=>({shapes,walking})).catch(error=>{loading=undefined;throw error})}
 self.onmessage=async(event)=>{
  const {id,origin,destination}=event.data;
  try{

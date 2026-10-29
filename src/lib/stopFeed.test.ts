@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {loadStopSources,mergeStopSources,STOP_SOURCES} from './stopFeed.ts';
+import general from '../../public/data/stops/general-stops.json' with {type:'json'};
+import insurgentes from '../../public/data/stops/insurgentes-stops.json' with {type:'json'};
+import mexico from '../../public/data/stops/mexico-stops.json' with {type:'json'};
+
+const fixtures={general,insurgentes,mexico};const sourceOf=(input:string)=>STOP_SOURCES.find(source=>input.endsWith(`${source}-stops.json`))!;
+const healthy=async(input:string)=>Response.json(fixtures[sourceOf(input)]);
+const all=await loadStopSources('/',healthy);assert.equal(all.stops.length,205);assert.deepEqual(all.failedSources,[]);assert.equal(all.loadedSources.length,3);
+const partial=await loadStopSources('/',async input=>sourceOf(input)==='mexico'?new Response('',{status:404}):healthy(input));
+assert.equal(partial.stops.length,general.stops.length+insurgentes.stops.length);assert.deepEqual(partial.failedSources,['mexico']);assert.deepEqual(partial.loadedSources,['general','insurgentes']);
+const called:string[]=[];const retry=await loadStopSources('/',async input=>{called.push(input);return healthy(input)},partial.failedSources);
+assert.equal(called.length,1,'Retry requests only the failed source');assert.equal(mergeStopSources(partial.stops,retry).length,205);
+assert.equal(mergeStopSources(all.stops,retry).length,205,'Retry does not duplicate loaded references');
+const malformed=await loadStopSources('/',async input=>sourceOf(input)==='general'?new Response('{bad json'):healthy(input));
+assert.deepEqual(malformed.failedSources,['general']);assert.equal(malformed.stops.length,114);
+const mixed=await loadStopSources('/',async()=>Response.json({stops:[...mexico.stops,{id:'bad',name:'Bad',coordinates:{lat:21.5,lng:-104.9},routeIds:'other'}]}),['mexico']);
+assert.equal(mixed.stops.length,mexico.stops.length);assert.deepEqual(mixed.failedSources,['mexico'],'Invalid route membership never turns into an unassigned reference');
+const invalid=await loadStopSources('/',async()=>Response.json({stops:null}));assert.equal(invalid.stops.length,0);assert.deepEqual(invalid.failedSources,[...STOP_SOURCES]);
+const controller=new AbortController();controller.abort();let signalled=0;
+const aborted=await loadStopSources('/',async(_input,init)=>{if(init?.signal===controller.signal)signalled++;throw new Error('aborted')},STOP_SOURCES,controller.signal);
+assert.equal(signalled,3);assert.equal(aborted.stops.length,0);
+console.log('OK: 205 current references validate; healthy sources survive 404/invalid JSON, scoped retry merges without duplication, metadata validation and cancellation.');

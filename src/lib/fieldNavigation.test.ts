@@ -2,6 +2,7 @@ import {meters,type Point} from './router.ts';
 import {reliableProgressSample,updateProgress,type ProgressState} from './progressGuard.ts';
 import {alightingStage,journeyStatus,type JourneyFix} from './journeyStatus.ts';
 import {appendReportFix,saveRouteReport,routeReportGeoJSON,type RouteReport} from './routeReport.ts';
+import {setLocalRecordPreference} from './localRecords.ts';
 import {isDeliverableAd,type AdCampaign} from './ads.ts';
 import {sponsoredIntroTiming} from './sponsoredTrip.ts';
 import ads from '../../public/data/ads.json' with {type:'json'};
@@ -36,7 +37,7 @@ report=appendReportFix(report,off[0],1000);report=appendReportFix(report,off[1],
 expect(report.fixes.length===2,'An explicitly started report captures reliable readings');
 expect(appendReportFix(report,{...off[2],accuracy:100},17000)===report,'Reports omit imprecise GPS');
 const values=new Map<string,string>(),storage={getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>{values.set(key,value)}};
-expect(saveRouteReport(report,storage),'Local report storage works independently of advertising');
+setLocalRecordPreference(true,storage);expect(saveRouteReport(report,storage),'Consented local report storage works independently of advertising');
 const geo=routeReportGeoJSON({...report,endedAt:17000});
 expect(geo.features[0]?.geometry.type==='LineString'&&geo.features[0].properties.verified===false,'Export a proposed GeoJSON trace, never mark it verified');
 expect(routeReportGeoJSON({...report,fixes:[...report.fixes,{point:point(5000,200),accuracy:8,time:60000}]}).features.length===2,'A GPS gap must not invent a long straight detour edge');

@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import type {Map,Marker,Popup,GeoJSONSource} from 'maplibre-gl';
 import type {Option,Point} from '../lib/router';
+import type {RoutePreview} from '../lib/routeExplorer';
 import type {RouteStop} from '../lib/navigation';
 import {projectProgress} from '../lib/navigation';
 import {visibleMapPadding,navigationCamera,mapFocus,shouldFitTripCamera,sameMapPadding,tripBoundsOptions} from '../lib/mapCamera';
@@ -15,7 +16,7 @@ import {trackAd} from '../lib/adEvents';
 import '../styles/vector-map.css';
 type Props={origin:Point;destination?:Point;access?:Point;place?:Place;option?:Option;adOption?:Option;onPick?:(point:Point)=>void;onDestinationChange?:(point:Point)=>void;onAdDestinationChange?:(point:Point,name:string)=>void;fullscreen?:boolean;stops?:RouteStop[];activeStop?:RouteStop;live?:Point;follow?:boolean;onPan?:()=>void;navigation?:boolean;heading?:number;activeLeg?:number;accuracy?:number;stale?:boolean;remaining?:number;ads?:AdCampaign[]};
 const coord=(p:Point):[number,number]=>[p.lng,p.lat];
-export default function StreetMap(props:Props & {locationPicker?:boolean;hideOrigin?:boolean;centerPicker?:MapSelection;onPickerChange?:(id:number,point:Point,moving:boolean)=>void;cameraRequest?:number}){
+export default function StreetMap(props:Props & {routePreview?:RoutePreview;locationPicker?:boolean;hideOrigin?:boolean;centerPicker?:MapSelection;onPickerChange?:(id:number,point:Point,moving:boolean)=>void;cameraRequest?:number}){
  const container=useRef<HTMLDivElement>(null),map=useRef<Map|null>(null),latest=useRef(props),markers=useRef<Marker[]>([]),liveMarker=useRef<Marker|null>(null);
  latest.current=props;
  const draw=useRef<()=>void>(()=>{}),updateAccuracy=useRef<()=>void>(()=>{}),camera=useRef<(reason?:'data'|'resize'|'reset'|'picker')=>void>(()=>{}),updateMarkers=useRef<()=>void>(()=>{}),updateAds=useRef<()=>void>(()=>{}),wakeAnimation=useRef<()=>void>(()=>{});
@@ -23,7 +24,9 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
  const activeStopMarker=useRef<Marker|null>(null);
  function padding(){
   const rect=container.current!.getBoundingClientRect(),main=container.current!.closest('main');
-  const top=main?.querySelector('.dynamic-island, .navigation-top, .nav-top-card, .map-top-minimal, .home-brand-row')?.getBoundingClientRect(),bottom=main?.querySelector('.map-sheet, .home-content')?.getBoundingClientRect();
+  const header=main?.querySelector('.dynamic-island, .navigation-top, .nav-top-card, .map-top-minimal, .home-brand-row')?.getBoundingClientRect();
+  const actions=latest.current.routePreview?main?.querySelector('.home-map-actions')?.getBoundingClientRect():undefined;
+  const top=actions&&(!header||actions.bottom>header.bottom)?actions:header,bottom=main?.querySelector('.map-sheet, .home-content')?.getBoundingClientRect();
   // The control container includes its margins; reserve those too, not just text.
   const creditHeight=container.current!.querySelector('.maplibregl-ctrl-bottom-right')?.getBoundingClientRect().height??44;
   const p=visibleMapPadding(rect,top,bottom,creditHeight);
@@ -72,7 +75,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
    instance.on('idle',()=>{if(!disposed)setError('')});
    draw.current=()=>{
     if(!instance?.getStyle()?.layers)return;
-    const current=latest.current,features=current.option?.legs.flatMap((leg,index)=>{
+    const current=latest.current,features=current.routePreview?current.routePreview.lines.map(line=>({type:'Feature' as const,geometry:{type:'LineString' as const,coordinates:line.map(coord)},properties:{color:current.routePreview!.color,walk:false,width:6}})):current.option?.legs.flatMap((leg,index)=>{
      if(leg.kind==='walk'&&!leg.geometry)return [];
      const coordinates=(leg.geometry??[leg.from,leg.to]).map(coord);if(coordinates.length<2)return [];
      return [{type:'Feature' as const,geometry:{type:'LineString' as const,coordinates},properties:{color:leg.kind==='bus'?leg.route?.color??'#0a9364':mapAppearance(theme.matches).walking,walk:leg.kind==='walk',width:(!current.navigation||index===(current.activeLeg??0))?6:4}}];
@@ -209,9 +212,10 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
      if(reason==='reset'&&!current.follow){const journey=current.adOption??current.option,bounds=new M.LngLatBounds(coord(current.origin),coord(current.destination??current.origin));journey?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(point=>bounds.extend(coord(point)))});instance.fitBounds(bounds,{...tripBoundsOptions(cameraPadding,!window.matchMedia('(prefers-reduced-motion: reduce)').matches),bearing:0,pitch:0})}
      else if(current.follow&&!initialized){instance.jumpTo({center:coord(current.live??current.origin),zoom:17.5,bearing:current.heading??0,pitch:35,padding:padding()});initialized=true}
     }
-    else if(shouldFitTripCamera(exploring,reason)){
+    else if(shouldFitTripCamera(exploring,reason)||current.routePreview&&reason==='resize'&&!exploring){
      exploring=false;
-     if(current.destination){const bounds=new M.LngLatBounds(coord(current.hideOrigin?current.destination:current.origin),coord(current.destination));if(current.access)bounds.extend(coord(current.access));current.option?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(p=>bounds.extend(coord(p)))});current.stops?.forEach(stop=>bounds.extend(coord(stop.coordinates)));instance.fitBounds(bounds,tripBoundsOptions(cameraPadding,reason==='reset'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches))}
+     if(current.routePreview){const points=current.routePreview.lines.flat();if(points.length){const bounds=new M.LngLatBounds(coord(points[0]),coord(points[0]));points.forEach(point=>bounds.extend(coord(point)));instance.fitBounds(bounds,{...tripBoundsOptions(cameraPadding),bearing:0,pitch:0})}}
+     else if(current.destination){const bounds=new M.LngLatBounds(coord(current.hideOrigin?current.destination:current.origin),coord(current.destination));if(current.access)bounds.extend(coord(current.access));current.option?.legs.forEach(leg=>{bounds.extend(coord(leg.from));bounds.extend(coord(leg.to));leg.geometry?.forEach(p=>bounds.extend(coord(p)))});current.stops?.forEach(stop=>bounds.extend(coord(stop.coordinates)));instance.fitBounds(bounds,tripBoundsOptions(cameraPadding,reason==='reset'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches))}
      else instance.jumpTo({center:coord(current.origin),zoom:13,padding:cameraPadding});
     }else if(reason==='resize')instance.setPadding(cameraPadding);
    };
@@ -242,7 +246,7 @@ export default function StreetMap(props:Props & {locationPicker?:boolean;hideOri
   const wake=()=>wakeAnimation.current();document.addEventListener('visibilitychange',wake);
   return()=>{disposed=true;window.clearInterval(adTimer);cancelAnimationFrame(frame);wakeAnimation.current=()=>{};document.removeEventListener('visibilitychange',wake);theme.removeEventListener('change',change);observer?.disconnect();activeStopMarker.current?.remove();activeStopMarker.current=null;instance?.remove();map.current=null;liveMarker.current=null;markers.current=[]};
  },[props.navigation]);
- useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current()},[ready,props.origin,props.destination,props.option,props.navigation,props.activeLeg,props.hideOrigin]);
+ useEffect(()=>{if(!ready)return;draw.current();if(!props.navigation)camera.current(props.routePreview?'reset':'data')},[ready,props.origin,props.destination,props.option,props.routePreview,props.navigation,props.activeLeg,props.hideOrigin]);
  useEffect(()=>{if(ready)updateAccuracy.current()},[ready,props.live,props.accuracy]);
  useEffect(()=>{if(ready)camera.current('picker')},[ready,props.centerPicker?.id]);
  useEffect(()=>{if(ready&&props.cameraRequest!==undefined)camera.current('reset')},[ready,props.cameraRequest]);

@@ -24,6 +24,8 @@ import '../styles/passenger-settings.css';
 import {replaceWalkingLeg} from '../lib/walkingReroute';
 import type {UpdateWalkingLeg} from './useWalkingReroute';
 import {installBoarding} from '../lib/boarding';
+import {loadStopSources,mergeStopSources,STOP_SOURCES,type StopSource} from '../lib/stopFeed';
+import {pruneLocalRecords} from '../lib/localRecords';
 import type {UpdatePickup} from './useBoardingJourney';
 import {TEPIC_MAP_CENTER,planningLocation,withinServiceArea,beginMapSelection,updateMapSelection,type Endpoint,type MapSelection} from '../lib/mapSelection';
 import '../styles/planning.css';
@@ -40,7 +42,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const [compassStart,setCompassStart]=useState({enabled:false,issue:''}),[starting,setStarting]=useState(false);
  const [journeyProgress,setJourneyProgress]=useState<{optionId:string;step:number;arrived:boolean}|null>(null);
  const [recoverable,setRecoverable]=useState<JourneySession>();
- useEffect(()=>{if(!onOpenAccount)setRecoverable(readJourney());const clear=()=>setRecoverable(undefined);window.addEventListener('pdp:journey-cleared',clear);return()=>window.removeEventListener('pdp:journey-cleared',clear)},[]);
+ useEffect(()=>{pruneLocalRecords();if(!onOpenAccount)setRecoverable(readJourney());const clear=()=>setRecoverable(undefined);window.addEventListener('pdp:journey-cleared',clear);return()=>window.removeEventListener('pdp:journey-cleared',clear)},[]);
  const [restoredAccess,setRestoredAccess]=useState<{meters:number;entrance:string}>();
  async function startTrip(index:number){
   if(starting)return;
@@ -81,6 +83,10 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
  const [options,setOptions]=useState<Option[]>([]),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[pickOrigin,setPickOrigin]=useState(false),[message,setMessage]=useState('');
+ const [failedStopSources,setFailedStopSources]=useState<StopSource[]>([]),[stopsBusy,setStopsBusy]=useState(false),[stopRetry,setStopRetry]=useState(0);
+ const failedStops=useRef<StopSource[]>([]);
+ // Keep the keyboard/search dock stable between pointer-down and click. Keyboard activation is unchanged.
+ const stopNotice=failedStopSources.length>0?<div className="stops-load-notice" role="status"><span>{failedStopSources.length===STOP_SOURCES.length?'Referencias de abordaje no disponibles.':'Referencias de abordaje incompletas.'} Puedes planear con el mapa; confirma el punto y el sentido con el chofer.</span><button type="button" disabled={stopsBusy} onPointerDown={event=>event.preventDefault()} onClick={()=>setStopRetry(value=>value+1)}>{stopsBusy?'Reintentando…':'Reintentar referencias'}</button></div>:undefined;
  useEffect(()=>{
   if(onOpenAccount||view!=='follow'||!options[selected]||!destination)return;
   if(journeyProgress?.arrived){clearJourney();return;}
@@ -101,7 +107,13 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const updatePickup=useCallback<UpdatePickup>((index,walk,previousBus,bus,point)=>{
   setOptions(previous=>{const current=previous[selected];if(!current)return previous;const updated=installBoarding(current,index,walk,previousBus,bus,point);return updated?previous.map((item,i)=>i===selected?updated:item):previous;});
  },[selected]);
- useEffect(()=>{let active=true;Promise.all(['general','insurgentes','mexico'].map(async name=>{const r=await fetch(`${import.meta.env.BASE_URL}data/stops/${name}-stops.json`);if(!r.ok)throw new Error();const d=await r.json();return (d.stops??[]).map((s:Stop)=>({...s,source:name}))})).then(lists=>{if(active)setStops(lists.flat())}).catch(()=>{if(active)setMessage('No se pudieron cargar las sugerencias. Puedes usar el mapa.')});return()=>{active=false}},[]);
+ useEffect(()=>{
+  const controller=new AbortController();setStopsBusy(true);
+  void loadStopSources(import.meta.env.BASE_URL,fetch,stopRetry?failedStops.current:STOP_SOURCES,controller.signal).then(result=>{
+   if(controller.signal.aborted)return;
+   setStops(previous=>mergeStopSources(previous,result));failedStops.current=result.failedSources;setFailedStopSources(result.failedSources);setStopsBusy(false);
+  });return()=>controller.abort();
+ },[stopRetry]);
  useEffect(()=>{let active=true;fetch(`${import.meta.env.BASE_URL}data/places.json`).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{if(active&&Array.isArray(data.places))setPlaces(data.places)}).catch(()=>{});return()=>{active=false}},[]);
  useEffect(()=>{let active=true,version=0;const refresh=()=>{const current=++version;void loadPublicAds(ADS_MODE,`${import.meta.env.BASE_URL}data/ads.json`,ADS_FEED_URL,fetch,ADS_API_KEY).then(data=>{if(active&&current===version)setAds(data)})};
   refresh();const timer=ADS_MODE==='remote'?window.setInterval(refresh,60000):undefined;
@@ -213,7 +225,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  }
  function back(){request.current++;setBusy(false);setMessage('');setView('search');closeEditor();cancelPicker()}
  if(view==='sponsor'&&sponsorIntro&&activeSponsor)return <SponsoredTripIntro ad={activeSponsor} routeName={sponsorIntro.routeName} routeId={sponsorIntro.routeId} onContinue={()=>{setSponsorViewed(true);setView('follow')}}/>;
- if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:restoredAccess} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
+ if(view==='follow'&&options[selected]&&destination)return <FollowRoute option={options[selected]} stops={stops} dataNotice={stopNotice} ads={ads} sponsoredTrip={sponsorViewed?activeSponsor:undefined} origin={origin} destination={destination} originName={originLabel} destinationName={query} placeAccess={chosenPlace?{meters:chosenPlace.accessMeters,entrance:chosenPlace.entrance}:restoredAccess} place={chosenPlace} compassStart={compassStart} initialStep={journeyProgress?.optionId===options[selected].id?journeyProgress.step:0} initialArrived={journeyProgress?.optionId===options[selected].id?journeyProgress.arrived:false} onProgress={(step,arrived)=>setJourneyProgress({optionId:options[selected].id,step,arrived})} onExit={()=>setView('trip')} onReplan={replanFromLocation} onWalkReroute={updateWalkingLeg} onPickup={updatePickup} onAdDestinationChange={planSponsorTrip}/>;
  if(welcome)return <main className="welcome-screen brand-welcome pdp-blue-glass"><div className="welcome-brand"><span className="welcome-mark"><UiIcon name="route"/></span><h1>PorDóndePasa</h1><p>Tu ciudad. Tu camino.</p></div><div className="welcome-action"><small>TEPIC · XALISCO</small><button type="button" onClick={()=>setWelcome(false)}>Empezar<UiIcon name="arrow"/></button></div></main>;
  if(view==='trip')return <main className="trip-screen pdp-blue-glass" data-screen={pickOrigin?'editar-origen':pickDestination?'editar-destino':'rutas-disponibles'}>
   <StreetMap fullscreen ads={ads} origin={origin} hideOrigin={originStatus!=='confirmed'} destination={destination} access={chosenPlace?.access} place={chosenPlace} option={options[selected]} cameraRequest={cameraRequest} centerPicker={mapSelection??undefined} onPickerChange={(id,point,moving)=>setMapSelection(current=>updateMapSelection(current,id,point,moving))} onDestinationChange={point=>beginPicker('destination',point)} onAdDestinationChange={moveDestination}/>
@@ -247,6 +259,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    </div>:<>
    {originStatus!=='confirmed'&&<div className="origin-confirmation" role="status"><strong>{originStatus==='loading'?'Buscando tu ubicación…':'Confirma desde dónde sales'}</strong><p>{originIssue||'Puedes elegir el punto de partida en el mapa mientras comprobamos tu GPS.'}</p><div><button type="button" disabled={editLocating||originStatus==='loading'} onClick={()=>void useCurrentOrigin()}>Usar mi ubicación</button><button type="button" onClick={()=>beginPicker('origin')}>Elegir origen en mapa</button></div></div>}
    {busy&&<div className="trip-status" role="status"><span className="loading-dot"/>Buscando tu ruta…</div>}
+   {stopNotice}
    {message&&<div className="trip-status" role="status">{message}<button className="text-button" onClick={plan}>Buscar de nuevo</button></div>}
    
    
@@ -258,5 +271,5 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    </>}
   </MapSheet>
  </main>;
- return <>{recoverable&&<JourneyRecovery session={recoverable} onResume={resumeJourney} onDiscard={()=>{clearJourney();setRecoverable(undefined)}}/>}<HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/></>;
+ return <>{recoverable&&<JourneyRecovery session={recoverable} onResume={resumeJourney} onDiscard={()=>{clearJourney();setRecoverable(undefined)}}/>}<HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} dataNotice={stopNotice} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/></>;
 }

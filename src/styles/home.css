@@ -10,7 +10,7 @@
 .pdp-home .home-intro h1 span{color:var(--brand-text)}.pdp-home .home-intro p{font-size:14px;line-height:1.5;color:var(--ui-muted);margin:0}
 .pdp-home .home-search{position:relative;z-index:6;display:block;margin:0}.pdp-home .home-search-row{display:flex;gap:8px}
 .pdp-home .home-field{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:56px;padding:13px 14px;border:1px solid var(--ui-line);border-radius:18px;background:var(--ui-panel);color:var(--brand-text);box-shadow:0 4px 20px var(--brand-shadow)}
-.pdp-home input{font:inherit;font-size:16px;min-width:0;width:100%;color:var(--ui-text);border:0;background:none;outline:none;padding:0;text-align:left}.pdp-home input::placeholder{color:var(--ui-muted);opacity:1}
+.pdp-home input[type=search]{font:inherit;font-size:16px;min-width:0;width:100%;color:var(--ui-text);border:0;background:none;outline:none;padding:0;text-align:left}.pdp-home input[type=search]::placeholder{color:var(--ui-muted);opacity:1}
 .pdp-home .home-field:focus-within{outline:3px solid var(--brand-focus);outline-offset:2px}
 .pdp-home .home-submit{display:grid;place-items:center;min-width:52px;border:0;border-radius:17px;background:var(--brand-action);color:var(--brand-on-action)}
 .pdp-home .home-suggestions{position:absolute;top:calc(100% + 8px);left:0;right:0;max-height:min(48svh,360px);overflow:auto;overscroll-behavior:contain;border:1px solid var(--ui-line);background:var(--ui-panel);border-radius:18px;box-shadow:0 10px 36px var(--brand-shadow);padding:6px}
@@ -38,6 +38,18 @@
 .pdp-home .home-catalog-list>p button{display:block;min-height:44px;border:0;background:none;color:var(--brand-text);text-decoration:underline}.pdp-home .home-catalog-route{display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 6px;border-bottom:1px solid var(--ui-line)}
 .pdp-home .home-catalog-route>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--ui-soft);flex-shrink:0}.pdp-home .home-catalog-route strong{font-size:14px;line-height:1.3}.pdp-home .home-catalog-route small{display:block;font-size:12px;line-height:1.4;color:var(--ui-muted);margin-top:4px}
 .pdp-home .home-catalog-plan{display:flex;justify-content:center;align-items:center;gap:9px;min-height:50px;width:100%;border:0;border-radius:15px;background:var(--brand-action);color:var(--brand-on-action);font-weight:650;font-size:15px}
+.pdp-home button.home-catalog-route{width:100%;border:0;border-bottom:1px solid var(--ui-line);background:transparent;text-align:left;color:var(--ui-text)}
+.pdp-home button.home-catalog-route:hover,.pdp-home button.home-catalog-route[aria-pressed=true]{background:var(--ui-soft)}
+.pdp-home .home-catalog-route>.home-catalog-route-name{display:block;flex:1;min-width:0;width:auto;height:auto;background:none;border-radius:0;overflow-wrap:anywhere}
+.pdp-home .home-catalog-route>.ui-icon{width:18px;height:18px;color:var(--ui-muted)}
+.pdp-home .home-route-preview header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pdp-home .home-route-identity{display:flex;align-items:center;gap:9px;min-width:0}
+.pdp-home .home-route-preview h1{font-size:18px;line-height:1.25;margin:0;overflow-wrap:anywhere}
+.pdp-home .home-route-preview p{font-size:12px;line-height:1.45;color:var(--ui-muted);margin:5px 0 9px}
+.pdp-home .home-route-preview-actions{display:flex;gap:7px;flex-wrap:wrap}
+.pdp-home .home-route-preview-actions button{display:flex;align-items:center;justify-content:center;gap:6px;flex:1;min-height:44px;padding:7px 9px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-soft);color:var(--brand-text);font-size:12px}
+.pdp-home .home-route-preview-actions button:disabled{opacity:.55;cursor:wait}
+.pdp-home .home-route-preview-actions .ui-icon{width:17px;height:17px}
 @media(min-width:900px){.pdp-home .home-content{max-width:480px}.pdp-home .home-intro{margin-top:40px}.pdp-home .home-map-preview{height:180px}}
 @media(max-width:360px){.pdp-home .home-content{padding-inline:20px}.pdp-home .home-wordmark{font-size:17px}.pdp-home .home-navigation{margin-inline:-20px}.pdp-home .home-map-preview{height:125px}}
 @media(max-height:680px){.pdp-home .home-content{padding-top:max(18px,env(safe-area-inset-top))}.pdp-home .home-intro{margin:22px 0 17px}.pdp-home .home-intro h1{font-size:34px;margin-bottom:11px}.pdp-home .home-explore{margin-top:16px}.pdp-home .home-map-preview{height:120px}}

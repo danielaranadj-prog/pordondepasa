@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {findRoutes,boardingAlternative,meters,type Point,type Shape} from './router.ts';
 import {waitingCandidate,compatibleBoarding,installBoarding,shouldAskWaiting} from './boarding.ts';
 import {readWaiting,saveWaiting,type WaitingRecord} from './waitingRecords.ts';
+import {localRecordKey,setLocalRecordPreference} from './localRecords.ts';
 import {stopTimeline} from './stopTimeline.ts';
 import {navigationCamera} from './mapCamera.ts';
 import type {RouteStop} from './navigation.ts';
@@ -57,8 +58,8 @@ assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(250,now+299000),now+299000)
 assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(250,now),now+300000),'Lost signal never prompts a waiting claim');
 assert.ok(!shouldAskWaiting(waiting,point(8,250),fix(350,now+300000),now+300000),'Do not ask after leaving the waiting point');
 assert.ok(!shouldAskWaiting({...waiting,reasons:[{reason:'full',at:now+299000}]},point(8,250),fix(250,now+300000),now+300000),'Respect the response cooldown');
-saveWaiting({...record,...{point:point(0,0),history:stable}} as WaitingRecord,storage);
-assert.deepEqual(readWaiting(storage),[record]);assert.ok(![...memory.values()][0].includes('coordinates'));
+setLocalRecordPreference(true,storage);saveWaiting({...record,...{point:point(0,0),history:stable}} as WaitingRecord,storage);
+assert.deepEqual(readWaiting(storage),[record]);assert.ok(!memory.get(localRecordKey('waiting'))!.includes('coordinates'));
 for(let i=0;i<110;i++)saveWaiting({...record,id:String(i)},storage);assert.equal(readWaiting(storage).length,100);
 const mexico=data.routes.find(route=>route.id==='m-xico')!;assert.ok(mexico);
 const original=JSON.stringify(mexico);let checks=0;

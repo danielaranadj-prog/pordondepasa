@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {journeyService,routeService,serviceNotice,tepicClock} from './serviceHours.ts';
+import {findRoutes,type Leg,type Shape} from './router.ts';
+const at=(s:string)=>new Date(s+'-07:00');
+const p={lat:21.5,lng:-104.9},q={lat:21.515,lng:-104.9};
+const shape=(id:string):Shape=>({id,name:id,color:'#006be6',groupName:'',coordinates:[p,{lat:21.5075,lng:-104.9},q]});
+const walk=(minutes:number):Leg=>({kind:'walk',from:p,to:p,minutes,meters:minutes*78});
+const bus=(id:string,minutes=10):Leg=>({kind:'bus',from:p,to:q,route:shape(id),minutes,meters:minutes*270});
+assert.equal(routeService(shape('pedregal'),at('2026-10-30T04:59:00')).available,false);
+assert.equal(routeService(shape('pedregal'),at('2026-10-30T05:00:00')).available,true);
+assert.equal(routeService(shape('pedregal'),at('2026-10-30T20:29:00')).available,true);
+assert.equal(routeService(shape('pedregal'),at('2026-10-30T20:30:00')).available,false);
+for(const id of ['m-xico','insurgentes','canoas','pueblo-nuevo','lomas-verdes']){
+ assert.equal(routeService(shape(id),at('2026-10-30T21:29:00')).available,true);
+ assert.equal(routeService(shape(id),at('2026-10-30T21:30:00')).available,false);
+ assert.equal(routeService(shape(id),at('2026-10-31T20:00:00')).available,false);
+ assert.equal(routeService(shape(id),at('2026-11-01T20:00:00')).available,false);
+}
+assert.equal(routeService(shape('lomas-verdes-centro'),at('2026-10-30T21:00:00')).available,false,'Do not extend an unconfirmed variant');
+assert.equal(routeService(shape('m-xico'),at('2026-10-31T19:59:00')).available,true);
+assert.equal(serviceNotice(at('2026-10-30T22:00:00')).kind,'night');
+assert.equal(serviceNotice(at('2026-10-30T04:00:00')).kind,'before-opening');
+assert.equal(serviceNotice(at('2026-10-31T20:15:00')).kind,'closed');
+assert.equal(serviceNotice(at('2026-10-30T20:15:00')).kind,'closing');
+assert.equal(tepicClock(new Date('2026-10-31T03:00:00Z')).weekday,5,'Use Tepic weekday, not UTC/device day');
+assert.equal(journeyService({legs:[walk(5),bus('pedregal')]},at('2026-10-30T20:20:00')).available,false,'Walking + estimated wait can miss the closing');
+assert.equal(journeyService({legs:[bus('m-xico',20),walk(3),bus('pedregal')]},at('2026-10-30T20:00:00')).available,false,'Check second boarding after first ride and transfer walk');
+assert.equal(journeyService({legs:[walk(5),bus('m-xico',35),walk(3)]},at('2026-10-30T21:15:00')).available,true,'A last ride may end after estimated closing; do not require alighting by closing');
+assert.equal(journeyService({legs:[bus('m-xico',20)]},at('2026-10-30T22:10:00'),true).available,true,'Never cancel an already boarded bus');
+assert.equal(journeyService({legs:[bus('m-xico',10),walk(2),bus('canoas')]},at('2026-10-30T21:20:00'),true).available,false,'Still check a future transfer during active navigation');
+assert.equal(journeyService({legs:[walk(7)]},at('2026-10-30T23:00:00')).available,true,'Walking is independent of bus operating hours');
+assert.equal(journeyService({legs:[walk(8),bus('pedregal')]},at('2026-10-30T04:50:00')).available,true,'An early walk may reach boarding after 05:00');
+const routes=['closed1','closed2','closed3','closed4','closed5','m-xico'].map(shape);
+const options=findRoutes(p,q,routes,5,o=>journeyService(o,at('2026-10-30T21:00:00')).available?o:null);
+assert.ok(options.some(o=>o.legs.some(l=>l.route?.id==='m-xico')),'Filter before ranking/truncation so a later eligible route is retained');
+assert.ok(options.every(o=>o.legs.every(l=>l.kind!=='bus'||l.route?.id==='m-xico')));
+console.log('OK: Tepic timezone, weekdays/weekends, closing boundaries, exact exceptions, future transfers, last rides, walking and pre-ranking service filter.');

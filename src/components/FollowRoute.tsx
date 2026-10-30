@@ -1,3 +1,4 @@
+import {journeyService} from '../lib/serviceHours';
 import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import type {Option,Point} from '../lib/router';
 import type {Place} from '../lib/places';
@@ -124,6 +125,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,dataNotice,o
  const maneuver=leg.kind==='walk'&&trusted?nextManeuver(line,accepted.along):undefined;
  const totalMeters=remaining+option.legs.slice(step+1).reduce((sum,l)=>sum+l.meters,0);
  const totalMinutes=remainingTripMinutes(option,step,remaining);
+ const futureService=journeyService({legs:option.legs.slice(step).map((item,i)=>i===0?{...item,minutes:item.meters?item.minutes*Math.min(1,remaining/item.meters):item.minutes}:item)},clock,leg.kind==='bus');
  const offRoute=!boarding.waiting&&!boarding.candidate&&(health.kind==='off-route'||health.kind==='wrong-direction'||leg.kind==='walk'&&!!walkingDeviation(history,line,clock,hasProgress?accepted.along:undefined));
  const proximityTarget=leg.kind==='walk'?leg.to:destination;
  const proximityLabel=leg.kind==='walk'&&step<option.legs.length-1?'al abordaje':'al destino';
@@ -381,6 +383,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,dataNotice,o
      <span>{stale?'GPS sin actualizar; esperando señal.':locationIssue||(!live?'Esperando GPS…':hasProgress?'Último avance confirmado. Comprobando GPS…':'Comprobando el avance GPS…')}</span>
     </div>
    )}
+   {!arrived&&!futureService.available&&<p className="service-option-note" role="status">{futureService.message} Si ya abordaste, continúa con el seguimiento; para otro abordaje confirma con el operador.</p>}
    {!arrived&&<div className="nav-notice-controls"><span>{leg.kind==='walk'&&!boarding.waiting?'Mantén la vista en el camino':'Distancias y tiempos estimados'}</span><span>{voice?'Voz activada':'Voz en silencio'}</span></div>}
    {showStops&&(
     <div className="nav-sheet-timeline-drawer">

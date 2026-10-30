@@ -1,3 +1,4 @@
+import {journeyService,serviceNotice} from './serviceHours';
 import {findRoutes, type Shape} from './router';
 import {WalkingRouter,type WalkNetwork} from './walking';
 import {loadTransitShapes} from './transitShapes';
@@ -20,6 +21,13 @@ self.onmessage=async(event)=>{
   const {shapes,walking}=await load();
   if(!walking.snaps(origin).length){self.postMessage({id,code:'origin_off_street',error:'El origen quedó fuera de las calles disponibles. Ajusta el pin sobre una calle y confirma el origen.'});return;}
   if(!walking.snaps(destination).length){self.postMessage({id,code:'destination_off_street',error:'El destino quedó fuera de las calles disponibles. Ajusta el pin sobre una calle y confirma el destino.'});return;}
-  self.postMessage({id,options:findRoutes(origin,destination,shapes,5,candidate=>walking.refineCandidate(candidate))});
+  const departAt=Number.isFinite(event.data.departAt)?event.data.departAt:Date.now();
+  let closedMessage='';
+  const options=findRoutes(origin,destination,shapes,5,candidate=>{
+   const refined=walking.refineCandidate(candidate);if(!refined)return null;
+   const service=journeyService(refined,departAt);if(!service.available){closedMessage=service.message;return null}return refined;
+  });
+  if(!options.length&&closedMessage){const notice=serviceNotice(departAt);self.postMessage({id,code:'outside_service_hours',error:`${notice.title}. ${closedMessage} Considera Uber, DiDi, inDrive o taxi.`});return}
+  self.postMessage({id,options});
  }catch(error){self.postMessage({id,...(error instanceof DatasetChangedError?{code:'dataset_changed',error:error.message}:{error:'No se pudieron calcular las rutas. Comprueba la conexión o usa el viaje guardado.'})});}
 };

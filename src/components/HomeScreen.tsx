@@ -1,3 +1,4 @@
+import ServiceHoursNotice from './ServiceHoursNotice';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import type {TransitStop} from '../lib/navigation';
 import type {Point} from '../lib/router';
@@ -16,10 +17,10 @@ import '../styles/blue-glass.css';
 // Presentation contract: optional saved destinations do not depend on an auth provider.
 export type HomeSavedPlace={kind:string;label:string;point:Point};
 type SavedPlace=HomeSavedPlace;
-type Props={query:string;ready:boolean;stops:TransitStop[];places:Place[];message:string;dataNotice?:ReactNode;onQuery:(value:string)=>void;onChoose:(stop:TransitStop)=>void;onChoosePlace:(place:Place)=>void;onSearch:()=>void;onMap:()=>void;savedPlaces?:SavedPlace[];onChooseSaved?:(place:SavedPlace)=>void;onOpenAccount?:()=>void};
+type Props={serviceNow:number;query:string;ready:boolean;stops:TransitStop[];places:Place[];message:string;dataNotice?:ReactNode;onQuery:(value:string)=>void;onChoose:(stop:TransitStop)=>void;onChoosePlace:(place:Place)=>void;onSearch:()=>void;onMap:()=>void;savedPlaces?:SavedPlace[];onChooseSaved?:(place:SavedPlace)=>void;onOpenAccount?:()=>void};
 type CatalogRoute={id:string;name:string;color:string;groupName?:string};
 const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-export default function HomeScreen({query,ready,stops,places,message,dataNotice,onQuery,onChoose,onChoosePlace,onSearch,onMap,savedPlaces=[],onChooseSaved,onOpenAccount}:Props){
+export default function HomeScreen({serviceNow,query,ready,stops,places,message,dataNotice,onQuery,onChoose,onChoosePlace,onSearch,onMap,savedPlaces=[],onChooseSaved,onOpenAccount}:Props){
  const [catalogOpen,setCatalogOpen]=useState(false),[catalogQuery,setCatalogQuery]=useState(''),[catalog,setCatalog]=useState<CatalogRoute[]|null>(null),[catalogIssue,setCatalogIssue]=useState(''),[retry,setRetry]=useState(0);
  const [selectedRoute,setSelectedRoute]=useState<CatalogRoute|null>(null),[preview,setPreview]=useState<RoutePreview>(),[previewIssue,setPreviewIssue]=useState(''),[previewRetry,setPreviewRetry]=useState(0),[cameraRequest,setCameraRequest]=useState(0);
  const shapes=useRef<Shape[]|null>(null);
@@ -78,9 +79,11 @@ export default function HomeScreen({query,ready,stops,places,message,dataNotice,
   <div className="home-content">
    {selectedRoute?<section className="home-route-preview" aria-label={`Recorrido de ${selectedRoute.name}`}>
     <header><span className="home-route-identity"><UiIcon name="bus" style={{color:selectedRoute.color}}/><h1>{selectedRoute.name}</h1></span><button type="button" className="home-profile" onClick={closePreview} aria-label="Cerrar recorrido"><UiIcon name="close"/></button></header>
+    <ServiceHoursNotice now={serviceNow} route={selectedRoute}/>
     <p role="status">{previewIssue||(!preview?'Cargando recorrido…':preview.incomplete?'Recorrido registrado con tramos pendientes de verificar. Los espacios sin datos no se conectan.':'Recorrido completo registrado. Acerca el mapa para ver las calles por donde pasa.')}</p>
     <div className="home-route-preview-actions"><button type="button" onClick={()=>openCatalog()}>Ver otra ruta</button>{previewIssue?<button type="button" onClick={()=>setPreviewRetry(n=>n+1)}>Reintentar</button>:<button type="button" disabled={!preview} onClick={()=>setCameraRequest(n=>n+1)}><UiIcon name="route"/>Ver recorrido completo</button>}</div>
    </section>:<><section className="home-intro"><h1>Tu próxima ruta, a un toque.</h1><p>Tu ciudad. Tu camino.</p></section>
+   <ServiceHoursNotice now={serviceNow}/>
    <form className="home-search" aria-label="Buscar destino" onSubmit={event=>{event.preventDefault();if(ready)onSearch()}}>
     <div className="home-search-row"><label className="home-field"><UiIcon name="search"/><input ref={search} type="search" aria-label="¿A dónde vamos?" placeholder="¿A dónde vamos?" value={query} autoComplete="off" onChange={event=>onQuery(event.target.value)}/></label>{ready&&<button className="home-submit" type="submit" aria-label="Buscar cómo llegar"><UiIcon name="arrow"/></button>}</div>
     {hasSuggestions&&<div className="home-suggestions" aria-label="Sugerencias de destino">{places.map(place=><button type="button" key={`place:${place.id}`} onClick={()=>onChoosePlace(place)}><span className="home-suggestion-icon"><UiIcon name="pin"/></span><span className="home-suggestion-text"><strong>{place.name}</strong><small>{place.neighborhood||place.municipality||getPlaceCategoryLabel(place.category)}{place.status!=='verificado'?' · Por verificar':''}</small></span><UiIcon name="up-right"/></button>)}{stops.map(stop=><button type="button" key={`stop:${stop.id}`} onClick={()=>onChoose(stop)}><span className="home-suggestion-icon"><UiIcon name="bus"/></span><span className="home-suggestion-text"><strong>{stop.name}</strong><small>Referencia · Tepic y Xalisco</small></span><UiIcon name="up-right"/></button>)}</div>}

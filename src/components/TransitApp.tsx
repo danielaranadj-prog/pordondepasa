@@ -1,3 +1,5 @@
+import ServiceHoursNotice,{useServiceClock} from './ServiceHoursNotice';
+import {journeyService} from '../lib/serviceHours';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type Option, type Point } from '../lib/router';
 import {planRoutes,RoutePlanError} from '../lib/workerClient';
@@ -39,6 +41,7 @@ function optionLabel(option:Option,index:number,options:Option[]):string {
  return 'Alternativa';
 }
 export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:SavedPlace[];onOpenAccount?:()=>void}={}){
+ const serviceNow=useServiceClock();
  const [compassStart,setCompassStart]=useState({enabled:false,issue:''}),[starting,setStarting]=useState(false);
  const [journeyProgress,setJourneyProgress]=useState<{optionId:string;step:number;arrived:boolean}|null>(null);
  const [recoverable,setRecoverable]=useState<JourneySession>();
@@ -46,12 +49,16 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const [restoredAccess,setRestoredAccess]=useState<{meters:number;entrance:string}>();
  async function startTrip(index:number){
   if(starting)return;
+  const available=options[index]&&journeyService(options[index],Date.now());
+  if(available&&!available.available){setMessage(available.message+' Busca de nuevo para actualizar las opciones.');setView('trip');return;}
   setStarting(true);
   try{
   // Request within the user's button gesture, before mounting navigation.
   const result=await requestCompass().catch(()=>({enabled:false,issue:'La orientación no está disponible. Puedes usar el mapa.'}));
   if(journeyProgress?.optionId!==options[index]?.id)setJourneyProgress(null);
   const option=options[index];
+  const freshService=option&&journeyService(option,Date.now());
+  if(freshService&&!freshService.available){setMessage(freshService.message+' Busca de nuevo para actualizar las opciones.');setView('trip');return;}
   let match:typeof sponsorIntro;
   try{match=option?.legs.filter(leg=>leg.kind==='bus'&&leg.route).flatMap(leg=>
    ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name,routeId:leg.route!.id})))[0]}catch{/* Commercial content must never block a journey. */}
@@ -83,6 +90,11 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
  const originAccess=useRef<Point|undefined>(undefined);
  const originPlace=useRef<Place|undefined>(undefined);
  const [options,setOptions]=useState<Option[]>([]),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[pickOrigin,setPickOrigin]=useState(false),[message,setMessage]=useState('');
+ useEffect(()=>{
+  if(view!=='trip'||!options.length)return;
+  const next=options.filter(option=>journeyService(option,serviceNow).available);
+  if(next.length!==options.length){setOptions(next);setSelected(0);if(!next.length)setMessage('Las opciones quedaron fuera del horario estimado al actualizar la hora. Busca de nuevo o consulta transporte privado.');}
+ },[serviceNow,view,options]);
  const [failedStopSources,setFailedStopSources]=useState<StopSource[]>([]),[stopsBusy,setStopsBusy]=useState(false),[stopRetry,setStopRetry]=useState(0);
  const failedStops=useRef<StopSource[]>([]);
  // Keep the keyboard/search dock stable between pointer-down and click. Keyboard activation is unchanged.
@@ -198,7 +210,7 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    setPickOrigin(false);
    const next=await planRoutes(originAccess.current??originValue.current,target);if(id!==request.current)return;setOptions(next);setSelected(0);if(!next.length)setMessage('No encontramos un recorrido conectado por calles con los datos actuales. Prueba un punto cercano sobre una calle pública.');
   }catch(error){if(id===request.current){
-   if(error instanceof RoutePlanError){if(error.issue==='dataset_changed')setMessage(error.message);else{const source=error.issue==='origin_off_street';beginPicker(source?'origin':'destination',source?originValue.current:target);setMessage(error.message)}}
+   if(error instanceof RoutePlanError){if(error.issue==='dataset_changed'||error.issue==='outside_service_hours')setMessage(error.message);else{const source=error.issue==='origin_off_street';beginPicker(source?'origin':'destination',source?originValue.current:target);setMessage(error.message)}}
    else setMessage('No se pudieron cargar las rutas. Intenta de nuevo.');
   }}
   finally{if(id===request.current)setBusy(false)}
@@ -260,16 +272,17 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
    {originStatus!=='confirmed'&&<div className="origin-confirmation" role="status"><strong>{originStatus==='loading'?'Buscando tu ubicación…':'Confirma desde dónde sales'}</strong><p>{originIssue||'Puedes elegir el punto de partida en el mapa mientras comprobamos tu GPS.'}</p><div><button type="button" disabled={editLocating||originStatus==='loading'} onClick={()=>void useCurrentOrigin()}>Usar mi ubicación</button><button type="button" onClick={()=>beginPicker('origin')}>Elegir origen en mapa</button></div></div>}
    {busy&&<div className="trip-status" role="status"><span className="loading-dot"/>Buscando tu ruta…</div>}
    {stopNotice}
+   <ServiceHoursNotice now={serviceNow}/>
    {message&&<div className="trip-status" role="status">{message}<button className="text-button" onClick={plan}>Buscar de nuevo</button></div>}
    
    
    {!!options.length&&<><div className="carousel-heading"><span>Así puedes llegar</span><strong>{selected+1} de {options.length}</strong></div>
     {options.length>1&&<nav className="route-option-switcher" aria-label="Comparar opciones de viaje">{options.map((o,i)=><button key={o.id} type="button" aria-pressed={selected===i} onClick={()=>selectCard(i)}><strong>{o.minutes} min</strong><span>{o.legs.filter(l=>l.kind==='bus').map(l=>l.route?.name).join(' + ')||'A pie'}</span></button>)}</nav>}
-    <div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary,.journey-details')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><RouteChoiceCard option={o} stops={stops} ads={ads} label={optionLabel(o,index,options)} selected={selected===index} starting={starting} onSelect={()=>selectCard(index)} onStart={()=>void startTrip(index)} origin={origin} destination={destination} originName={originLabel} destinationName={query}/></article>)}</div>
+    <div ref={carousel} onScroll={followCards} onPointerDown={e=>{if(showAll)return;if((e.target as HTMLElement).closest('a,button,summary,.journey-details')){moved.current=false;return;}if(e.pointerType!=='mouse')return;drag.current={x:e.clientX,scroll:e.currentTarget.scrollLeft};moved.current=false;e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const delta=e.clientX-drag.current.x;if(Math.abs(delta)>5){moved.current=true;e.currentTarget.scrollLeft=drag.current.scroll-delta}}} onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);if(moved.current)selectCard(selected)}} onPointerCancel={()=>{drag.current=null}} onClickCapture={e=>{if(moved.current){e.preventDefault();e.stopPropagation();moved.current=false}}} className={'route-carousel '+(showAll?'route-list-view':'')}>{options.map((o,index)=><article key={o.id} className={'route-slide '+(selected===index?'active':'')}><RouteChoiceCard option={o} stops={stops} ads={ads} serviceNow={serviceNow} label={optionLabel(o,index,options)} selected={selected===index} starting={starting} onSelect={()=>selectCard(index)} onStart={()=>void startTrip(index)} origin={origin} destination={destination} originName={originLabel} destinationName={query}/></article>)}</div>
     <div className="carousel-dots">{options.map((o,i)=><button key={o.id} aria-label={`Ver opción ${i+1}`} aria-pressed={i===selected} onClick={()=>selectCard(i)}/>)}</div><small className="trip-estimate">Tiempo, espera, tarifa y caminata estimados; no son datos en tiempo real.</small></>}
    {!busy&&!options.length&&!message&&<div className="trip-status">{destination?(originStatus==='confirmed'?'Destino listo. Busca tus opciones de viaje.':'Destino listo. Confirma el origen para continuar.'):'Elige a dónde quieres ir.'}<button type="button" className="search" onClick={()=>destination?plan():beginPicker('destination')}>{destination?'Buscar cómo llegar →':'Elegir destino en mapa →'}</button></div>}
    </>}
   </MapSheet>
  </main>;
- return <>{recoverable&&<JourneyRecovery session={recoverable} onResume={resumeJourney} onDiscard={()=>{clearJourney();setRecoverable(undefined)}}/>}<HomeScreen query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} dataNotice={stopNotice} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/></>;
+ return <>{recoverable&&<JourneyRecovery session={recoverable} onResume={resumeJourney} onDiscard={()=>{clearJourney();setRecoverable(undefined)}}/>}<HomeScreen serviceNow={serviceNow} query={query} ready={!!destination} stops={suggestions.slice(0,Math.max(0,8-placeSuggestions.length))} places={placeSuggestions} message={message} dataNotice={stopNotice} savedPlaces={savedPlaces} onOpenAccount={onOpenAccount} onChooseSaved={place=>{choose(place.point,place.label);void calculate(place.point)}} onQuery={value=>{request.current++;setQuery(value);setDestination(undefined);setChosenPlace(undefined);setOptions([]);setMessage('')}} onChoose={stop=>{choose(stop.coordinates,stop.name);void calculate(stop.coordinates);}} onChoosePlace={place=>{choose(place.coordinates,place.name,place);void calculate(place.access??place.coordinates);}} onSearch={plan} onMap={()=>beginPicker('destination')}/></>;
 }

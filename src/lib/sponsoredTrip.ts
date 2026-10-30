@@ -9,7 +9,7 @@ export interface SponsoredEvent {adId:string;type:SponsoredEventType;at:number}
 
 export function sponsoredIntroTiming(config:AdCampaign['sponsoredTrip']){
  const requested=config?.durationSeconds;
- const duration=Number.isFinite(requested)?Math.min(6,Math.max(5,requested!)):6;
+ const duration=Number.isFinite(requested)?Math.min(10,Math.max(5,requested!)):6;
  const requestedSkip=config?.canSkipAfterSeconds;
  const skipAfter=Number.isFinite(requestedSkip)?Math.min(duration,Math.max(0,requestedSkip!)):1.5;
  return {duration,skipAfter};

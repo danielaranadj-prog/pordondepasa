@@ -55,8 +55,8 @@ export default function TransitApp({savedPlaces=[],onOpenAccount}:{savedPlaces?:
   let match:typeof sponsorIntro;
   try{match=option?.legs.filter(leg=>leg.kind==='bus'&&leg.route).flatMap(leg=>
    ads.filter(ad=>canShowSponsoredTrip(ad,leg.route!.id)).map(ad=>({ad,routeName:leg.route!.name,routeId:leg.route!.id})))[0]}catch{/* Commercial content must never block a journey. */}
-  setSponsorIntro(match);setSponsorViewed(true);setRecoverable(undefined);
-  setCompassStart(result);setSelected(index);setView('follow');
+  setSponsorIntro(match);setSponsorViewed(false);setRecoverable(undefined);
+  setCompassStart(result);setSelected(index);setView(match?'sponsor':'follow');
   }finally{setStarting(false)}
  }
  const [welcome,setWelcome]=useState(true),[view,setView]=useState<'search'|'trip'|'follow'|'sponsor'>('search');

@@ -49,3 +49,6 @@ expect(sponsoredIntroTiming(sponsor.sponsoredTrip).duration===6,'Field sponsor r
 expect(sponsoredIntroTiming({...sponsor.sponsoredTrip!,durationSeconds:3}).duration===5,'Legacy short ads get at least five seconds');
 expect(meters(origin,point(100))>99,'Simulation uses metres');
 console.log('OK: late boarding, GPS recovery/outliers, deviation, stopped vs lost signal, alighting alerts, local reports and ad schedule.');
+
+expect(sponsoredIntroTiming({...sponsor.sponsoredTrip!,durationSeconds:10}).duration===10,'Admin ten-second sponsor reaches the client unchanged');
+expect(sponsoredIntroTiming({...sponsor.sponsoredTrip!,durationSeconds:30}).duration===10,'A malformed duration cannot block navigation for longer than ten seconds');

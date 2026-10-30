@@ -20,7 +20,8 @@
     "check": "astro check",
     "test:unit": "node --test src/lib/*.test.ts",
     "ads:pilot": "node scripts/ads-pilot-server.mjs",
-    "test:accounts": "node scripts/test-account-config.mjs && node src/lib/account.test.ts && node scripts/test-account-rls.mjs"
+    "test:accounts": "node scripts/test-account-config.mjs && node src/lib/account.test.ts && node scripts/test-account-rls.mjs",
+    "build:web": "node scripts/build-web.mjs"
   },
   "dependencies": {
     "@astrojs/react": "7.1.1",
@@ -39,7 +40,11 @@
     "react-dom": "^19.2.3",
     "typescript": "^5.9.3"
   },
-  "overrides": {"xcode": {"uuid": "11.1.1"}},
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
+  },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@capacitor/cli": "8.5.3",

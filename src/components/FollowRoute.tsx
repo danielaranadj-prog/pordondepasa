@@ -135,8 +135,7 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,dataNotice,o
  const nextBusRoute=option.legs[step+1]?.kind==='bus'?option.legs[step+1]?.route:undefined;
  const showTripSponsor=!arrived && !isPremiumUser() && leg.kind==='bus' && !!sponsoredTrip?.sponsoredTrip &&
   isDeliverableAd(sponsoredTrip,new Date(clock),[leg.route?.id??'']);
- const sponsorImpression=useAdImpression(showTripSponsor?sponsoredTrip?.id:undefined,leg.route?.id,
-  id=>recordSponsoredTripEvent(id,'sponsored_trip_views'),'journey-sponsor');
+ const sponsorImpression=useAdImpression(showTripSponsor?sponsoredTrip?.id:undefined,leg.route?.id,undefined,'journey-sponsor');
  function speak(text:string){
   if(!('speechSynthesis' in window))return;
   window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='es-MX';window.speechSynthesis.speak(utterance);
@@ -286,22 +285,21 @@ export default function FollowRoute({option,stops,ads,sponsoredTrip,dataNotice,o
     </div>
     <h1 className="nav-top-title">{walkReroute.status?.kind==='pending'?'Ajustando caminata':offRoute?'Recorrido diferente':!arrived&&!boarding.waiting&&!boarding.candidate&&leg.kind==='walk'&&maneuver?maneuver.label:title}</h1>
     <p className="nav-top-subtitle" title={instructionText}>{walkReroute.status?.kind==='pending'?'Conservamos tu punto de llegada.':offRoute?'Tu ubicación se alejó del recorrido seleccionado.':streetSubtitle}</p>
-    {activeLandmarkAd && <div ref={landmarkImpression} className="nav-landmark-chip" role="note" aria-label="Sugerencia patrocinada cerca de tu bajada">
-     <span className="nav-landmark-label">Patrocinado</span>
-     <span className="nav-landmark-name">{activeLandmarkAd.icon} {activeLandmarkAd.title}</span>
-     <span className="nav-landmark-distance">{distanceLabel(meters(leg.to,activeLandmarkAd.coordinates!))} de bajada</span>
-     {activeLandmarkAd.promoText&&<span className="nav-landmark-promo">{activeLandmarkAd.promoText}</span>}
-     <button type="button" onClick={()=>setDismissedAdStep(step)} aria-label={`Ocultar anuncio de ${activeLandmarkAd.title}`}>×</button>
-    </div>}
+
    </div>
    <button className="nav-top-back" onClick={onExit} aria-label="Volver a las opciones de viaje" title="Volver a opciones"><UiIcon name="back"/></button>
   </section>
   {!arrived&&<div className="navigation-tools journey-map-tools"><button type="button" onClick={()=>{setFollow(false);setCameraRequest(value=>value+1)}} aria-label="Ver todo el viaje"><UiIcon name="route"/></button><button type="button" onClick={()=>setFollow(true)} disabled={!live} aria-label={!live?'Esperando ubicación para centrar':'Centrar en mí'} aria-pressed={follow}><UiIcon name="locate"/></button><button type="button" onClick={()=>{setReportOpen(!reportOpen);setSheetMode('expanded')}} aria-label="Reportar un problema" aria-expanded={reportOpen} disabled={!!report&&!report.endedAt}><UiIcon name="report"/></button></div>}
   <footer className={`nav-bottom-sheet map-sheet sheet-${sheetMode} ${showStops?'is-expanded':''}`} role="region" aria-label="Control del viaje">
-   {showTripSponsor && <div className="nav-trip-sponsor" ref={sponsorImpression} role="note" aria-label="Patrocinador del viaje">
+   {activeLandmarkAd && !arrived && !offRoute && <aside ref={landmarkImpression} className="nav-proximity-offer" aria-label="Publicidad cerca de tu bajada">
+    <div className="nav-proximity-heading"><small>Publicidad · cerca de tu bajada</small><button type="button" onClick={()=>setDismissedAdStep(step)} aria-label={`Ocultar anuncio de ${activeLandmarkAd.title}`}><UiIcon name="close"/></button></div>
+    <div className="nav-proximity-body"><AdImage ad={activeLandmarkAd}/><div><strong>{activeLandmarkAd.title}</strong><p>{activeLandmarkAd.promoText||activeLandmarkAd.description}</p><small>{distanceLabel(meters(leg.to,activeLandmarkAd.coordinates!))} del punto de bajada · {activeLandmarkAd.referenceText}</small></div></div>
+    {safeAdUrl(activeLandmarkAd.ctaUrl)&&<a href={activeLandmarkAd.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>trackAd(activeLandmarkAd.id,'click',leg.route?.id)}>{activeLandmarkAd.callToAction||'Ver promoción'} ↗</a>}
+   </aside>}
+   {showTripSponsor && !activeLandmarkAd && <div className="nav-trip-sponsor" ref={sponsorImpression} role="note" aria-label="Patrocinador del viaje">
     <AdImage ad={sponsoredTrip!}/>
     <span className="nav-trip-sponsor-copy"><small>Publicidad · Patrocinador del viaje</small><strong>{sponsoredTrip!.icon} {sponsoredTrip!.title}</strong><span>{sponsoredTrip!.sponsoredTrip!.promoOffer}</span></span>
-    <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>{recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks');trackAd(sponsoredTrip!.id,'click',leg.route?.id)}}>Canjear</a>
+    <a href={sponsoredTrip!.sponsoredTrip!.ctaUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={()=>{recordSponsoredTripEvent(sponsoredTrip!.id,'sponsored_trip_cta_clicks');trackAd(sponsoredTrip!.id,'click',leg.route?.id)}}>Ver promo</a>
    </div>}
    <div className="nav-route-summary">
     <button
